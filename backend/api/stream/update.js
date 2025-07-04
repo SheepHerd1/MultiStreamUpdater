@@ -55,8 +55,9 @@ module.exports = async (req, res) => {
             await updateTwitch(twitchAuth.token, twitchAuth.userId, title, gameId);
             results.twitch = { success: true };
         } catch (error) {
-            console.error("Twitch API Error:", error.response ? error.response.data : error.message);
-            results.twitch = { success: false, error: 'Failed to update Twitch.' };
+            const errorMessage = error.response?.data?.message || 'Failed to update Twitch.';
+            console.error("Twitch API Error:", errorMessage);
+            results.twitch = { success: false, error: errorMessage };
         }
     }
 
