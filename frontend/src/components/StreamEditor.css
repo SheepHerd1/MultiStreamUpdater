@@ -1,0 +1,40 @@
+.stream-editor {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #fca311;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #e0e0e0;
+    color: #1a1a2e;
+    box-sizing: border-box; /* Important for width */
+}
+
+.stream-editor button {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.status-message {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #0f1c3d;
+    border-radius: 5px;
+    text-align: center;
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import jwtDecode from 'jwt-decode';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 
@@ -21,8 +21,8 @@ function App() {
         setAuth(prev => ({ ...prev, twitch: twitchAuth }));
         // Store in localStorage to persist login
         localStorage.setItem('twitchAuth', JSON.stringify(twitchAuth));
-        // Clean the URL
-        window.history.replaceState({}, document.title, "/");
+        // Clean the URL, respecting the GitHub Pages sub-path
+        window.history.replaceState({}, document.title, process.env.PUBLIC_URL || "/");
       } catch (e) {
         console.error("Invalid token:", e);
       }
