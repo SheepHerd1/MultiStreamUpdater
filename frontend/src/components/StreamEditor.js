@@ -10,6 +10,7 @@ function StreamEditor({ auth }) {
     const [tags, setTags] = useState('');
     const [status, setStatus] = useState({ message: '', type: '' }); // Use an object for status
     const [isLoading, setIsLoading] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false); // Track if initial data has loaded
 
    useEffect(() => {
       // Fetch the current stream info when the component loads to pre-fill the form.
@@ -28,6 +29,7 @@ function StreamEditor({ auth }) {
                setTitle(title || '');
                setCategory(game_name || '');
                setStatus({ message: '', type: '' }); // Clear status
+               setIsInitialized(true); // Mark the form as ready
             } catch (error) {
                console.error('Could not fetch stream info:', error);
                setStatus({ message: 'Could not fetch current stream info.', type: 'error' });
@@ -40,6 +42,7 @@ function StreamEditor({ auth }) {
             setCategory('');
             setTags('');
             setStatus({ message: '', type: '' });
+            setIsInitialized(false); // Reset initialization on logout
          }
       };
       fetchStreamInfo();
@@ -97,7 +100,7 @@ function StreamEditor({ auth }) {
                     <label htmlFor="tags">Tags (comma-separated)</label>
                     <input type="text" id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="chill, ama, gaming" />
                 </div>
-                <button type="submit" disabled={isLoading}>
+                <button type="submit" disabled={isLoading || !isInitialized}>
                     {isLoading ? 'Updating...' : 'Update All Platforms'}
                 </button>
             </form>

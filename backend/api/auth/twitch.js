@@ -8,7 +8,7 @@ const {
 } = process.env;
 
 const REDIRECT_URI = `${VITE_APP_VERCEL_URL}/api/auth/twitch`;
-const TWITCH_SCOPES = 'channel:manage:broadcast openid'; // Request the OpenID scope to get an id_token
+const TWITCH_SCOPES = 'channel:manage:broadcast openid user:read:broadcast'; // Add scope to read channel info
 
 module.exports = async (req, res) => {
     const { code } = req.query;
