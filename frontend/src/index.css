@@ -13,6 +13,7 @@ body {
 }
 
 .App {
+  position: relative; /* Needed for positioning the logout button */
   width: 100%;
   max-width: 600px;
   padding: 20px;

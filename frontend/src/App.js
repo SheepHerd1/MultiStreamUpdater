@@ -6,15 +6,19 @@ import Dashboard from './components/Dashboard';
 function App() {
   const [auth, setAuth] = useState({ twitch: null });
 
+  const handleLogout = () => {
+    // Clear the auth state in React
+    setAuth({ twitch: null });
+    // Remove the persisted session from the browser's storage
+    localStorage.removeItem('twitchAuth');
+  };
+
   useEffect(() => {
-    // Handle the GitHub Pages 404 redirect using sessionStorage.
-    if (sessionStorage.redirect) {
-      const redirectUrl = new URL(sessionStorage.redirect);
-      // We no longer need the sessionStorage item, so clear it.
-      delete sessionStorage.redirect;
-      // Restore the URL to the one the user originally tried to access.
-      window.history.replaceState(null, '', redirectUrl.pathname + redirectUrl.search);
-    }
+    // This effect handles the initial setup of the application.
+    // It's responsible for three main tasks in order:
+    // 1. Correcting the URL if redirected from a 404 page on GitHub Pages.
+    // 2. Processing an authentication token from the URL if one exists.
+    // 3. Loading a persisted session from localStorage if no token is present.
 
     const urlParams = new URLSearchParams(window.location.search);
     const twitchToken = urlParams.get('twitch_access_token');
@@ -30,8 +34,6 @@ function App() {
         setAuth(prev => ({ ...prev, twitch: twitchAuth }));
         // Store in localStorage to persist login
         localStorage.setItem('twitchAuth', JSON.stringify(twitchAuth));
-        // Clean the URL, respecting the GitHub Pages sub-path
-        window.history.replaceState({}, document.title, window.location.pathname.replace(/\/$/, ''));
       } catch (e) {
         console.error("Invalid token:", e);
       }
@@ -47,9 +49,22 @@ function App() {
         }
       }
     }
-  }, []);
+  }, []); // Empty dependency array means this runs only once on mount
 
-  return <div className="App">{auth.twitch ? <Dashboard auth={auth} /> : <Login />}</div>;
+  // This effect is responsible for cleaning the URL *after* authentication is successful.
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    // If we are authenticated AND there are still auth tokens in the URL, clean it.
+    if (auth.twitch && urlParams.has('twitch_access_token')) {
+      window.history.replaceState({}, document.title, window.location.pathname.replace(/\/$/, ''));
+    }
+  }, [auth.twitch]); // This effect runs whenever the auth.twitch state changes
+
+  return (
+    <div className="App">
+      {auth.twitch ? <Dashboard auth={auth} onLogout={handleLogout} /> : <Login />}
+    </div>
+  );
 }
 
 export default App;

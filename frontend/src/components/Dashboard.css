@@ -1,3 +1,12 @@
+.logout-btn {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    background-color: #e91e63;
+    color: white;
+    padding: 8px 12px;
+}
+
 .dashboard p {
     text-align: center;
     font-size: 1.2em;

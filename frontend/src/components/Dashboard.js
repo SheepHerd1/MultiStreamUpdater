@@ -2,9 +2,10 @@ import React from 'react';
 import StreamEditor from './StreamEditor';
 import './Dashboard.css';
 
-function Dashboard({ auth }) {
+function Dashboard({ auth, onLogout }) {
     return (
         <div className="dashboard">
+            <button onClick={onLogout} className="logout-btn">Logout</button>
             <h2>Dashboard</h2>
             <p>Welcome, {auth.twitch?.userName || 'Streamer'}!</p>
             
