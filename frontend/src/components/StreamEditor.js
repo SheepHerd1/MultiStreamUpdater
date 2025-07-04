@@ -34,6 +34,12 @@ function StreamEditor({ auth }) {
             } finally {
                setIsLoading(false);
             }
+         } else {
+            // If auth is null (e.g., user logged out), clear the form fields.
+            setTitle('');
+            setCategory('');
+            setTags('');
+            setStatus('');
          }
       };
       fetchStreamInfo();
