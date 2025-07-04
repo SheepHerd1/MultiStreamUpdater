@@ -1,0 +1,12 @@
+{
+  "name": "multi-stream-updater-backend",
+  "version": "1.0.0",
+  "description": "Backend for multi-stream updater",
+  "main": "index.js",
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "axios": "^1.4.0"
+  }
+}

@@ -1,0 +1,15 @@
+.dashboard p {
+    text-align: center;
+    font-size: 1.2em;
+}
+
+.connected-platforms {
+    margin: 20px 0;
+}
+
+.platform-status {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    background-color: #0f1c3d;
+}
