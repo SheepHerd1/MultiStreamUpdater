@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './StreamEditor.css';
 
@@ -10,6 +10,34 @@ function StreamEditor({ auth }) {
     const [tags, setTags] = useState('');
     const [status, setStatus] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+   useEffect(() => {
+      // Fetch the current stream info when the component loads to pre-fill the form.
+      const fetchStreamInfo = async () => {
+         if (auth.twitch) {
+            setIsLoading(true);
+            setStatus('Fetching current stream info...');
+            try {
+               const response = await axios.get(`${API_BASE_URL}/api/stream/info`, {
+                  params: {
+                     broadcaster_id: auth.twitch.userId,
+                     token: auth.twitch.token,
+                  }
+               });
+               const { title, game_name } = response.data;
+               setTitle(title || '');
+               setCategory(game_name || '');
+               setStatus(''); // Clear status after successful fetch
+            } catch (error) {
+               console.error('Could not fetch stream info:', error);
+               setStatus('Could not fetch current stream info.');
+            } finally {
+               setIsLoading(false);
+            }
+         }
+      };
+      fetchStreamInfo();
+   }, [auth.twitch]); // This effect runs once the user is authenticated.
 
     const handleSubmit = async (e) => {
         e.preventDefault();
