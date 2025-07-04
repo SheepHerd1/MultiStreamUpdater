@@ -74,6 +74,10 @@ function StreamEditor({ auth }) {
             setStatus('An unexpected error occurred.');
         } finally {
             setIsLoading(false);
+            // Automatically clear the status message after 5 seconds
+            setTimeout(() => {
+                setStatus('');
+            }, 5000);
         }
     };
 

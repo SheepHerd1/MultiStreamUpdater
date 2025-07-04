@@ -38,8 +38,8 @@ module.exports = async (req, res) => {
         // 3. Redirect back to the frontend with the tokens
         // In a real app, you might store refresh_token securely and only pass back the access_token
         // We use the URL hash (#) to pass tokens. This prevents the browser from sending the token
-        // to the server and avoids issues with GitHub Pages' 404 routing on the callback.
-        const redirectUrl = `${FRONTEND_URL}/#twitch_access_token=${access_token}&twitch_refresh_token=${refresh_token}`;
+        // to a dedicated callback page for robust handling.
+        const redirectUrl = `${FRONTEND_URL}/callback.html#twitch_access_token=${access_token}&twitch_refresh_token=${refresh_token}`;
         
         res.writeHead(302, { Location: redirectUrl });
         res.end();
@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
     } catch (error) {
         console.error('Error exchanging Twitch code for token:', error.response ? error.response.data : error.message);
         // Redirect back to the frontend with an error flag for a better user experience
-        const errorRedirectUrl = `${FRONTEND_URL}/#error=twitch_auth_failed`;
+        const errorRedirectUrl = `${FRONTEND_URL}/callback.html#error=twitch_auth_failed`;
         res.writeHead(302, { Location: errorRedirectUrl });
         res.end();
     }
