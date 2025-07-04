@@ -20,24 +20,25 @@ function App() {
     // 2. Processing an authentication token from the URL if one exists.
     // 3. Loading a persisted session from localStorage if no token is present.
 
+    let tokenToProcess = null;
+    let searchParams = new URLSearchParams(window.location.search);
+
     // Handle the GitHub Pages 404 redirect using sessionStorage.
     if (sessionStorage.redirect) {
       const redirectUrl = new URL(sessionStorage.redirect);
+      // Prioritize the search params from the URL that was saved before the redirect.
+      searchParams = redirectUrl.searchParams;
       // We no longer need the sessionStorage item, so clear it.
       delete sessionStorage.redirect;
-      // Restore the URL to the one the user originally tried to access.
-      // This is crucial for capturing the auth token after the 404 redirect.
-      window.history.replaceState(null, '', redirectUrl.pathname + redirectUrl.search);
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const twitchToken = urlParams.get('twitch_access_token');
+    tokenToProcess = searchParams.get('twitch_access_token');
 
-    if (twitchToken) {
+    if (tokenToProcess) {
       try {
-        const decoded = jwtDecode(twitchToken);
+        const decoded = jwtDecode(tokenToProcess);
         const twitchAuth = {
-          token: twitchToken,
+          token: tokenToProcess,
           userId: decoded.user_id,
           userName: decoded.preferred_username || 'user',
         };
@@ -65,7 +66,7 @@ function App() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     // If we are authenticated AND there are still auth tokens in the URL, clean it.
-    if (auth.twitch && urlParams.has('twitch_access_token')) {
+    if (auth.twitch && (urlParams.has('twitch_access_token') || urlParams.has('p'))) {
       window.history.replaceState({}, document.title, window.location.pathname.replace(/\/$/, ''));
     }
   }, [auth.twitch]); // This effect runs whenever the auth.twitch state changes

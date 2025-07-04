@@ -15,8 +15,8 @@ async function getTwitchGameId(gameName, appAccessToken) {
                 'Authorization': `Bearer ${appAccessToken}`,
             },
         });
-        // Return the ID of the first match, or "0" for "Not Playing" if no match is found.
-        return response.data.data[0]?.id || "0";
+        // Return the ID of the first match. If no match is found, return undefined so the category is not changed.
+        return response.data.data[0]?.id;
     } catch (error) {
         console.error("Error fetching Twitch game ID:", error.response ? error.response.data : error.message);
         return undefined; // Return undefined to avoid changing the category on error
