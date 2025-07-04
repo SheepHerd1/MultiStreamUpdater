@@ -1,18 +1,18 @@
 const axios = require('axios');
-
 const { TWITCH_CLIENT_ID } = process.env;
+const { handleTwitchApiError } = require('../_utils/errorHandler');
 
 // Helper function to get a game ID from a game name
 async function getTwitchGameId(gameName, appAccessToken) {
     // If the user didn't enter a category, we don't need to change it.
-    if (!gameName) return undefined; 
+    if (!gameName) return undefined;
 
     try {
         const response = await axios.get('https://api.twitch.tv/helix/games', {
             params: { name: gameName },
             headers: {
                 'Client-ID': TWITCH_CLIENT_ID,
-                'Authorization': `Bearer ${appAccessToken}`,
+                'Authorization': `Bearer ${appAccessToken}`
             },
         });
         // Return the ID of the first match. If no match is found, return undefined so the category is not changed.
@@ -27,13 +27,13 @@ async function getTwitchGameId(gameName, appAccessToken) {
 async function updateTwitch(authToken, broadcasterId, title, gameId) {
     await axios.patch(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcasterId}`, {
         title: title,
-        game_id: gameId,
+        game_id: gameId
     }, {
         headers: {
             'Client-ID': TWITCH_CLIENT_ID,
             'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json',
-        },
+            'Content-Type': 'application/json'
+        }
     });
 }
 
@@ -49,14 +49,12 @@ module.exports = async (req, res) => {
     if (twitchAuth && twitchAuth.token && twitchAuth.userId) {
         try {
             // Dynamically look up the game ID from the category name.
-            // Note: This requires an App Access Token, but for simplicity, the user's token often works.
             const gameId = await getTwitchGameId(category, twitchAuth.token);
 
             await updateTwitch(twitchAuth.token, twitchAuth.userId, title, gameId);
             results.twitch = { success: true };
         } catch (error) {
-            const errorMessage = error.response?.data?.message || 'Failed to update Twitch.';
-            console.error("Twitch API Error:", errorMessage);
+            const errorMessage = handleTwitchApiError(error, 'Failed to update Twitch.');
             results.twitch = { success: false, error: errorMessage };
         }
     }

@@ -23,7 +23,9 @@ function App() {
     const hashParams = new URLSearchParams(window.location.hash.substring(1)); // remove the '#'
     const twitchToken = hashParams.get('twitch_access_token');
 
-    if (twitchToken) { // A token was found in the hash.
+    if (twitchToken) {
+      // A token was found in the URL hash. This means the user is returning from Twitch.
+      // We will process the token, save it to localStorage, and then force a reload to a clean URL.
       try {
         const decoded = jwtDecode(twitchToken);
         const twitchAuth = {
@@ -31,18 +33,19 @@ function App() {
           userId: decoded.user_id,
           userName: decoded.preferred_username || 'user',
         };
-
-        // Set the auth state and save the session to localStorage.
-        setAuth(prev => ({ ...prev, twitch: twitchAuth }));
         localStorage.setItem('twitchAuth', JSON.stringify(twitchAuth));
 
-        // Clean the token from the URL hash for security and aesthetics.
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        // Redirect to the clean version of the URL to remove the token from the address bar.
+        // The next time this component loads, the `else` block below will handle authentication.
+        window.location.href = window.location.pathname;
       } catch (e) {
         console.error("Invalid token:", e);
+        // If the token is bad, clear it from the URL and let the user try again.
+        window.location.href = window.location.pathname;
       }
     } else {
-      // 2. No token in hash, so check for a saved session in localStorage.
+      // No token in the hash. This is a normal page load.
+      // Check for a saved session in localStorage.
       const storedTwitchAuth = localStorage.getItem('twitchAuth');
       if (storedTwitchAuth) {
         try {
