@@ -4,43 +4,18 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 
 /**
- * A helper function to safely get the initial authentication state from localStorage.
- * This runs before the component renders to prevent a flash of the login screen.
+ * A helper function to safely get the initial authentication state from localStorage on first load.
  */
 const getInitialAuthState = () => {
-  console.log("1. Checking for authentication state...");
-  // Check for a permanent session first.
-  let storedTwitchAuth = localStorage.getItem('twitchAuth');
-
-  // Check for a temporary token from the callback page.
-  const tempAuth = localStorage.getItem('twitchAuthTemp');
-  if (tempAuth) {
-    console.log("2. Found temporary token from callback page.");
-    storedTwitchAuth = tempAuth; // Prioritize the new token.
-    localStorage.removeItem('twitchAuthTemp'); // Clean up the temporary item.
-  }
-
+  const storedTwitchAuth = localStorage.getItem('twitchAuth');
   if (storedTwitchAuth) {
-    console.log("3. Processing stored token...");
     try {
-      const parsedAuth = JSON.parse(storedTwitchAuth); // Contains access_token and id_token
-      // We decode the id_token (a JWT), not the access_token (an opaque string).
-      const decoded = jwtDecode(parsedAuth.id_token);
-      // Save the full auth object to the permanent session.
-      const fullAuth = {
-        token: parsedAuth.token, // The access_token for API calls
-        userId: decoded.sub, // The user's ID is in the 'sub' (subject) claim
-        userName: decoded.preferred_username || 'user'
-      };
-      localStorage.setItem('twitchAuth', JSON.stringify(fullAuth));
-      console.log("4. Successfully decoded token. User is authenticated.");
-      return { twitch: fullAuth };
+      // We just need to parse it, the full user info is already there.
+      return { twitch: JSON.parse(storedTwitchAuth) };
     } catch (e) {
-      console.error("5. ERROR: Failed to parse or decode token.", e);
-      localStorage.removeItem('twitchAuth'); // Clear corrupted data
+      localStorage.removeItem('twitchAuth');
     }
   }
-  console.log("6. No valid token found. User is not authenticated.");
   return { twitch: null };
 };
 
@@ -53,6 +28,39 @@ function App() {
     // Remove the persisted session from the browser's storage
     localStorage.removeItem('twitchAuth');
   };
+
+  useEffect(() => {
+    const handleAuthMessage = (event) => {
+      // Ensure the message is from a trusted source if necessary, but for now, check the type.
+      if (event.data.type === 'twitch-auth-success') {
+        const { token, id_token } = event.data;
+        if (token && id_token) {
+          try {
+            const decoded = jwtDecode(id_token);
+            const fullAuth = {
+              token: token,
+              userId: decoded.sub,
+              userName: decoded.preferred_username || 'user',
+            };
+            // Save the full session to localStorage
+            localStorage.setItem('twitchAuth', JSON.stringify(fullAuth));
+            // Update the state to show the dashboard
+            setAuth({ twitch: fullAuth });
+          } catch (e) {
+            console.error("Failed to process token from popup:", e);
+          }
+        }
+      }
+    };
+
+    // Set up the event listener
+    window.addEventListener('message', handleAuthMessage);
+
+    // Clean up the event listener when the component unmounts
+    return () => {
+      window.removeEventListener('message', handleAuthMessage);
+    };
+  }, []); // Empty dependency array ensures this runs only once.
 
   return (
     <div className="App">
