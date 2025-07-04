@@ -20,7 +20,7 @@
 
         if (twitchToken && idToken) {
             // Send the data back to the main window that opened this popup.
-            window.opener.postMessage({ type: 'twitch-auth-success', token: twitchToken, id_token: idToken }, window.location.origin);
+            window.opener.postMessage({ type: 'twitch-auth-success', token: twitchToken, id_token: idToken }, 'https://sheepherd1.github.io');
         }
 
         // Close the popup window.
