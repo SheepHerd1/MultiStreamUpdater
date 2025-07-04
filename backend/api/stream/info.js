@@ -3,6 +3,16 @@ const { TWITCH_CLIENT_ID } = process.env;
 const { handleTwitchApiError } = require('../_utils/errorHandler');
 
 module.exports = async (req, res) => {
+    // Manually handle CORS preflight requests.
+    // This is a robust way to ensure the browser's security checks pass.
+    if (req.method === 'OPTIONS') {
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
+        res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+        res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+        return res.status(200).end();
+    }
+
     const { broadcaster_id, token } = req.query;
 
     if (!broadcaster_id || !token) {

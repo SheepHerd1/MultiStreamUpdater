@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { TWITCH_CLIENT_ID } = process.env;
 const { handleTwitchApiError } = require('../_utils/errorHandler');
+const { validateBody } = require('../_utils/validator');
 
 // Helper function to get a game ID from a game name
 async function getTwitchGameId(gameName, appAccessToken) {
@@ -46,6 +47,12 @@ async function updateTwitch(authToken, broadcasterId, { title, gameId, tags }) {
 module.exports = async (req, res) => {
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
+    }
+
+    // Validate the request body to ensure all required fields are present.
+    const requiredFields = ['title', 'category', 'tags', 'twitchAuth'];
+    if (!validateBody(requiredFields)(req, res)) {
+        return; // Stop execution if validation fails
     }
 
     const { title, category, tags, twitchAuth } = req.body;
