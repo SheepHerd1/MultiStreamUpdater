@@ -45,6 +45,23 @@ async function updateTwitch(authToken, broadcasterId, { title, gameId, tags }) {
 }
 
 module.exports = async (req, res) => {
+    // --- CORS Headers ---
+    // Set headers to allow your frontend to make requests to this API
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
+
+    // --- Preflight (OPTIONS) Request Handler ---
+    // The browser sends an OPTIONS request first to check if the actual request is safe.
+    // We need to respond with a 204 "No Content" status for it to proceed.
+    if (req.method === 'OPTIONS') {
+        return res.status(204).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
