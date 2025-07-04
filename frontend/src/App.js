@@ -7,15 +7,13 @@ function App() {
   const [auth, setAuth] = useState({ twitch: null });
 
   useEffect(() => {
-    // Handle the GitHub Pages 404 redirect
-    const urlParams404 = new URLSearchParams(window.location.search);
-    const p = urlParams404.get('p');
-    const q = urlParams404.get('q');
-    if (p) {
-      const path = p.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
-      const search = q ? q.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>') : '';
-      const newUrl = `${window.location.pathname.replace(/[^/]*$/, '')}${path}${search}`;
-      window.history.replaceState(null, '', newUrl);
+    // Handle the GitHub Pages 404 redirect using sessionStorage.
+    if (sessionStorage.redirect) {
+      const redirectUrl = new URL(sessionStorage.redirect);
+      // We no longer need the sessionStorage item, so clear it.
+      delete sessionStorage.redirect;
+      // Restore the URL to the one the user originally tried to access.
+      window.history.replaceState(null, '', redirectUrl.pathname + redirectUrl.search);
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -33,7 +31,7 @@ function App() {
         // Store in localStorage to persist login
         localStorage.setItem('twitchAuth', JSON.stringify(twitchAuth));
         // Clean the URL, respecting the GitHub Pages sub-path
-        window.history.replaceState({}, document.title, window.location.pathname);
+        window.history.replaceState({}, document.title, window.location.pathname.replace(/\/$/, ''));
       } catch (e) {
         console.error("Invalid token:", e);
       }
