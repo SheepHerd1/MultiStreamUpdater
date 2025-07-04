@@ -44,6 +44,9 @@ module.exports = async (req, res) => {
 
     } catch (error) {
         console.error('Error exchanging Twitch code for token:', error.response ? error.response.data : error.message);
-        res.status(500).json({ message: 'Authentication failed' });
+        // Redirect back to the frontend with an error flag for a better user experience
+        const errorRedirectUrl = `${FRONTEND_URL}?error=twitch_auth_failed`;
+        res.writeHead(302, { Location: errorRedirectUrl });
+        res.end();
     }
 };
