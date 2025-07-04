@@ -8,14 +8,14 @@ const {
 } = process.env;
 
 const REDIRECT_URI = `${VITE_APP_VERCEL_URL}/api/auth/twitch`;
+const TWITCH_SCOPES = 'channel:manage:broadcast';
 
 module.exports = async (req, res) => {
     const { code } = req.query;
 
     // 1. If no code, redirect to Twitch for authorization
     if (!code) {
-        const scopes = 'channel:manage:broadcast';
-        const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${scopes}`;
+        const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${TWITCH_SCOPES}`;
         res.writeHead(302, { Location: authUrl });
         res.end();
         return;
