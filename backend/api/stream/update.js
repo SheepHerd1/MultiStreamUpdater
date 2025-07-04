@@ -2,6 +2,27 @@ const axios = require('axios');
 
 const { TWITCH_CLIENT_ID } = process.env;
 
+// Helper function to get a game ID from a game name
+async function getTwitchGameId(gameName, appAccessToken) {
+    // If the user didn't enter a category, we don't need to change it.
+    if (!gameName) return undefined; 
+
+    try {
+        const response = await axios.get('https://api.twitch.tv/helix/games', {
+            params: { name: gameName },
+            headers: {
+                'Client-ID': TWITCH_CLIENT_ID,
+                'Authorization': `Bearer ${appAccessToken}`,
+            },
+        });
+        // Return the ID of the first match, or "0" for "Not Playing" if no match is found.
+        return response.data.data[0]?.id || "0";
+    } catch (error) {
+        console.error("Error fetching Twitch game ID:", error.response ? error.response.data : error.message);
+        return undefined; // Return undefined to avoid changing the category on error
+    }
+}
+
 // Helper function to update Twitch
 async function updateTwitch(authToken, broadcasterId, title, gameId) {
     await axios.patch(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcasterId}`, {
@@ -27,8 +48,10 @@ module.exports = async (req, res) => {
     // --- Twitch Update ---
     if (twitchAuth && twitchAuth.token && twitchAuth.userId) {
         try {
-            // In a real app, you'd look up the gameId from the category name
-            const gameId = "509658"; // Example: "Just Chatting"
+            // Dynamically look up the game ID from the category name.
+            // Note: This requires an App Access Token, but for simplicity, the user's token often works.
+            const gameId = await getTwitchGameId(category, twitchAuth.token);
+
             await updateTwitch(twitchAuth.token, twitchAuth.userId, title, gameId);
             results.twitch = { success: true };
         } catch (error) {

@@ -20,6 +20,16 @@ function App() {
     // 2. Processing an authentication token from the URL if one exists.
     // 3. Loading a persisted session from localStorage if no token is present.
 
+    // Handle the GitHub Pages 404 redirect using sessionStorage.
+    if (sessionStorage.redirect) {
+      const redirectUrl = new URL(sessionStorage.redirect);
+      // We no longer need the sessionStorage item, so clear it.
+      delete sessionStorage.redirect;
+      // Restore the URL to the one the user originally tried to access.
+      // This is crucial for capturing the auth token after the 404 redirect.
+      window.history.replaceState(null, '', redirectUrl.pathname + redirectUrl.search);
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const twitchToken = urlParams.get('twitch_access_token');
 
