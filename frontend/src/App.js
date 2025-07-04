@@ -30,7 +30,12 @@ function App() {
       // Check localStorage on initial load
       const storedTwitchAuth = localStorage.getItem('twitchAuth');
       if (storedTwitchAuth) {
-        setAuth(prev => ({ ...prev, twitch: JSON.parse(storedTwitchAuth) }));
+        try {
+          setAuth(prev => ({ ...prev, twitch: JSON.parse(storedTwitchAuth) }));
+        } catch (e) {
+          console.error("Failed to parse auth from localStorage", e);
+          localStorage.removeItem('twitchAuth'); // Clear corrupted item
+        }
       }
     }
   }, []);
