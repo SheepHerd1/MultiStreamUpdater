@@ -15,9 +15,10 @@
         // This script processes the token from the URL hash and saves it.
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const twitchToken = hashParams.get('twitch_access_token');
+        const idToken = hashParams.get('id_token');
 
-        if (twitchToken) {
-            const twitchAuth = { token: twitchToken }; // We'll decode it in the main app
+        if (twitchToken && idToken) {
+            const twitchAuth = { token: twitchToken, id_token: idToken };
             localStorage.setItem('twitchAuthTemp', JSON.stringify(twitchAuth));
         }
 
