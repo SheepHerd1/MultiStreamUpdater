@@ -63,7 +63,12 @@ function StreamEditor({ auth }) {
                     {isLoading ? 'Updating...' : 'Update All Platforms'}
                 </button>
             </form>
-            {status && <p className="status-message">{status}</p>}
+            {status && (
+                <p className="status-message">
+                    {isLoading && <span className="spinner"></span>}
+                    {status}
+                </p>
+            )}
         </div>
     );
 }
