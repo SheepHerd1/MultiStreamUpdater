@@ -5,8 +5,9 @@
  * @returns {string} The parsed error message.
  */
 function handleTwitchApiError(error, defaultMessage) {
-    const errorMessage = error.response?.data?.message || defaultMessage;
-    console.error("Twitch API Error:", errorMessage);
+    // Log the full error for better debugging, but return a clean message to the user.
+    console.error("Twitch API Error Details:", error);
+    const errorMessage = error.response?.data?.message || error.message || defaultMessage;
     return errorMessage;
 }
 

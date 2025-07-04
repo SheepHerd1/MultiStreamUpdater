@@ -81,8 +81,9 @@ function StreamEditor({ auth }) {
             setStatus({ message: statusMessages.join(' | '), type: 'success' });
 
         } catch (error) {
+            const errorMessage = error.response?.data?.message || 'An unexpected error occurred.';
             console.error('Error updating stream:', error);
-            setStatus({ message: 'An unexpected error occurred.', type: 'error' });
+            setStatus({ message: errorMessage, type: 'error' });
         } finally {
             setIsLoading(false);
             // Automatically clear the status message after 5 seconds
@@ -98,15 +99,15 @@ function StreamEditor({ auth }) {
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
                     <label htmlFor="title">Stream Title</label>
-                    <input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="My awesome stream" required />
+                    <input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="My awesome stream" required disabled={isLoading} />
                 </div>
                 <div className="form-group">
                     <label htmlFor="category">Category / Game</label>
-                    <input type="text" id="category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Just Chatting" required />
+                    <input type="text" id="category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Just Chatting" required disabled={isLoading} />
                 </div>
                 <div className="form-group">
                     <label htmlFor="tags">Tags (comma-separated)</label>
-                    <input type="text" id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="chill, ama, gaming" />
+                    <input type="text" id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="chill, ama, gaming" disabled={isLoading} />
                 </div>
                 <button type="submit" disabled={isLoading}>
                     {isLoading ? 'Updating...' : 'Update All Platforms'}
