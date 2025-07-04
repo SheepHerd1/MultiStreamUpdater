@@ -12,18 +12,19 @@
     <p>Please wait, you are being redirected.</p>
 
     <script>
-        // This script processes the token from the URL hash and saves it.
+        // This script runs in the popup window.
+        // It gets the tokens from the URL hash, sends them to the main window, and closes itself.
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const twitchToken = hashParams.get('twitch_access_token');
         const idToken = hashParams.get('id_token');
 
         if (twitchToken && idToken) {
-            const twitchAuth = { token: twitchToken, id_token: idToken };
-            localStorage.setItem('twitchAuthTemp', JSON.stringify(twitchAuth));
+            // Send the data back to the main window that opened this popup.
+            window.opener.postMessage({ type: 'twitch-auth-success', token: twitchToken, id_token: idToken }, window.location.origin);
         }
 
-        // Redirect to the main application page.
-        window.location.href = '/MultiStreamUpdater/';
+        // Close the popup window.
+        window.close();
     </script>
 </body>
 </html>
