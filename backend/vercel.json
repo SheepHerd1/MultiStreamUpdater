@@ -2,9 +2,10 @@
     "version": 2,
     "builds": [
         {
-            "src": "api/**/*.js",
-            "use": "@vercel/node"
-        }
+            "src": "api/auth/twitch.js", "use": "@vercel/node"
+        },
+        { "src": "api/stream/info.js", "use": "@vercel/node" },
+        { "src": "api/stream/update.js", "use": "@vercel/node" }
     ],
     "headers": [
         {

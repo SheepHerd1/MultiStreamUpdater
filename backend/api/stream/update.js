@@ -24,11 +24,17 @@ async function getTwitchGameId(gameName, appAccessToken) {
 }
 
 // Helper function to update Twitch
-async function updateTwitch(authToken, broadcasterId, title, gameId) {
-    await axios.patch(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcasterId}`, {
+async function updateTwitch(authToken, broadcasterId, { title, gameId, tags }) {
+    const payload = {
         title: title,
-        game_id: gameId
-    }, {
+        game_id: gameId,
+        tags: tags,
+    };
+
+    // Remove any keys that are undefined so we don't overwrite existing values with nulls.
+    Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
+
+    await axios.patch(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcasterId}`, payload, {
         headers: {
             'Client-ID': TWITCH_CLIENT_ID,
             'Authorization': `Bearer ${authToken}`,
@@ -51,7 +57,7 @@ module.exports = async (req, res) => {
             // Dynamically look up the game ID from the category name.
             const gameId = await getTwitchGameId(category, twitchAuth.token);
 
-            await updateTwitch(twitchAuth.token, twitchAuth.userId, title, gameId);
+            await updateTwitch(twitchAuth.token, twitchAuth.userId, { title, gameId, tags });
             results.twitch = { success: true };
         } catch (error) {
             const errorMessage = handleTwitchApiError(error, 'Failed to update Twitch.');
