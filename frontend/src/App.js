@@ -23,10 +23,15 @@ const getInitialAuthState = () => {
   if (storedTwitchAuth) {
     console.log("3. Processing stored token...");
     try {
-      const parsedAuth = JSON.parse(storedTwitchAuth);
-      const decoded = jwtDecode(parsedAuth.token); // Decode the token here
+      const parsedAuth = JSON.parse(storedTwitchAuth); // Contains access_token and id_token
+      // We decode the id_token (a JWT), not the access_token (an opaque string).
+      const decoded = jwtDecode(parsedAuth.id_token);
       // Save the full auth object to the permanent session.
-      const fullAuth = { ...parsedAuth, userId: decoded.user_id, userName: decoded.preferred_username || 'user' };
+      const fullAuth = {
+        token: parsedAuth.token, // The access_token for API calls
+        userId: decoded.sub, // The user's ID is in the 'sub' (subject) claim
+        userName: decoded.preferred_username || 'user'
+      };
       localStorage.setItem('twitchAuth', JSON.stringify(fullAuth));
       console.log("4. Successfully decoded token. User is authenticated.");
       return { twitch: fullAuth };

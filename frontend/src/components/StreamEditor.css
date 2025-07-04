@@ -39,6 +39,16 @@
     text-align: center;
 }
 
+.status-message.success {
+    background-color: #2e7d32; /* Green for success */
+    color: white;
+}
+
+.status-message.error {
+    background-color: #c62828; /* Red for error */
+    color: white;
+}
+
 .spinner {
     display: inline-block;
     vertical-align: middle; /* Aligns spinner nicely with the text */

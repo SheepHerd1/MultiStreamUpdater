@@ -8,7 +8,7 @@ function StreamEditor({ auth }) {
     const [title, setTitle] = useState('');
     const [category, setCategory] = useState('');
     const [tags, setTags] = useState('');
-    const [status, setStatus] = useState('');
+    const [status, setStatus] = useState({ message: '', type: '' }); // Use an object for status
     const [isLoading, setIsLoading] = useState(false);
 
    useEffect(() => {
@@ -16,7 +16,7 @@ function StreamEditor({ auth }) {
       const fetchStreamInfo = async () => {
          if (auth.twitch) {
             setIsLoading(true);
-            setStatus('Fetching current stream info...');
+            setStatus({ message: 'Fetching current stream info...', type: 'info' });
             try {
                const response = await axios.get(`${API_BASE_URL}/api/stream/info`, {
                   params: {
@@ -27,10 +27,10 @@ function StreamEditor({ auth }) {
                const { title, game_name } = response.data;
                setTitle(title || '');
                setCategory(game_name || '');
-               setStatus(''); // Clear status after successful fetch
+               setStatus({ message: '', type: '' }); // Clear status
             } catch (error) {
                console.error('Could not fetch stream info:', error);
-               setStatus('Could not fetch current stream info.');
+               setStatus({ message: 'Could not fetch current stream info.', type: 'error' });
             } finally {
                setIsLoading(false);
             }
@@ -39,7 +39,7 @@ function StreamEditor({ auth }) {
             setTitle('');
             setCategory('');
             setTags('');
-            setStatus('');
+            setStatus({ message: '', type: '' });
          }
       };
       fetchStreamInfo();
@@ -48,7 +48,7 @@ function StreamEditor({ auth }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        setStatus('Updating...');
+        setStatus({ message: 'Updating...', type: 'info' });
 
         try {
             const response = await axios.post(`${API_BASE_URL}/api/stream/update`, {
@@ -67,16 +67,16 @@ function StreamEditor({ auth }) {
             }
             // Add other platforms here
 
-            setStatus(statusMessages.join(' | '));
+            setStatus({ message: statusMessages.join(' | '), type: 'success' });
 
         } catch (error) {
             console.error('Error updating stream:', error);
-            setStatus('An unexpected error occurred.');
+            setStatus({ message: 'An unexpected error occurred.', type: 'error' });
         } finally {
             setIsLoading(false);
             // Automatically clear the status message after 5 seconds
             setTimeout(() => {
-                setStatus('');
+                setStatus({ message: '', type: '' });
             }, 5000);
         }
     };
@@ -101,10 +101,10 @@ function StreamEditor({ auth }) {
                     {isLoading ? 'Updating...' : 'Update All Platforms'}
                 </button>
             </form>
-            {status && (
-                <p className="status-message">
+            {status.message && (
+                <p className={`status-message ${status.type}`}>
                     {isLoading && <span className="spinner"></span>}
-                    {status}
+                    {status.message}
                 </p>
             )}
         </div>

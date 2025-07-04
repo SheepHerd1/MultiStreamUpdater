@@ -8,7 +8,7 @@ const {
 } = process.env;
 
 const REDIRECT_URI = `${VITE_APP_VERCEL_URL}/api/auth/twitch`;
-const TWITCH_SCOPES = 'channel:manage:broadcast';
+const TWITCH_SCOPES = 'channel:manage:broadcast openid'; // Request the OpenID scope to get an id_token
 
 module.exports = async (req, res) => {
     const { code } = req.query;
@@ -33,13 +33,12 @@ module.exports = async (req, res) => {
             },
         });
 
-        const { access_token, refresh_token } = tokenResponse.data;
+        const { access_token, refresh_token, id_token } = tokenResponse.data; // Get the id_token
 
         // 3. Redirect back to the frontend with the tokens
-        // In a real app, you might store refresh_token securely and only pass back the access_token
         // We use the URL hash (#) to pass tokens. This prevents the browser from sending the token
         // to a dedicated callback page for robust handling.
-        const redirectUrl = `${FRONTEND_URL}/callback.html#twitch_access_token=${access_token}&twitch_refresh_token=${refresh_token}`;
+        const redirectUrl = `${FRONTEND_URL}/callback.html#twitch_access_token=${access_token}&id_token=${id_token}`;
         
         res.writeHead(302, { Location: redirectUrl });
         res.end();
