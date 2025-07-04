@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './StreamEditor.css';
 
@@ -10,6 +10,7 @@ function StreamEditor({ auth }) {
     const [tags, setTags] = useState('');
     const [status, setStatus] = useState({ message: '', type: '' }); // Use an object for status
     const [isLoading, setIsLoading] = useState(false);
+    const statusTimeoutRef = useRef(null); // Ref to hold the timeout ID
 
    useEffect(() => {
       // Fetch the current stream info when the component loads to pre-fill the form.
@@ -43,6 +44,11 @@ function StreamEditor({ auth }) {
          }
       };
       fetchStreamInfo();
+
+      // Cleanup function to clear any running timeout when the component unmounts
+      return () => {
+        clearTimeout(statusTimeoutRef.current);
+      };
    }, [auth.twitch]); // This effect runs once the user is authenticated.
 
     const handleSubmit = async (e) => {
@@ -50,11 +56,16 @@ function StreamEditor({ auth }) {
         setIsLoading(true);
         setStatus({ message: 'Updating...', type: 'info' });
 
+        // Clear any existing status timeout to prevent it from firing prematurely
+        clearTimeout(statusTimeoutRef.current);
+
         try {
             const response = await axios.post(`${API_BASE_URL}/api/stream/update`, {
                 title,
                 category,
-                tags: tags.split(',').map(t => t.trim()),
+                // Process tags more robustly: split, trim, and filter out any empty strings.
+                // This prevents sending `['']` if the input is empty.
+                tags: tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [],
                 twitchAuth: auth.twitch,
                 // Pass other platform auth tokens here
             });
@@ -75,7 +86,7 @@ function StreamEditor({ auth }) {
         } finally {
             setIsLoading(false);
             // Automatically clear the status message after 5 seconds
-            setTimeout(() => {
+            statusTimeoutRef.current = setTimeout(() => {
                 setStatus({ message: '', type: '' });
             }, 5000);
         }
