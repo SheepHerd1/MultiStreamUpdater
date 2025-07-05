@@ -17,6 +17,7 @@ function Dashboard({ auth, onLogout }) {
   const [description, setDescription] = useState('');
   const [youtubeStreamId, setYoutubeStreamId] = useState(null);
   const [youtubeUpdateType, setYoutubeUpdateType] = useState(null);
+  const [youtubeCategoryId, setYoutubeCategoryId] = useState('');
   const [notification, setNotification] = useState('');
 
   // Get auth details from the prop
@@ -90,6 +91,7 @@ function Dashboard({ auth, onLogout }) {
         setDescription(response.data.description || '');
         setYoutubeStreamId(response.data.id);
         setYoutubeUpdateType(response.data.updateType);
+        setYoutubeCategoryId(response.data.categoryId || '');
       } else if (response.data.message) {
         console.log('YouTube Info:', response.data.message);
       }
@@ -188,6 +190,7 @@ function Dashboard({ auth, onLogout }) {
           description,
           streamId: youtubeStreamId,
           updateType: youtubeUpdateType,
+          categoryId: youtubeCategoryId,
         },
         { headers: { 'Authorization': `Bearer ${youtubeAuth.token}`, 'Content-Type': 'application/json' } }
       );
@@ -249,6 +252,10 @@ function Dashboard({ auth, onLogout }) {
           <div className="form-group">
             <label htmlFor="category">Twitch Category</label>
             <input id="category" type="text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category/Game" disabled={!twitchAuth} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="youtubeCategory">YouTube Category ID</label>
+            <input id="youtubeCategory" type="text" value={youtubeCategoryId} onChange={(e) => setYoutubeCategoryId(e.target.value)} placeholder="e.g., 20 for Gaming" disabled={!youtubeAuth} />
           </div>
           <div className="form-group">
             <label htmlFor="description">YouTube Description</label>

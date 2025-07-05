@@ -80,6 +80,7 @@ export default async function handler(req, res) {
         title: relevantBroadcast.snippet.title,
         description: relevantBroadcast.snippet.description,
         isLive: relevantBroadcast.status.lifeCycleStatus === 'live',
+        categoryId: relevantBroadcast.snippet.categoryId,
         updateType: 'broadcast',
       });
     }
@@ -98,6 +99,7 @@ export default async function handler(req, res) {
         title: stream.snippet.title,
         description: stream.snippet.description,
         isLive: false,
+        categoryId: stream.snippet.categoryId,
         updateType: 'stream',
       });
     }

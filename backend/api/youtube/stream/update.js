@@ -21,13 +21,13 @@ export default async function handler(req, res) {
   }
   const accessToken = authHeader.split(' ')[1];
 
-  const { streamId, title, description, updateType } = req.body;
+  const { streamId, title, description, updateType, categoryId } = req.body;
   if (!streamId || !title || !updateType) {
     return res.status(400).json({ error: 'streamId, title, and updateType are required' });
   }
 
   const oauth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
-  oauth2Client.setCredentials({ access_token: accessToken });
+  oauth2client.setCredentials({ access_token: accessToken });
 
   const youtube = google.youtube({
     version: 'v3',
@@ -40,8 +40,13 @@ export default async function handler(req, res) {
       snippet: {
         title: title,
         description: description,
+        categoryId: categoryId,
       },
     };
+
+    // Clean the body: if a value is undefined or an empty string, don't send it, so we don't overwrite with empty values.
+    if (!requestBody.snippet.description) { delete requestBody.snippet.description; }
+    if (!requestBody.snippet.categoryId) { delete requestBody.snippet.categoryId; }
 
     let response;
     if (updateType === 'broadcast') {
