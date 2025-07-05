@@ -2,7 +2,6 @@
   "name": "multi-stream-updater-frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://SheepHerd1.github.io/MultiStreamUpdater",
   "dependencies": {
     "axios": "^1.4.0",
     "jwt-decode": "^3.1.2",
