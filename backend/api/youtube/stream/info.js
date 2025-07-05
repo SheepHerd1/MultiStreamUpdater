@@ -16,19 +16,38 @@ export default async function handler(req, res) {
   });
 
   try {
-    // Find the user's active live broadcast
-    const response = await youtube.liveBroadcasts.list({
+    // First, try to find an active live broadcast
+    let response = await youtube.liveBroadcasts.list({
       part: 'id,snippet,contentDetails,status',
       broadcastStatus: 'active',
       mine: true,
+      maxResults: 1,
     });
 
-    const liveBroadcasts = response.data.items;
-    if (!liveBroadcasts || liveBroadcasts.length === 0) {
-      return res.status(200).json({ message: 'No active YouTube stream found.' });
+    let broadcasts = response.data.items;
+
+    // If no active stream is found, look for upcoming ones
+    if (!broadcasts || broadcasts.length === 0) {
+      response = await youtube.liveBroadcasts.list({
+        part: 'id,snippet,contentDetails,status',
+        broadcastStatus: 'upcoming',
+        mine: true,
+      });
+      
+      if (response.data.items && response.data.items.length > 0) {
+        // Sort upcoming streams to find the one scheduled soonest
+        const sortedUpcoming = response.data.items.sort((a, b) => 
+          new Date(a.snippet.scheduledStartTime) - new Date(b.snippet.scheduledStartTime)
+        );
+        broadcasts = [sortedUpcoming[0]]; // Take the soonest one
+      }
     }
 
-    const stream = liveBroadcasts[0];
+    if (!broadcasts || broadcasts.length === 0) {
+      return res.status(200).json({ message: 'No active or upcoming YouTube stream found.' });
+    }
+
+    const stream = broadcasts[0];
     res.status(200).json({
       id: stream.id,
       title: stream.snippet.title,
