@@ -11,6 +11,12 @@ export default async function handler(req, res) {
     return res.status(204).send('');
   }
 
+  // Defensive check for environment variables to prevent a crash
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    console.error("Function crash averted in youtube/stream/info.js: Missing Google environment variables.");
+    return res.status(500).json({ error: "Server configuration error. Please check credentials." });
+  }
+
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Authorization token is required' });
