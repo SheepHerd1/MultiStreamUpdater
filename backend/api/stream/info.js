@@ -5,6 +5,12 @@ import { allowCors } from '../_middleware/cors.js';
 const { TWITCH_CLIENT_ID } = process.env;
 
 const handler = async (req, res) => {
+    // Defensive check for environment variables to prevent a crash
+    if (!TWITCH_CLIENT_ID) {
+        console.error("Function crash averted in info.js: Missing TWITCH_CLIENT_ID environment variable.");
+        return res.status(500).json({ message: "Server configuration error." });
+    }
+
     // --- Securely get the token from the Authorization header ---
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

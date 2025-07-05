@@ -45,6 +45,12 @@ async function updateTwitch(authToken, broadcasterId, { title, gameId, tags }) {
 }
 
 const handler = async (req, res) => {
+  // Defensive check for environment variables to prevent a crash
+  if (!TWITCH_CLIENT_ID) {
+    console.error("Function crash averted in update.js: Missing TWITCH_CLIENT_ID environment variable.");
+    return res.status(500).json({ message: "Server configuration error." });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
