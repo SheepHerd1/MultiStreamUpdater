@@ -18,8 +18,8 @@ function Dashboard({ auth, onLogout }) {
   const [youtubeBroadcastId, setYoutubeBroadcastId] = useState(null);
 
   // Get auth details from the prop
-  const twitchAuth = auth.twitch;
-  const youtubeAuth = auth.youtube;
+  const twitchAuth = auth.twitch; // Twitch auth is managed by the parent
+  const [youtubeAuth, setYoutubeAuth] = useState(auth.youtube); // Manage YouTube auth locally for responsiveness
 
   // --- YouTube Auth Handling ---
   // This effect runs once on mount to handle the YouTube OAuth redirect
@@ -37,12 +37,11 @@ function Dashboard({ auth, onLogout }) {
           localStorage.setItem('yt_refresh_token', refreshToken);
         }
         
+        // Update our local state immediately to re-render the component
+        setYoutubeAuth({ token: accessToken, refreshToken: refreshToken });
+
         // Clean the URL so the tokens aren't visible and the logic doesn't re-run on refresh
         window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-        
-        // A reload is a simple way to force the parent App to re-read localStorage
-        // and pass down the new `auth.youtube` prop.
-        window.location.reload();
       }
     }
   }, []); // Empty dependency array ensures this runs only once
@@ -100,6 +99,35 @@ function Dashboard({ auth, onLogout }) {
   useEffect(() => {
     fetchAllStreamInfo();
   }, [fetchAllStreamInfo]);
+
+  const handleYouTubeConnect = () => {
+    const authUrl = `${api.defaults.baseURL}/api/auth/youtube/connect`;
+    const windowName = 'youtubeAuth';
+    // Center the popup on the screen
+    const width = 500;
+    const height = 650;
+    const left = (window.screen.width / 2) - (width / 2);
+    const top = (window.screen.height / 2) - (height / 2);
+    const windowFeatures = `width=${width},height=${height},top=${top},left=${left}`;
+
+    const popup = window.open(authUrl, windowName, windowFeatures);
+
+    // Poll the popup window to see when it has been closed
+    const interval = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(interval);
+        // After the popup is closed, check localStorage for the new tokens
+        // that the popup window should have set.
+        const accessToken = localStorage.getItem('yt_access_token');
+        const refreshToken = localStorage.getItem('yt_refresh_token');
+
+        // If a new token exists, update the state to re-render the dashboard
+        if (accessToken && (!youtubeAuth || accessToken !== youtubeAuth.token)) {
+          setYoutubeAuth({ token: accessToken, refreshToken: refreshToken });
+        }
+      }
+    }, 500); // Check every half-second
+  };
 
   // --- Form Submission ---
   const handleSubmit = async (e) => {
@@ -174,9 +202,9 @@ function Dashboard({ auth, onLogout }) {
         {youtubeAuth ? (
           <div className="platform-status youtube">YouTube Connected</div>
         ) : (
-          <a href={`${api.defaults.baseURL}/api/auth/youtube/connect`} className="connect-btn youtube">
+          <button type="button" onClick={handleYouTubeConnect} className="connect-btn youtube">
             Connect YouTube
-          </a>
+          </button>
         )}
       </div>
 
