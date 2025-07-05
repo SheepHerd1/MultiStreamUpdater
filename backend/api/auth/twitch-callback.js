@@ -22,6 +22,15 @@ async function getTwitchToken(code, env) {
 }
 
 export default async function handler(req, res) {
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
+        res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        return res.status(204).send('');
+    }
+
     const { code, error } = req.query;
     const { FRONTEND_URL, VITE_APP_VERCEL_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = process.env;
 

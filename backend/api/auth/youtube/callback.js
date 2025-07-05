@@ -2,6 +2,15 @@ import { google } from 'googleapis';
 
 // This function will be hosted at /api/auth/youtube/callback
 export default async function handler(req, res) {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return res.status(204).send('');
+  }
+
   const { code } = req.query;
 
   if (!code) {

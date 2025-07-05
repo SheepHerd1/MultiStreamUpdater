@@ -1,6 +1,15 @@
 import { google } from 'googleapis';
 
 export default async function handler(req, res) {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return res.status(204).send('');
+  }
+
   // We need an API key for this public data endpoint.
   if (!process.env.GOOGLE_API_KEY) {
     return res.status(500).json({ error: 'Server is missing Google API Key configuration.' });

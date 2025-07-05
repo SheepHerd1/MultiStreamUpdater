@@ -4,7 +4,7 @@ import './Dashboard.css';
 import PlatformCard from './PlatformCard';
 
 
-function Dashboard({ auth, onLogout }) {
+function Dashboard({ auth, onLogout, setAuth }) {
   // Shared state
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,34 +27,7 @@ function Dashboard({ auth, onLogout }) {
   const [notification, setNotification] = useState('');
 
   // Get auth details from the prop
-  const twitchAuth = auth.twitch; // Twitch auth is managed by the parent
-  const [youtubeAuth, setYoutubeAuth] = useState(() => {
-    // On initial load, check localStorage directly to restore the session.
-    const accessToken = localStorage.getItem('yt_access_token');
-    if (accessToken) {
-      return { token: accessToken, refreshToken: localStorage.getItem('yt_refresh_token') };
-    }
-    return auth.youtube || null;
-  });
-
-  // --- YouTube Auth Handling ---
-  useEffect(() => {
-    const hash = window.location.hash.substring(1);
-    if (hash) {
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get('yt_access_token');
-      const refreshToken = params.get('yt_refresh_token');
-
-      if (accessToken) {
-        localStorage.setItem('yt_access_token', accessToken);
-        if (refreshToken) {
-          localStorage.setItem('yt_refresh_token', refreshToken);
-        }
-        setYoutubeAuth({ token: accessToken, refreshToken: refreshToken });
-        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-      }
-    }
-  }, []);
+  const { twitch: twitchAuth, youtube: youtubeAuth } = auth;
 
   // --- Data Fetching ---
   const fetchTwitchStreamInfo = useCallback(async () => {
@@ -151,19 +124,6 @@ function Dashboard({ auth, onLogout }) {
       return () => clearTimeout(timer);
     }
   }, [notification]);
-
-  useEffect(() => {
-    const handleStorageChange = (event) => {
-      if (event.key === 'yt_access_token') {
-        const newAccessToken = event.newValue;
-        if (newAccessToken) {
-          setYoutubeAuth({ token: newAccessToken, refreshToken: localStorage.getItem('yt_refresh_token') });
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
 
   const handleYouTubeConnect = () => {
     const authUrl = `${api.defaults.baseURL}/api/auth/youtube/connect`;

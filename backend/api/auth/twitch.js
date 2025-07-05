@@ -4,6 +4,14 @@
  * This function starts the Twitch OAuth2 flow by redirecting the user to the Twitch authorization URL.
  */
 export default function handler(req, res) {
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
+        res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        return res.status(204).send('');
+    }
     const {
         TWITCH_CLIENT_ID,
         VITE_APP_VERCEL_URL // Your Vercel deployment URL

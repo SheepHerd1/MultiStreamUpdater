@@ -20,6 +20,15 @@ async function getAppAccessToken() {
 }
 
 export default async function handler(req, res) {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return res.status(204).send('');
+  }
+
   const { query } = req.query;
   if (!query) {
     return res.status(400).json({ error: 'Query parameter is required.' });
