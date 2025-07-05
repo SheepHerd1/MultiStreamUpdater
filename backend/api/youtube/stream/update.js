@@ -35,28 +35,24 @@ export default async function handler(req, res) {
   });
 
   try {
+    const requestBody = {
+      id: streamId,
+      snippet: {
+        title: title,
+        description: description,
+      },
+    };
+
     let response;
     if (updateType === 'broadcast') {
       response = await youtube.liveBroadcasts.update({
         part: 'snippet',
-        requestBody: {
-          id: streamId,
-          snippet: {
-            title: title,
-            description: description,
-          },
-        },
+        requestBody: requestBody,
       });
     } else if (updateType === 'stream') {
       response = await youtube.liveStreams.update({
         part: 'snippet',
-        requestBody: {
-          id: streamId,
-          snippet: {
-            title: title,
-            description: description,
-          },
-        },
+        requestBody: requestBody,
       });
     } else {
       return res.status(400).json({ error: `Invalid updateType: ${updateType}` });
