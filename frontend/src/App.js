@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import './App.css';
 
 /**
  * A helper function to safely get the initial authentication state from localStorage on first load.
