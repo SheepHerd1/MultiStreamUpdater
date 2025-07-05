@@ -18,9 +18,9 @@ export default async function handler(req, res) {
     // Exchange the authorization code for access and refresh tokens
     const { tokens } = await oauth2Client.getToken(code);
     
-    // Redirect back to your frontend, passing tokens in the URL hash.
-    // The frontend will be responsible for storing them (e.g., in localStorage).
-    const frontendUrl = new URL(process.env.FRONTEND_URL);
+    // Redirect to a dedicated callback HTML page in the frontend's public folder.
+    // This page will handle storing the tokens and closing the popup.
+    const frontendCallbackUrl = new URL('youtube-callback.html', process.env.FRONTEND_URL);
     
     // The hash is used because it's not sent to servers, keeping tokens more secure.
     const hashParams = new URLSearchParams();
@@ -28,9 +28,9 @@ export default async function handler(req, res) {
     if (tokens.refresh_token) {
       hashParams.append('yt_refresh_token', tokens.refresh_token);
     }
-    frontendUrl.hash = hashParams.toString();
+    frontendCallbackUrl.hash = hashParams.toString();
 
-    res.redirect(302, frontendUrl.toString());
+    res.redirect(302, frontendCallbackUrl.toString());
   } catch (error) {
     console.error('Error exchanging auth code for tokens:', error.response?.data || error.message);
     res.status(500).send('Failed to authenticate with YouTube.');

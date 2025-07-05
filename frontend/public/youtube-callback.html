@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Authenticating...</title>
+  <script>
+    // This script runs as soon as the page loads in the popup
+    try {
+      const hash = window.location.hash.substring(1);
+      if (hash) {
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('yt_access_token');
+        const refreshToken = params.get('yt_refresh_token');
+
+        if (accessToken) {
+          // Save the tokens to localStorage where the main window can find them
+          localStorage.setItem('yt_access_token', accessToken);
+          if (refreshToken) {
+            localStorage.setItem('yt_refresh_token', refreshToken);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error in popup callback:', e);
+    } finally {
+      // Close the popup window, which will trigger the main window's logic
+      window.close();
+    }
+  </script>
+</head>
+<body>
+  <p>Please wait, completing authentication...</p>
+</body>
+</html>
