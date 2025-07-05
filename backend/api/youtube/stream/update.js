@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     let response;
     if (updateType === 'broadcast') {
       response = await youtube.liveBroadcasts.update({
-        part: 'id,snippet',
+        part: 'snippet',
         requestBody: {
           id: streamId,
           snippet: {
