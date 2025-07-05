@@ -23,7 +23,18 @@ async function getTwitchToken(code, env) {
 
 export default async function handler(req, res) {
     const { code, error } = req.query;
-    const { FRONTEND_URL } = process.env; // Your GitHub Pages URL
+    const { FRONTEND_URL, VITE_APP_VERCEL_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = process.env;
+
+    // Defensive check for required environment variables. This prevents the function from crashing.
+    if (!FRONTEND_URL || !VITE_APP_VERCEL_URL || !TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
+        console.error('Function crash averted: Missing one or more required environment variables.');
+        // We can't use renderScript here if FRONTEND_URL is missing.
+        // Send a plain text error. The user will see this in the popup.
+        const errorHtml = `<!DOCTYPE html><html><head><title>Error</title></head><body><p>Server configuration error. Please contact the site administrator.</p></body></html>`;
+        res.setHeader('Content-Type', 'text/html');
+        return res.status(500).send(errorHtml);
+    }
+
 
     // This HTML/JS is sent to the popup. It communicates back to the main window.
     // We derive the origin from the full frontend URL for security and robustness.
