@@ -17,6 +17,7 @@ function Dashboard({ auth, onLogout }) {
   const [description, setDescription] = useState('');
   const [youtubeStreamId, setYoutubeStreamId] = useState(null);
   const [youtubeUpdateType, setYoutubeUpdateType] = useState(null);
+  const [youtubeStatus, setYoutubeStatus] = useState('');
 
   // Get auth details from the prop
   const twitchAuth = auth.twitch; // Twitch auth is managed by the parent
@@ -79,6 +80,14 @@ function Dashboard({ auth, onLogout }) {
         setDescription(response.data.description || '');
         setYoutubeStreamId(response.data.id);
         setYoutubeUpdateType(response.data.updateType);
+        // Set a helpful status message for the user
+        if (response.data.updateType === 'broadcast') {
+          setYoutubeStatus(`Editing Scheduled/Live Stream: "${response.data.title}"`);
+        } else {
+          setYoutubeStatus('Editing Default Stream Settings');
+        }
+      } else if (response.data.message) {
+        setYoutubeStatus(response.data.message);
       }
     } catch (err) {
       console.error('Could not fetch YouTube info:', err);
@@ -225,6 +234,7 @@ function Dashboard({ auth, onLogout }) {
           </div>
           <div className="form-group">
             <label htmlFor="description">YouTube Description</label>
+            {youtubeAuth && youtubeStatus && <p className="editor-status youtube">{youtubeStatus}</p>}
             <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="YouTube video description" disabled={!youtubeAuth} />
           </div>
           <div className="form-group">
