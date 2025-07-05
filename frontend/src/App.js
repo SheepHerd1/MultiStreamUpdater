@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import jwtDecode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
+import './App.css';
 
 /**
  * A helper function to safely get the initial authentication state from localStorage on first load.
@@ -16,6 +17,7 @@ const getInitialAuthState = () => {
       // We just need to parse it, the full user info is already there.
       authState.twitch = JSON.parse(storedTwitchAuth);
     } catch (e) {
+      console.error("Failed to parse stored Twitch auth:", e);
       localStorage.removeItem('twitchAuth');
     }
   }
@@ -23,6 +25,7 @@ const getInitialAuthState = () => {
     try {
       authState.youtube = JSON.parse(storedYouTubeAuth);
     } catch (e) {
+      console.error("Failed to parse stored YouTube auth:", e);
       localStorage.removeItem('youtubeAuth');
     }
   }
@@ -42,7 +45,9 @@ function App() {
 
   useEffect(() => {
     const handleAuthMessage = (event) => {
-      // Ensure the message is from a trusted source if necessary, but for now, check the type.
+      // It's good practice to check the origin, but for now we'll focus on the message type.
+      // You can add an origin check later if needed: if (event.origin !== 'YOUR_VERCEL_URL') return;
+
       if (event.data.type === 'twitch-auth-success' && event.data.token && event.data.id_token) {
         try {
           const decoded = jwtDecode(event.data.id_token);
