@@ -38,6 +38,20 @@ function App() {
         } catch (e) {
           console.error("Failed to process Twitch token from popup:", e);
         }
+      } else if (event.data.type === 'youtube-auth-success' && event.data.accessToken) {
+        try {
+          const youtubeAuth = {
+            token: event.data.accessToken,
+            refreshToken: event.data.refreshToken,
+          };
+          localStorage.setItem('yt_access_token', youtubeAuth.token);
+          if (youtubeAuth.refreshToken) {
+            localStorage.setItem('yt_refresh_token', youtubeAuth.refreshToken);
+          }
+          setAuth(prevAuth => ({ ...prevAuth, youtube: youtubeAuth }));
+        } catch (e) {
+          console.error("Failed to process YouTube token from popup:", e);
+        }
       }
     };
 
@@ -63,28 +77,10 @@ function App() {
       }
     }
 
-    // 2. Check for YouTube auth in URL hash (from OAuth callback)
-    const hash = window.location.hash.substring(1);
-    if (hash) {
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get('yt_access_token');
-      const refreshToken = params.get('yt_refresh_token');
-
-      if (accessToken) {
-        localStorage.setItem('yt_access_token', accessToken);
-        if (refreshToken) {
-          localStorage.setItem('yt_refresh_token', refreshToken);
-        }
-        authState.youtube = { token: accessToken, refreshToken: refreshToken };
-        // Clean the URL
-        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-      }
-    } else {
-      // 3. If not in hash, check for YouTube auth in localStorage
-      const accessToken = localStorage.getItem('yt_access_token');
-      if (accessToken) {
-        authState.youtube = { token: accessToken, refreshToken: localStorage.getItem('yt_refresh_token') };
-      }
+    // 2. Check for YouTube auth in localStorage
+    const accessToken = localStorage.getItem('yt_access_token');
+    if (accessToken) {
+      authState.youtube = { token: accessToken, refreshToken: localStorage.getItem('yt_refresh_token') };
     }
 
     setAuth(authState);

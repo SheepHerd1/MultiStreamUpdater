@@ -88,6 +88,12 @@ api.interceptors.response.use(
             const twitchAuth = JSON.parse(twitchAuthString);
             const refreshToken = twitchAuth.refreshToken;
 
+            if (!refreshToken) {
+              // This can happen if the user authenticated before the refresh token flow was implemented.
+              // We must treat this as a session expiration and force a re-login.
+              throw new Error('No Twitch refresh token available in local storage.');
+            }
+
             const { data } = await axios.post(`${api.defaults.baseURL}/api/auth/twitch/refresh`, { refreshToken });
             
             // Update the entire auth object with new tokens

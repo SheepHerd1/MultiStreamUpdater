@@ -27,19 +27,26 @@ export default async function handler(req, res) {
     // Exchange the authorization code for access and refresh tokens
     const { tokens } = await oauth2Client.getToken(code);
     
-    // Redirect to a dedicated callback HTML page in the frontend's public folder.
-    // This page will handle storing the tokens and closing the popup.
-    const frontendCallbackUrl = new URL('youtube-callback.html', process.env.FRONTEND_URL);
-    
-    // The hash is used because it's not sent to servers, keeping tokens more secure.
-    const hashParams = new URLSearchParams();
-    hashParams.append('yt_access_token', tokens.access_token);
-    if (tokens.refresh_token) {
-      hashParams.append('yt_refresh_token', tokens.refresh_token);
-    }
-    frontendCallbackUrl.hash = hashParams.toString();
+    // Use the same postMessage flow as Twitch for consistency and reliability
+    const targetOrigin = new URL(process.env.FRONTEND_URL).origin;
+    const renderScript = (message) => `
+    <!DOCTYPE html><html><head><title>Authenticating...</title></head><body>
+    <script>
+      window.opener.postMessage(${JSON.stringify(message)}, '${targetOrigin}');
+      window.close();
+    </script>
+    <p>Authentication complete. You can close this window.</p>
+    </body></html>
+    `;
 
-    res.redirect(302, frontendCallbackUrl.toString());
+    const successMessage = {
+      type: 'youtube-auth-success',
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+    };
+
+    res.setHeader('Content-Type', 'text/html');
+    res.status(200).send(renderScript(successMessage));
   } catch (error) {
     console.error('Error exchanging auth code for tokens:', error.response?.data || error.message);
     res.status(500).send('Failed to authenticate with YouTube.');
