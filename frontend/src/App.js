@@ -62,22 +62,11 @@ function App() {
         } catch (e) {
           console.error("Failed to process Twitch token from popup:", e);
         }
-      } else if (event.data.type === 'youtube-auth-success' && event.data.authData) {
-        try {
-          // The backend provides the necessary auth data.
-          // We store it in the same way as Twitch for consistency.
-          localStorage.setItem('youtubeAuth', JSON.stringify(event.data.authData));
-          setAuth(prevAuth => ({ ...prevAuth, youtube: event.data.authData }));
-        } catch (e) {
-          console.error("Failed to process YouTube auth data from popup:", e);
-        }
       }
     };
 
-    // Set up the event listener
     window.addEventListener('message', handleAuthMessage);
 
-    // Clean up the event listener when the component unmounts
     return () => {
       window.removeEventListener('message', handleAuthMessage);
     };
