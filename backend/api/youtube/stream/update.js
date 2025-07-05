@@ -49,7 +49,7 @@ export default async function handler(req, res) {
       });
     } else if (updateType === 'stream') {
       response = await youtube.liveStreams.update({
-        part: 'id,snippet',
+        part: 'snippet',
         requestBody: {
           id: streamId,
           snippet: {
