@@ -10,14 +10,19 @@ function Dashboard({ auth, onLogout }) {
   const [error, setError] = useState('');
 
   // Twitch-specific state
-  const [category, setCategory] = useState('');
-  const [tags, setTags] = useState('');
+  const [twitchCategory, setTwitchCategory] = useState('');
+  const [twitchCategoryQuery, setTwitchCategoryQuery] = useState('');
+  const [twitchCategoryResults, setTwitchCategoryResults] = useState([]);
+  const [isTwitchCategoryLoading, setIsTwitchCategoryLoading] = useState(false);
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState('');
 
   // YouTube-specific state
   const [description, setDescription] = useState('');
   const [youtubeStreamId, setYoutubeStreamId] = useState(null);
   const [youtubeUpdateType, setYoutubeUpdateType] = useState(null);
   const [youtubeCategoryId, setYoutubeCategoryId] = useState('');
+  const [youtubeCategories, setYoutubeCategories] = useState([]);
   const [notification, setNotification] = useState('');
 
   // Get auth details from the prop
@@ -69,8 +74,8 @@ function Dashboard({ auth, onLogout }) {
       });
       // Let Twitch set the initial title
       setTitle(currentTitle => currentTitle || response.data.title || '');
-      setCategory(response.data.game_name || '');
-      setTags((response.data.tags || []).join(', '));
+      setTwitchCategory(response.data.game_name || '');
+      setTags(response.data.tags || []);
     } catch (err) {
       console.error('Could not fetch Twitch info:', err);
       const errorMessage = err.response?.data?.error || 'Failed to fetch Twitch info.';
@@ -102,6 +107,21 @@ function Dashboard({ auth, onLogout }) {
     }
   }, [youtubeAuth]);
 
+  // Fetch the list of YouTube categories when the component loads
+  useEffect(() => {
+    const fetchYoutubeCategories = async () => {
+      try {
+        const response = await api.get('/api/youtube/categories');
+        // Filter out non-assignable categories
+        const assignableCategories = response.data.filter(cat => cat.snippet?.assignable);
+        setYoutubeCategories(assignableCategories);
+      } catch (error) {
+        console.error("Could not fetch YouTube categories", error);
+      }
+    };
+    fetchYoutubeCategories();
+  }, []);
+
   const fetchAllStreamInfo = useCallback(async () => {
     setIsLoading(true);
     setError('');
@@ -117,6 +137,28 @@ function Dashboard({ auth, onLogout }) {
   useEffect(() => {
     fetchAllStreamInfo();
   }, [fetchAllStreamInfo]);
+
+  // Debounced search for Twitch categories
+  const searchTwitchCategories = useCallback(async (query) => {
+    if (!query) {
+      setTwitchCategoryResults([]);
+      return;
+    }
+    setIsTwitchCategoryLoading(true);
+    try {
+      const response = await api.get(`/api/twitch/categories?query=${query}`);
+      setTwitchCategoryResults(response.data);
+    } catch (error) {
+      console.error('Error searching categories:', error);
+    } finally {
+      setIsTwitchCategoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = setTimeout(() => searchTwitchCategories(twitchCategoryQuery), 300);
+    return () => clearTimeout(handler);
+  }, [twitchCategoryQuery, searchTwitchCategories]);
 
   // Effect to handle auto-hiding the notification message
   useEffect(() => {
@@ -158,6 +200,29 @@ function Dashboard({ auth, onLogout }) {
     window.open(authUrl, windowName, windowFeatures);
   };
 
+  // --- Tag Input Handlers ---
+  const handleTagInputChange = (e) => {
+    setTagInput(e.target.value);
+  };
+
+  const handleTagInputKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      if (newTag && !tags.includes(newTag) && tags.length < 10) {
+        setTags([...tags, newTag]);
+        setTagInput('');
+      }
+    } else if (e.key === 'Backspace' && !tagInput) {
+      e.preventDefault();
+      setTags(tags.slice(0, -1));
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
   // --- Form Submission ---
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -172,8 +237,8 @@ function Dashboard({ auth, onLogout }) {
         `/api/stream/update`,
         {
           title,
-          category,
-          tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+          category: twitchCategory,
+          tags: tags,
           broadcasterId: twitchAuth.userId,
         },
         { headers: { 'Authorization': `Bearer ${twitchAuth.token}`, 'Content-Type': 'application/json' } }
@@ -250,20 +315,68 @@ function Dashboard({ auth, onLogout }) {
             <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Stream Title" />
           </div>
           <div className="form-group">
-            <label htmlFor="category">Twitch Category</label>
-            <input id="category" type="text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category/Game" disabled={!twitchAuth} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="youtubeCategory">YouTube Category ID</label>
-            <input id="youtubeCategory" type="text" value={youtubeCategoryId} onChange={(e) => setYoutubeCategoryId(e.target.value)} placeholder="e.g., 20 for Gaming" disabled={!youtubeAuth} />
+            <label htmlFor="twitchCategory">Twitch Category</label>
+            <div className="category-search-container">
+              <input
+                id="twitchCategory"
+                type="text"
+                value={twitchCategoryQuery || twitchCategory}
+                onChange={(e) => {
+                  setTwitchCategory(''); // Clear the selected category when user types
+                  setTwitchCategoryQuery(e.target.value);
+                }}
+                placeholder="Search for a category..."
+                disabled={!twitchAuth}
+              />
+              {twitchCategoryResults.length > 0 && (
+                <div className="category-results">
+                  {isTwitchCategoryLoading ? <div>Loading...</div> :
+                    twitchCategoryResults.map(cat => (
+                      <div key={cat.id} className="category-result-item" onClick={() => {
+                        setTwitchCategory(cat.name);
+                        setTwitchCategoryQuery('');
+                        setTwitchCategoryResults([]);
+                      }}>
+                        <img src={cat.box_art_url.replace('{width}', '30').replace('{height}', '40')} alt="" />
+                        <span>{cat.name}</span>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="form-group">
             <label htmlFor="description">YouTube Description</label>
             <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="YouTube video description" disabled={!youtubeAuth} />
           </div>
           <div className="form-group">
-            <label htmlFor="tags">Twitch Tags (comma-separated)</label>
-            <input id="tags" type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g. chill, playingwithviewers" disabled={!twitchAuth} />
+            <label htmlFor="youtubeCategory">YouTube Category</label>
+            <select id="youtubeCategory" value={youtubeCategoryId} onChange={(e) => setYoutubeCategoryId(e.target.value)} disabled={!youtubeAuth}>
+              <option value="">-- Select a Category --</option>
+              {youtubeCategories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.snippet.title}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="tags">Twitch Tags</label>
+            <div className="tag-input-container" tabIndex="0">
+              {tags.map(tag => (
+                <div key={tag} className="tag-item">
+                  {tag}
+                  <button type="button" className="tag-remove-btn" onClick={() => removeTag(tag)}>&times;</button>
+                </div>
+              ))}
+              <input
+                id="tags"
+                type="text"
+                value={tagInput}
+                onChange={handleTagInputChange}
+                onKeyDown={handleTagInputKeyDown}
+                placeholder={tags.length < 10 ? "Add a tag..." : "Max 10 tags"}
+                disabled={!twitchAuth || tags.length >= 10}
+              />
+            </div>
           </div>
           <div className="form-actions">
             <button type="submit" disabled={isLoading || (!twitchAuth && !youtubeAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
