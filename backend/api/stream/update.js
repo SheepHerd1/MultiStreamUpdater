@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { allowCors } from '../_middleware/cors.js';
 
 const { TWITCH_CLIENT_ID } = process.env;
 
@@ -95,4 +94,4 @@ const handler = async (req, res) => {
   res.status(200).json(results);
 };
 
-export default allowCors(handler);
+export default handler;
