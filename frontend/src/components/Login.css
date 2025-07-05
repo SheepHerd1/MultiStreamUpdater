@@ -52,6 +52,11 @@
   gap: 10px;
 }
 
+.platform-icon {
+  width: 20px;
+  height: 20px;
+}
+
 .platform-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);

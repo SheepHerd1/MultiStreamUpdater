@@ -72,6 +72,12 @@
     opacity: 0.6;
 }
 
+.platform-icon-status {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0; /* Prevents icon from shrinking if text is long */
+}
+
 .connect-btn {
     color: white;
     padding: 5px 10px;

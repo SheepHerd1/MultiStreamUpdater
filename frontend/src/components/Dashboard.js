@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api'; // Import our configured axios instance
 import './Dashboard.css';
 import PlatformCard from './PlatformCard';
-
+import TwitchIcon from './icons/TwitchIcon';
+import YouTubeIcon from './icons/YouTubeIcon';
 
 function Dashboard({ auth, onLogout, setAuth }) {
   // Shared state
@@ -215,6 +216,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
       
       <div className="connected-platforms">
         <div className={`platform-status twitch ${twitchAuth ? 'connected' : ''}`}>
+          <TwitchIcon className="platform-icon-status" />
           Twitch {twitchAuth ? 'Connected' : 'Not Connected'}
           {!twitchAuth && (
             <button type="button" onClick={handleTwitchConnect} className="connect-btn twitch">
@@ -223,6 +225,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
           )}
         </div>
         <div className={`platform-status youtube ${youtubeAuth ? 'connected' : ''}`}>
+          <YouTubeIcon className="platform-icon-status" />
           YouTube {youtubeAuth ? 'Connected' : 'Not Connected'}
           {!youtubeAuth && (
             <button type="button" onClick={handleYouTubeConnect} className="connect-btn youtube">
