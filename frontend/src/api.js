@@ -1,52 +1,93 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: process.env.REACT_APP_API_BASE_URL || 'https://multi-stream-updater.vercel.app',
 });
 
-// This interceptor will run before every request
-api.interceptors.request.use((config) => {
-  // This is a placeholder for future logic if needed
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+// --- Axios Interceptor for Automatic Token Refresh ---
 
-// This interceptor will run for every response
+// This flag prevents a storm of refresh requests if multiple API calls fail at once.
+let isRefreshing = false;
+// This is a queue for API calls that failed while a token refresh was in progress.
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
-  (response) => response, // If the response is successful, just return it
+  // If a request is successful, just pass the response along.
+  response => response,
+  // If a request fails, this logic will run.
   async (error) => {
     const originalRequest = error.config;
 
-    // Check if the error is a 401 (Unauthorized) and we haven't retried yet
+    // We only want to handle 401 Unauthorized errors, and we don't want to retry a request forever.
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Check if it's a YouTube API call that failed
-      if (originalRequest.url.includes('/api/youtube/')) {
-        originalRequest._retry = true; // Mark that we are retrying this request
-        const refreshToken = localStorage.getItem('yt_refresh_token');
+      
+      if (isRefreshing) {
+        // If a refresh is already happening, we add the failed request to a queue.
+        // It will be retried once the new token is available.
+        return new Promise(function(resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers['Authorization'] = 'Bearer ' + token;
+          return api(originalRequest);
+        });
+      }
 
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      // Currently, we only have refresh logic for YouTube.
+      const isYoutubeRequest = originalRequest.url.includes('/api/youtube/');
+      if (isYoutubeRequest) {
+        const refreshToken = localStorage.getItem('yt_refresh_token');
         if (refreshToken) {
           try {
-            // Call our new backend endpoint to get a fresh access token
-            const { data } = await axios.post(`${API_BASE_URL}/api/auth/youtube/refresh`, { refreshToken });
-            const newAccessToken = data.accessToken;
+            // Make a direct axios call to the refresh endpoint to avoid an infinite loop.
+            const { data } = await axios.post(`${api.defaults.baseURL}/api/auth/youtube/refresh`, { refreshToken });
+            const newAccessToken = data.access_token; // Ensure your backend returns 'access_token'
 
-            // Update the token in localStorage and in the original request's header
+            // The 'storage' event listener in Dashboard.js will see this change and update the component's state.
             localStorage.setItem('yt_access_token', newAccessToken);
-            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
 
-            // Retry the original request with the new token
+            // Update the authorization header for the request that just failed.
+            originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
+            
+            // Retry all the requests that were queued up while we were refreshing.
+            processQueue(null, newAccessToken);
+            
+            // Finally, retry the original request that failed.
             return api(originalRequest);
+
           } catch (refreshError) {
-            // If the refresh fails, we can't recover, so reject the promise
+            console.error('YouTube session expired or refresh failed. Please log in again.', refreshError);
+            // Clear out the bad tokens
+            localStorage.removeItem('yt_access_token');
+            localStorage.removeItem('yt_refresh_token');
+            // Reject all queued requests
+            processQueue(refreshError, null);
+            // TODO: You could trigger a global logout state here to redirect the user to the login page.
             return Promise.reject(refreshError);
+          } finally {
+            isRefreshing = false;
           }
         }
       }
+      
+      // If it's not a YouTube request or there's no refresh token, we can't do anything.
+      isRefreshing = false;
     }
-    // For any other errors, just reject the promise
+
+    // For any other errors, just pass them along.
     return Promise.reject(error);
   }
 );
