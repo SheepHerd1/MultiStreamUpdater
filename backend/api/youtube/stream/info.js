@@ -31,10 +31,10 @@ export default async function handler(req, res) {
   });
 
   try {
-    // Fetch all non-completed broadcasts to find the most relevant one
+    // Fetch all of the user's broadcasts and we will filter them in our code.
+    // The `broadcastStatus` parameter is removed to avoid the "Incompatible parameters" API error.
     const broadcastResponse = await youtube.liveBroadcasts.list({
       part: 'id,snippet,contentDetails,status',
-      broadcastStatus: 'all',
       mine: true,
     });
 
