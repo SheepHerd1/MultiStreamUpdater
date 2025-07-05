@@ -15,7 +15,8 @@ function Dashboard({ auth, onLogout }) {
 
   // YouTube-specific state
   const [description, setDescription] = useState('');
-  const [youtubeBroadcastId, setYoutubeBroadcastId] = useState(null);
+  const [youtubeStreamId, setYoutubeStreamId] = useState(null);
+  const [youtubeUpdateType, setYoutubeUpdateType] = useState(null);
 
   // Get auth details from the prop
   const twitchAuth = auth.twitch; // Twitch auth is managed by the parent
@@ -76,7 +77,8 @@ function Dashboard({ auth, onLogout }) {
         // Let YouTube set the title if Twitch hasn't already
         setTitle(currentTitle => currentTitle || response.data.title || '');
         setDescription(response.data.description || '');
-        setYoutubeBroadcastId(response.data.id);
+        setYoutubeStreamId(response.data.id);
+        setYoutubeUpdateType(response.data.updateType);
       }
     } catch (err) {
       console.error('Could not fetch YouTube info:', err);
@@ -153,13 +155,14 @@ function Dashboard({ auth, onLogout }) {
     }
 
     // Add YouTube update promise if connected and we have a broadcast ID
-    if (youtubeAuth && youtubeBroadcastId) {
+    if (youtubeAuth && youtubeStreamId) {
       const youtubePromise = api.post(
         `/api/youtube/stream/update`,
         {
           title,
           description,
-          broadcastId: youtubeBroadcastId,
+          streamId: youtubeStreamId,
+          updateType: youtubeUpdateType,
         },
         { headers: { 'Authorization': `Bearer ${youtubeAuth.token}`, 'Content-Type': 'application/json' } }
       );

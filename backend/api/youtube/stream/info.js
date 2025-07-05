@@ -43,17 +43,38 @@ export default async function handler(req, res) {
       }
     }
 
-    if (!broadcasts || broadcasts.length === 0) {
-      return res.status(200).json({ message: 'No active or upcoming YouTube stream found.' });
+    // If a broadcast was found, return its info
+    if (broadcasts && broadcasts.length > 0) {
+      const stream = broadcasts[0];
+      return res.status(200).json({
+        id: stream.id,
+        title: stream.snippet.title,
+        description: stream.snippet.description,
+        isLive: stream.status.lifeCycleStatus === 'live',
+        updateType: 'broadcast', // This is a scheduled broadcast
+      });
     }
 
-    const stream = broadcasts[0];
-    res.status(200).json({
-      id: stream.id,
-      title: stream.snippet.title,
-      description: stream.snippet.description,
-      isLive: stream.status.lifeCycleStatus === 'live',
+    // --- Fallback: Find the user's default stream settings ("Stream Now") ---
+    const liveStreamResponse = await youtube.liveStreams.list({
+      part: 'id,snippet',
+      mine: true,
+      maxResults: 1,
     });
+
+    if (liveStreamResponse.data.items && liveStreamResponse.data.items.length > 0) {
+      const stream = liveStreamResponse.data.items[0];
+      return res.status(200).json({
+        id: stream.id,
+        title: stream.snippet.title,
+        description: stream.snippet.description,
+        isLive: false, // A stream key itself is not considered 'live'
+        updateType: 'stream', // This is a persistent stream key
+      });
+    }
+
+    // If no broadcasts or streams are found at all
+    return res.status(200).json({ message: 'No active, upcoming, or default YouTube stream found.' });
   } catch (error) {
     console.error('Error fetching YouTube stream info:', error.response?.data || error.message);
     if (error.response?.status === 401 || error.response?.status === 403) {

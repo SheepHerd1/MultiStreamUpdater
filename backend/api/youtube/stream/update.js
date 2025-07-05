@@ -11,9 +11,9 @@ export default async function handler(req, res) {
   }
   const accessToken = authHeader.split(' ')[1];
 
-  const { broadcastId, title, description } = req.body;
-  if (!broadcastId || !title) {
-    return res.status(400).json({ error: 'broadcastId and title are required' });
+  const { streamId, title, description, updateType } = req.body;
+  if (!streamId || !title || !updateType) {
+    return res.status(400).json({ error: 'streamId, title, and updateType are required' });
   }
 
   const oauth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
@@ -25,20 +25,37 @@ export default async function handler(req, res) {
   });
 
   try {
-    const response = await youtube.liveBroadcasts.update({
-      part: 'id,snippet',
-      requestBody: {
-        id: broadcastId,
-        snippet: {
-          title: title,
-          description: description,
+    let response;
+    if (updateType === 'broadcast') {
+      response = await youtube.liveBroadcasts.update({
+        part: 'id,snippet',
+        requestBody: {
+          id: streamId,
+          snippet: {
+            title: title,
+            description: description,
+          },
         },
-      },
-    });
+      });
+    } else if (updateType === 'stream') {
+      response = await youtube.liveStreams.update({
+        part: 'id,snippet',
+        requestBody: {
+          id: streamId,
+          snippet: {
+            title: title,
+            description: description,
+          },
+        },
+      });
+    } else {
+      return res.status(400).json({ error: `Invalid updateType: ${updateType}` });
+    }
 
     res.status(200).json({ success: true, updatedStream: response.data });
   } catch (error) {
     console.error('Error updating YouTube stream:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to update stream on YouTube' });
+    const status = error.response?.status || 500;
+    res.status(status).json({ error: 'Failed to update stream on YouTube' });
   }
 }
