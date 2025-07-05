@@ -1,0 +1,30 @@
+.platform-card {
+    background-color: #1e1e2e;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    transition: opacity 0.3s ease;
+}
+
+.platform-card.disconnected {
+    opacity: 0.6;
+    background-color: #1a1a28; /* Slightly darker when disconnected */
+}
+
+.platform-card-header {
+    border-bottom: 1px solid #3a3a4a;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.platform-card-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #f0f0f0;
+}
+
+.platform-card-content .form-group:last-child {
+    margin-bottom: 0;
+}
