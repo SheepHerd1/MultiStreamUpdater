@@ -5,54 +5,114 @@ import './Dashboard.css';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function Dashboard({ auth, onLogout }) {
+  // Shared state
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('');
-  const [tags, setTags] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Get the active Twitch authentication details
-  const twitchAuth = auth.twitch;
+  // Twitch-specific state
+  const [category, setCategory] = useState('');
+  const [tags, setTags] = useState('');
 
-  const fetchStreamInfo = useCallback(async () => {
+  // YouTube-specific state
+  const [description, setDescription] = useState('');
+  const [youtubeBroadcastId, setYoutubeBroadcastId] = useState(null);
+
+  // Get auth details from the prop
+  const twitchAuth = auth.twitch;
+  const youtubeAuth = auth.youtube;
+
+  // --- YouTube Auth Handling ---
+  // This effect runs once on mount to handle the YouTube OAuth redirect
+  useEffect(() => {
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get('yt_access_token');
+      const refreshToken = params.get('yt_refresh_token');
+
+      if (accessToken) {
+        // Store tokens so the parent component can pick them up on next load
+        localStorage.setItem('yt_access_token', accessToken);
+        if (refreshToken) {
+          localStorage.setItem('yt_refresh_token', refreshToken);
+        }
+        
+        // Clean the URL so the tokens aren't visible and the logic doesn't re-run on refresh
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        
+        // A reload is a simple way to force the parent App to re-read localStorage
+        // and pass down the new `auth.youtube` prop.
+        window.location.reload();
+      }
+    }
+  }, []); // Empty dependency array ensures this runs only once
+
+  // --- Data Fetching ---
+  const fetchTwitchStreamInfo = useCallback(async () => {
     if (!twitchAuth) return;
 
-    setIsLoading(true);
-    setError('');
     try {
       const response = await axios.get(`${API_BASE_URL}/api/stream/info`, {
-        params: {
-          broadcaster_id: twitchAuth.userId,
-        },
-        headers: {
-          // This is the secure way to send the token
-          'Authorization': `Bearer ${twitchAuth.token}`,
-        },
+        params: { broadcaster_id: twitchAuth.userId },
+        headers: { 'Authorization': `Bearer ${twitchAuth.token}` },
       });
-      setTitle(response.data.title || '');
+      // Let Twitch set the initial title
+      setTitle(currentTitle => currentTitle || response.data.title || '');
       setCategory(response.data.game_name || '');
       setTags((response.data.tags || []).join(', '));
     } catch (err) {
-      console.error('Could not fetch stream info:', err);
-      setError('Failed to fetch stream info. Please check the console for details.');
-    } finally {
-      setIsLoading(false);
+      console.error('Could not fetch Twitch info:', err);
+      // This error will be caught by the Promise.allSettled in fetchAllStreamInfo
+      throw new Error('Failed to fetch Twitch info.');
     }
   }, [twitchAuth]);
 
-  // Fetch stream info when the component first loads
-  useEffect(() => {
-    fetchStreamInfo();
-  }, [fetchStreamInfo]);
+  const fetchYouTubeStreamInfo = useCallback(async () => {
+    if (!youtubeAuth) return;
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/youtube/stream/info`, {
+        headers: { 'Authorization': `Bearer ${youtubeAuth.token}` },
+      });
+      if (response.data.id) {
+        // Let YouTube set the title if Twitch hasn't already
+        setTitle(currentTitle => currentTitle || response.data.title || '');
+        setDescription(response.data.description || '');
+        setYoutubeBroadcastId(response.data.id);
+      }
+    } catch (err) {
+      console.error('Could not fetch YouTube info:', err);
+      throw new Error('Failed to fetch YouTube info.');
+    }
+  }, [youtubeAuth]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!twitchAuth) return;
-
+  const fetchAllStreamInfo = useCallback(async () => {
     setIsLoading(true);
     setError('');
     try {
-      await axios.post(
+      // Fetch from both platforms in parallel and don't fail if one has an error
+      await Promise.allSettled([fetchTwitchStreamInfo(), fetchYouTubeStreamInfo()]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchTwitchStreamInfo, fetchYouTubeStreamInfo]);
+
+  // Fetch all stream info when the component first loads or auth changes
+  useEffect(() => {
+    fetchAllStreamInfo();
+  }, [fetchAllStreamInfo]);
+
+  // --- Form Submission ---
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    const updatePromises = [];
+
+    // Add Twitch update promise if connected
+    if (twitchAuth) {
+      const twitchPromise = axios.post(
         `${API_BASE_URL}/api/stream/update`,
         {
           title,
@@ -60,17 +120,44 @@ function Dashboard({ auth, onLogout }) {
           tags: tags.split(',').map(t => t.trim()).filter(Boolean),
           broadcasterId: twitchAuth.userId,
         },
-        {
-          headers: {
-            'Authorization': `Bearer ${twitchAuth.token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+        { headers: { 'Authorization': `Bearer ${twitchAuth.token}`, 'Content-Type': 'application/json' } }
       );
-      alert('Stream updated successfully!');
+      updatePromises.push(twitchPromise);
+    }
+
+    // Add YouTube update promise if connected and we have a broadcast ID
+    if (youtubeAuth && youtubeBroadcastId) {
+      const youtubePromise = axios.post(
+        `${API_BASE_URL}/api/youtube/stream/update`,
+        {
+          title,
+          description,
+          broadcastId: youtubeBroadcastId,
+        },
+        { headers: { 'Authorization': `Bearer ${youtubeAuth.token}`, 'Content-Type': 'application/json' } }
+      );
+      updatePromises.push(youtubePromise);
+    }
+
+    if (updatePromises.length === 0) {
+      setError("No platforms connected to update.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const results = await Promise.allSettled(updatePromises);
+      const failedUpdates = results.filter(r => r.status === 'rejected');
+      
+      if (failedUpdates.length > 0) {
+        failedUpdates.forEach(failure => console.error('An update failed:', failure.reason));
+        throw new Error('One or more platforms failed to update. Check console.');
+      }
+      
+      alert('Stream(s) updated successfully!');
     } catch (err) {
-      console.error('Error updating stream:', err);
-      setError('Failed to update stream. Please check the console for details.');
+      console.error('Error updating stream(s):', err);
+      setError(err.message || 'Failed to update stream(s). Please check the console.');
     } finally {
       setIsLoading(false);
     }
@@ -79,33 +166,43 @@ function Dashboard({ auth, onLogout }) {
   return (
     <div className="dashboard">
       <button onClick={onLogout} className="logout-btn">Logout</button>
-      <h2>Dashboard</h2>
-      <p>Welcome, {auth.twitch?.userName || 'Streamer'}!</p>
+      <h2>Multi-Stream Updater</h2>
+      <p>Welcome, {twitchAuth?.userName || 'Streamer'}!</p>
       
       <div className="connected-platforms">
         <h3>Connected Platforms</h3>
-        {auth.twitch && <div className="platform-status twitch">Twitch Connected</div>}
-        {auth.youtube && <div className="platform-status youtube">YouTube Connected</div>}
+        {twitchAuth && <div className="platform-status twitch">Twitch Connected</div>}
+        {youtubeAuth ? (
+          <div className="platform-status youtube">YouTube Connected</div>
+        ) : (
+          <a href={`${API_BASE_URL}/api/auth/youtube/connect`} className="connect-btn youtube">
+            Connect YouTube
+          </a>
+        )}
       </div>
 
       <div className="stream-editor">
         <h3>Stream Editor</h3>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="title">Title</label>
+            <label htmlFor="title">Title (Shared)</label>
             <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Stream Title" />
           </div>
           <div className="form-group">
-            <label htmlFor="category">Category</label>
-            <input id="category" type="text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category/Game" />
+            <label htmlFor="category">Twitch Category</label>
+            <input id="category" type="text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category/Game" disabled={!twitchAuth} />
           </div>
           <div className="form-group">
-            <label htmlFor="tags">Tags (comma-separated)</label>
-            <input id="tags" type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g. chill, playingwithviewers" />
+            <label htmlFor="description">YouTube Description</label>
+            <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="YouTube video description" disabled={!youtubeAuth} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="tags">Twitch Tags (comma-separated)</label>
+            <input id="tags" type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g. chill, playingwithviewers" disabled={!twitchAuth} />
           </div>
           <div className="form-actions">
-            <button type="submit" disabled={isLoading}>{isLoading ? 'Updating...' : 'Update Stream'}</button>
-            <button type="button" onClick={fetchStreamInfo} disabled={isLoading}>Refresh Info</button>
+            <button type="submit" disabled={isLoading || (!twitchAuth && !youtubeAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
+            <button type="button" onClick={fetchAllStreamInfo} disabled={isLoading}>Refresh All Info</button>
           </div>
         </form>
         {error && <p className="error-message">{error}</p>}
