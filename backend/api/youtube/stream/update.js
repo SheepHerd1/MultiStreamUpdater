@@ -64,8 +64,19 @@ export default async function handler(req, res) {
 
     res.status(200).json({ success: true, updatedStream: response.data });
   } catch (error) {
-    console.error('Error updating YouTube stream:', error.response?.data || error.message);
-    const status = error.response?.status || 500;
-    res.status(status).json({ error: 'Failed to update stream on YouTube' });
+    console.error('Error in /api/youtube/stream/update:', error.response?.data || error.message);
+
+    if (error.response) {
+      const status = error.response.status;
+      const message = error.response.data?.error?.errors?.[0]?.message ||
+                      error.response.data?.error?.message ||
+                      'An unknown error occurred while updating on YouTube.';
+      
+      if (status === 401 || status === 403) {
+        return res.status(401).json({ error: 'Invalid or expired token. Please re-authenticate.' });
+      }
+      return res.status(status).json({ error: message });
+    }
+    res.status(500).json({ error: 'A server error occurred while updating the YouTube stream.' });
   }
 }

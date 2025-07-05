@@ -32,30 +32,44 @@ export default async function handler(req, res) {
   });
 
   try {
-    // First, try to find an active live broadcast
-    let response = await youtube.liveBroadcasts.list({
-      part: 'id,snippet,contentDetails,status',
-      broadcastStatus: 'active',
-      mine: true,
-      maxResults: 1,
-    });
-
-    let broadcasts = response.data.items;
-
-    // If no active stream is found, look for upcoming ones
-    if (!broadcasts || broadcasts.length === 0) {
-      response = await youtube.liveBroadcasts.list({
+    let broadcasts = [];
+    try {
+      // First, try to find an active live broadcast
+      let response = await youtube.liveBroadcasts.list({
         part: 'id,snippet,contentDetails,status',
-        broadcastStatus: 'upcoming',
+        broadcastStatus: 'active',
         mine: true,
+        maxResults: 1,
       });
-      
-      if (response.data.items && response.data.items.length > 0) {
-        // Sort upcoming streams to find the one scheduled soonest
-        const sortedUpcoming = response.data.items.sort((a, b) => 
-          new Date(a.snippet.scheduledStartTime) - new Date(b.snippet.scheduledStartTime)
-        );
-        broadcasts = [sortedUpcoming[0]]; // Take the soonest one
+
+      broadcasts = response.data.items;
+
+      // If no active stream is found, look for upcoming ones
+      if (!broadcasts || broadcasts.length === 0) {
+        response = await youtube.liveBroadcasts.list({
+          part: 'id,snippet,contentDetails,status',
+          broadcastStatus: 'upcoming',
+          mine: true,
+        });
+        
+        if (response.data.items && response.data.items.length > 0) {
+          // Sort upcoming streams to find the one scheduled soonest
+          const sortedUpcoming = response.data.items.sort((a, b) => 
+            new Date(a.snippet.scheduledStartTime) - new Date(b.snippet.scheduledStartTime)
+          );
+          broadcasts = [sortedUpcoming[0]]; // Take the soonest one
+        }
+      }
+    } catch (broadcastError) {
+      // If we get the specific "Incompatible parameters" error, we can assume there are no broadcasts
+      // and safely continue to the liveStream fallback.
+      const errorMessage = broadcastError.response?.data?.error?.message || '';
+      if (errorMessage.includes('Incompatible parameters')) {
+        console.log('Handled "Incompatible parameters" error. Proceeding to check for default stream.');
+        broadcasts = []; // Ensure broadcasts is an empty array so the fallback runs
+      } else {
+        // If it's a different error (like auth), re-throw it to be caught by the outer block.
+        throw broadcastError;
       }
     }
 
@@ -92,10 +106,30 @@ export default async function handler(req, res) {
     // If no broadcasts or streams are found at all
     return res.status(200).json({ message: 'No active, upcoming, or default YouTube stream found.' });
   } catch (error) {
-    console.error('Error fetching YouTube stream info:', error.response?.data || error.message);
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      return res.status(401).json({ error: 'Invalid or expired token. Please re-authenticate.' });
+    console.error('Error in /api/youtube/stream/info:', error.response?.data || error.message);
+
+    // If the error is from the Google API, it will likely have a `response` object.
+    if (error.response) {
+      const status = error.response.status;
+      // Extract the specific error message from Google's response structure
+      const message = error.response.data?.error?.errors?.[0]?.message || 
+                      error.response.data?.error?.message || 
+                      'An unknown error occurred while communicating with YouTube.';
+
+      // Check for the specific "Incompatible parameters" error which often means live streaming is not enabled.
+      if (status === 400 && message.includes('Incompatible parameters')) {
+        const userFriendlyMessage = 'Live streaming may not be enabled on this YouTube account. Please visit youtube.com/features to check your status. It may take up to 24 hours to activate.';
+        console.error('Potential issue: Live streaming not enabled for user.');
+        return res.status(400).json({ error: userFriendlyMessage });
+      }
+
+      // Specifically handle 401/403 as a re-authentication request for the client
+      if (status === 401 || status === 403) {
+        return res.status(401).json({ error: 'Invalid or expired token. Please re-authenticate.' });
+      }
+      return res.status(status).json({ error: message });
     }
-    res.status(500).json({ error: 'Failed to fetch stream info from YouTube' });
+    // For non-API errors (e.g., network issues), return a generic 500
+    res.status(500).json({ error: 'A server error occurred while fetching YouTube stream info.' });
   }
 }
