@@ -22,11 +22,21 @@ export default async (req, res) => {
         return res.status(204).end();
     }
 
-    const { broadcaster_id, token } = req.query;
-
-    if (!broadcaster_id || !token) {
-        return res.status(400).json({ message: 'Missing required query parameters: broadcaster_id and token.' });
+    // --- Securely get the token from the Authorization header ---
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Authorization header is missing or malformed. It must be "Bearer [token]".' });
     }
+    const token = authHeader.split(' ')[1];
+
+    // --- Get the broadcaster ID from the query parameter ---
+    const { broadcaster_id } = req.query;
+
+    if (!broadcaster_id) {
+        return res.status(400).json({ message: 'Missing required query parameter: broadcaster_id.' });
+    }
+
+    // The token is now correctly retrieved from the header.
 
     try {
         const response = await axios.get(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcaster_id}`, {
