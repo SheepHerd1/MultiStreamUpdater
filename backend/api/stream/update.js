@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { allowCors } from '../_middleware/cors.js';
 
 const { TWITCH_CLIENT_ID } = process.env;
 
@@ -43,35 +44,31 @@ async function updateTwitch(authToken, broadcasterId, { title, gameId, tags }) {
   });
 }
 
-export default async (req, res) => {
-  // --- CORS Headers ---
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-  );
-
-  // Handle the browser's preflight OPTIONS request.
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-
+const handler = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { title, category, tags, twitchAuth } = req.body;
+  // --- Securely get the token from the Authorization header ---
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Authorization header is missing or malformed.' });
+  }
+  const token = authHeader.split(' ')[1];
+
+  // Get the rest of the data from the request body
+  const { title, category, tags, broadcasterId } = req.body;
   const results = {};
 
   // --- Twitch Update ---
-  if (twitchAuth && twitchAuth.token && twitchAuth.userId) {
+  // Check for the necessary data. The token comes from the header, the ID from the body.
+  if (token && broadcasterId) {
     try {
-      const gameId = await getTwitchGameId(category, twitchAuth.token);
-      await updateTwitch(twitchAuth.token, twitchAuth.userId, { title, gameId, tags });
+      const gameId = await getTwitchGameId(category, token);
+      await updateTwitch(token, broadcasterId, { title, gameId, tags });
       results.twitch = { success: true };
     } catch (error) {
+      console.error("Error updating Twitch:", error.response ? error.response.data : error.message);
       const status = error.response ? error.response.status : 500;
       const message = error.response ? error.response.data.message : 'Failed to update Twitch.';
       results.twitch = { success: false, error: message };
@@ -84,3 +81,5 @@ export default async (req, res) => {
 
   res.status(200).json(results);
 };
+
+export default allowCors(handler);
