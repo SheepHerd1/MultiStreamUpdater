@@ -59,13 +59,11 @@ export default async function handler(req, res) {
 
     try {
         const tokenData = await getTwitchToken(code, process.env);
+        // Restructure the success message to match the format expected by the frontend App.js
         const successMessage = {
-            type: 'auth-success',
-            data: {
-                provider: 'twitch',
-                accessToken: tokenData.access_token,
-                idToken: tokenData.id_token
-            },
+            type: 'twitch-auth-success',
+            token: tokenData.access_token,
+            id_token: tokenData.id_token,
         };
         res.setHeader('Content-Type', 'text/html');
         res.status(200).send(renderScript(successMessage));
