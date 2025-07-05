@@ -21,7 +21,16 @@ function Dashboard({ auth, onLogout }) {
 
   // Get auth details from the prop
   const twitchAuth = auth.twitch; // Twitch auth is managed by the parent
-  const [youtubeAuth, setYoutubeAuth] = useState(auth.youtube); // Manage YouTube auth locally for responsiveness
+  const [youtubeAuth, setYoutubeAuth] = useState(() => {
+    // On initial load, check localStorage directly to restore the session.
+    // This is the key to persisting the login across page refreshes.
+    const accessToken = localStorage.getItem('yt_access_token');
+    if (accessToken) {
+      return { token: accessToken, refreshToken: localStorage.getItem('yt_refresh_token') };
+    }
+    // Fallback to the prop from the parent, or null.
+    return auth.youtube || null;
+  });
 
   // --- YouTube Auth Handling ---
   // This effect runs once on mount to handle the YouTube OAuth redirect
@@ -117,6 +126,23 @@ function Dashboard({ auth, onLogout }) {
     }
   }, [notification]);
 
+  // This effect handles listening for the auth popup to complete.
+  // It runs once when the component mounts and cleans up after itself.
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      // Listen for the specific key our popup sets in localStorage
+      if (event.key === 'yt_access_token') {
+        const newAccessToken = event.newValue;
+        if (newAccessToken) {
+          setYoutubeAuth({ token: newAccessToken, refreshToken: localStorage.getItem('yt_refresh_token') });
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []); // The empty array ensures this runs only once.
+
   const handleYouTubeConnect = () => {
     const authUrl = `${api.defaults.baseURL}/api/auth/youtube/connect`;
     const windowName = 'youtubeAuth';
@@ -128,23 +154,6 @@ function Dashboard({ auth, onLogout }) {
     const windowFeatures = `width=${width},height=${height},top=${top},left=${left}`;
 
     window.open(authUrl, windowName, windowFeatures);
-
-    const handleStorageChange = (event) => {
-      // Listen for the specific key our popup sets
-      if (event.key === 'yt_access_token') {
-        const accessToken = event.newValue;
-        const refreshToken = localStorage.getItem('yt_refresh_token');
-
-        if (accessToken && (!youtubeAuth || accessToken !== youtubeAuth.token)) {
-          setYoutubeAuth({ token: accessToken, refreshToken: refreshToken });
-        }
-        // Clean up the listener once we're done
-        window.removeEventListener('storage', handleStorageChange);
-      }
-    };
-
-    // Add the event listener to the main window
-    window.addEventListener('storage', handleStorageChange);
   };
 
   // --- Form Submission ---
