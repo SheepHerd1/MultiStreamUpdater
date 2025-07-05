@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../api'; // Import our configured axios instance
 import './Dashboard.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function Dashboard({ auth, onLogout }) {
   // Shared state
@@ -53,7 +52,7 @@ function Dashboard({ auth, onLogout }) {
     if (!twitchAuth) return;
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/stream/info`, {
+      const response = await api.get(`/api/stream/info`, {
         params: { broadcaster_id: twitchAuth.userId },
         headers: { 'Authorization': `Bearer ${twitchAuth.token}` },
       });
@@ -71,7 +70,7 @@ function Dashboard({ auth, onLogout }) {
   const fetchYouTubeStreamInfo = useCallback(async () => {
     if (!youtubeAuth) return;
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/youtube/stream/info`, {
+      const response = await api.get(`/api/youtube/stream/info`, {
         headers: { 'Authorization': `Bearer ${youtubeAuth.token}` },
       });
       if (response.data.id) {
@@ -112,8 +111,8 @@ function Dashboard({ auth, onLogout }) {
 
     // Add Twitch update promise if connected
     if (twitchAuth) {
-      const twitchPromise = axios.post(
-        `${API_BASE_URL}/api/stream/update`,
+      const twitchPromise = api.post(
+        `/api/stream/update`,
         {
           title,
           category,
@@ -127,8 +126,8 @@ function Dashboard({ auth, onLogout }) {
 
     // Add YouTube update promise if connected and we have a broadcast ID
     if (youtubeAuth && youtubeBroadcastId) {
-      const youtubePromise = axios.post(
-        `${API_BASE_URL}/api/youtube/stream/update`,
+      const youtubePromise = api.post(
+        `/api/youtube/stream/update`,
         {
           title,
           description,
@@ -175,7 +174,7 @@ function Dashboard({ auth, onLogout }) {
         {youtubeAuth ? (
           <div className="platform-status youtube">YouTube Connected</div>
         ) : (
-          <a href={`${API_BASE_URL}/api/auth/youtube/connect`} className="connect-btn youtube">
+          <a href={`${api.defaults.baseURL}/api/auth/youtube/connect`} className="connect-btn youtube">
             Connect YouTube
           </a>
         )}
