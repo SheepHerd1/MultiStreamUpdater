@@ -112,23 +112,24 @@ function Dashboard({ auth, onLogout }) {
     const top = (window.screen.height / 2) - (height / 2);
     const windowFeatures = `width=${width},height=${height},top=${top},left=${left}`;
 
-    const popup = window.open(authUrl, windowName, windowFeatures);
+    window.open(authUrl, windowName, windowFeatures);
 
-    // Poll the popup window to see when it has been closed
-    const interval = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(interval);
-        // After the popup is closed, check localStorage for the new tokens
-        // that the popup window should have set.
-        const accessToken = localStorage.getItem('yt_access_token');
+    const handleStorageChange = (event) => {
+      // Listen for the specific key our popup sets
+      if (event.key === 'yt_access_token') {
+        const accessToken = event.newValue;
         const refreshToken = localStorage.getItem('yt_refresh_token');
 
-        // If a new token exists, update the state to re-render the dashboard
         if (accessToken && (!youtubeAuth || accessToken !== youtubeAuth.token)) {
           setYoutubeAuth({ token: accessToken, refreshToken: refreshToken });
         }
+        // Clean up the listener once we're done
+        window.removeEventListener('storage', handleStorageChange);
       }
-    }, 500); // Check every half-second
+    };
+
+    // Add the event listener to the main window
+    window.addEventListener('storage', handleStorageChange);
   };
 
   // --- Form Submission ---
