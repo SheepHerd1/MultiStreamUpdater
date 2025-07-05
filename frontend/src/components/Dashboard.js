@@ -199,6 +199,8 @@ function Dashboard({ auth, onLogout }) {
       }
       
       alert('Stream(s) updated successfully!');
+      // After a successful update, re-fetch the latest stream info to update the UI
+      fetchAllStreamInfo();
     } catch (err) {
       console.error('Error updating stream(s):', err);
       setError(err.message || 'Failed to update stream(s). Please check the console.');
