@@ -7,7 +7,7 @@ function Dashboard({ auth, onLogout }) {
         <div className="dashboard">
             <button onClick={onLogout} className="logout-btn">Logout</button>
             <h2>Dashboard</h2>
-            <p>Welcome, {auth.twitch?.userName || auth.youtube?.userName || 'Streamer'}!</p>
+            <p>Welcome, {auth.twitch?.userName || 'Streamer'}!</p>
             
             <div className="connected-platforms">
                 <h3>Connected Platforms</h3>
