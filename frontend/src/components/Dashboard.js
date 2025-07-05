@@ -7,12 +7,12 @@ function Dashboard({ auth, onLogout }) {
         <div className="dashboard">
             <button onClick={onLogout} className="logout-btn">Logout</button>
             <h2>Dashboard</h2>
-            <p>Welcome, {auth.twitch?.userName || 'Streamer'}!</p>
+            <p>Welcome, {auth.twitch?.userName || auth.youtube?.userName || 'Streamer'}!</p>
             
             <div className="connected-platforms">
                 <h3>Connected Platforms</h3>
                 {auth.twitch && <div className="platform-status twitch">Twitch Connected</div>}
-                {/* Add other platforms here as they are implemented */}
+                {auth.youtube && <div className="platform-status youtube">YouTube Connected</div>}
             </div>
 
             <StreamEditor auth={auth} />
