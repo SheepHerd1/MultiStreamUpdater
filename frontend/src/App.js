@@ -22,13 +22,14 @@ function App() {
       // It's good practice to check the origin, but for now we'll focus on the message type.
       // You can add an origin check later if needed: if (event.origin !== 'YOUR_VERCEL_URL') return;
 
-      if (event.data.type === 'twitch-auth-success' && event.data.token && event.data.id_token) {
+      if (event.data.type === 'twitch-auth-success' && event.data.token && event.data.id_token && event.data.refreshToken) {
         try {
           const decoded = jwtDecode(event.data.id_token);
           const twitchAuth = {
             token: event.data.token,
             userId: decoded.sub,
             userName: decoded.preferred_username || 'user',
+            refreshToken: event.data.refreshToken, // Store the refresh token
           };
           // Save the full session to localStorage
           localStorage.setItem('twitchAuth', JSON.stringify(twitchAuth));

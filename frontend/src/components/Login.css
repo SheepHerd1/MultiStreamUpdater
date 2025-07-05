@@ -1,20 +1,95 @@
 .login-container {
-    text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #121212; /* A slightly lighter dark background */
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.login-box {
+  background-color: #1e1e2e;
+  padding: 40px;
+  border-radius: 12px;
+  border: 1px solid #2a2a3a;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 450px;
+  width: 100%;
+}
+
+.login-box h1 {
+  color: #f0f0f0;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 2em;
+}
+
+.login-box p {
+  color: #a0a0b0;
+  margin-bottom: 30px;
+  font-size: 1.1em;
 }
 
 .platform-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.platform-buttons a {
-    text-decoration: none;
+.platform-btn {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 
-.platform-buttons button {
-    width: 100%;
-    padding: 15px;
-    font-size: 16px;
+.platform-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.platform-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.twitch-btn {
+  background-color: #9147ff;
+  color: white;
+}
+
+.twitch-btn:hover:not(:disabled) {
+  background-color: #a46eff;
+}
+
+.youtube-btn {
+  background-color: #ff0000;
+  color: white;
+}
+
+.youtube-btn:hover:not(:disabled) {
+  background-color: #ff3333;
+}
+
+.coming-soon {
+  margin-top: 20px;
+  border-top: 1px solid #3a3a4a;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.coming-soon .platform-btn {
+  background-color: #3a3a4a;
+  color: #808090;
 }

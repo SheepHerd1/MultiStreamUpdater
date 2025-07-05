@@ -7,7 +7,7 @@ import axios from 'axios';
 
 async function getTwitchToken(code, env) {
     const url = 'https://id.twitch.tv/oauth2/token';
-    const redirectUri = `${env.VITE_APP_VERCEL_URL}/api/auth/twitch-callback`;
+    const redirectUri = `${env.VITE_APP_VERCEL_URL}/api/auth/twitch/callback`;
 
     const params = new URLSearchParams({
         client_id: env.TWITCH_CLIENT_ID,
@@ -34,25 +34,18 @@ export default async function handler(req, res) {
     const { code, error } = req.query;
     const { FRONTEND_URL, VITE_APP_VERCEL_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = process.env;
 
-    // Defensive check for required environment variables. This prevents the function from crashing.
     if (!FRONTEND_URL || !VITE_APP_VERCEL_URL || !TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
         console.error('Function crash averted: Missing one or more required environment variables.');
-        // We can't use renderScript here if FRONTEND_URL is missing.
-        // Send a plain text error. The user will see this in the popup.
         const errorHtml = `<!DOCTYPE html><html><head><title>Error</title></head><body><p>Server configuration error. Please contact the site administrator.</p></body></html>`;
         res.setHeader('Content-Type', 'text/html');
         return res.status(500).send(errorHtml);
     }
 
-
-    // This HTML/JS is sent to the popup. It communicates back to the main window.
-    // We derive the origin from the full frontend URL for security and robustness.
     const targetOrigin = new URL(FRONTEND_URL).origin;
     const renderScript = (message) => `
     <!DOCTYPE html><html><head><title>Authenticating...</title></head><body>
     <script>
       const targetOrigin = '${targetOrigin}';
-      // Send message to the parent window and then close the popup
       window.opener.postMessage(${JSON.stringify(message)}, targetOrigin);
       window.close();
     </script>
@@ -68,12 +61,7 @@ export default async function handler(req, res) {
 
     try {
         const tokenData = await getTwitchToken(code, process.env);
-        // Restructure the success message to match the format expected by the frontend App.js
-        const successMessage = {
-            type: 'twitch-auth-success',
-            token: tokenData.access_token,
-            id_token: tokenData.id_token,
-        };
+        const successMessage = { type: 'twitch-auth-success', token: tokenData.access_token, id_token: tokenData.id_token, refreshToken: tokenData.refresh_token };
         res.setHeader('Content-Type', 'text/html');
         res.status(200).send(renderScript(successMessage));
     } catch (e) {

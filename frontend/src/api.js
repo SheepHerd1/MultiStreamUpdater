@@ -46,8 +46,8 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      // Currently, we only have refresh logic for YouTube.
       const isYoutubeRequest = originalRequest.url.includes('/api/youtube/');
+      const isTwitchRequest = originalRequest.url.includes('/api/stream/') || originalRequest.url.includes('/api/twitch/');
       if (isYoutubeRequest) {
         const refreshToken = localStorage.getItem('yt_refresh_token');
         if (refreshToken) {
@@ -81,9 +81,39 @@ api.interceptors.response.use(
             isRefreshing = false;
           }
         }
+      } else if (isTwitchRequest) {
+        const twitchAuthString = localStorage.getItem('twitchAuth');
+        if (twitchAuthString) {
+          try {
+            const twitchAuth = JSON.parse(twitchAuthString);
+            const refreshToken = twitchAuth.refreshToken;
+
+            const { data } = await axios.post(`${api.defaults.baseURL}/api/auth/twitch/refresh`, { refreshToken });
+            
+            // Update the entire auth object with new tokens
+            const newTwitchAuth = {
+              ...twitchAuth,
+              token: data.accessToken,
+              refreshToken: data.refreshToken,
+            };
+            localStorage.setItem('twitchAuth', JSON.stringify(newTwitchAuth));
+
+            originalRequest.headers['Authorization'] = 'Bearer ' + data.accessToken;
+            processQueue(null, data.accessToken);
+            return api(originalRequest);
+
+          } catch (refreshError) {
+            console.error('Twitch session expired. Please log in again.', refreshError);
+            localStorage.removeItem('twitchAuth');
+            processQueue(refreshError, null);
+            return Promise.reject(refreshError);
+          } finally {
+            isRefreshing = false;
+          }
+        }
       }
       
-      // If it's not a YouTube request or there's no refresh token, we can't do anything.
+      // If it's not a request we can handle or there's no refresh token, stop.
       isRefreshing = false;
     }
 
