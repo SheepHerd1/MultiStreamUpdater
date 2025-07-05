@@ -85,6 +85,9 @@ app.get('/api/auth/twitch/callback', async (req, res) => {
 
 // 3. YouTube Login: Redirects user to Google to authorize
 app.get('/api/auth/youtube', (req, res) => {
+    // DEBUG: Log the exact URI being used for the Google auth URL
+    console.log('Generating YouTube Auth URL with Redirect URI:', YOUTUBE_REDIRECT_URI);
+
     const authUrl = youtubeOauth2Client.generateAuthUrl({
         access_type: 'offline', // Required to get a refresh token
         scope: ['https://www.googleapis.com/auth/youtube.readonly', 'https://www.googleapis.com/auth/youtube'],
