@@ -1,10 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Login.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+// The origin of your Vercel backend
+const API_ORIGIN = new URL(API_BASE_URL).origin;
 
 function Login() {
     const [authenticating, setAuthenticating] = useState(null); // Can be 'twitch', 'youtube', etc.
+
+    useEffect(() => {
+        const handleAuthMessage = (event) => {
+            // Security: alys check the origin of the message
+            if (event.origin !== API_ORIGIN) {
+                console.warn(`Message from unexpected origin: ${event.origin}`);
+                return;
+            }
+
+            const { type, data } = event.data;
+
+            if (type === 'auth-success') {
+                console.log(`${data.provider} authentication successful!`, data);
+                // You can now store the tokens
+                localStorage.setItem(`${data.provider}_access_token`, data.accessToken);
+                localStorage.setItem(`${data.provider}_id_token`, data.idToken);
+                alert(`Successfully connected with ${data.provider}!`);
+            } else if (type === 'auth-error') {
+                console.error(`${data.provider} authentication failed:`, data.error);
+                alert(`Failed to connect with ${data.provider}. Please try again.`);
+            }
+
+            // Stop listening and re-enable buttons
+            setAuthenticating(null);
+        };
+
+        window.addEventListener('message', handleAuthMessage);
+
+        // Cleanup: remove the listener when the component unmounts
+        return () => {
+            window.removeEventListener('message', handleAuthMessage);
+        };
+    }, []); // The empty dependency array means this effect runs only once on mount
 
     const handleLogin = (platform) => {
         setAuthenticating(platform);
@@ -14,15 +49,7 @@ function Login() {
         const top = window.screen.height / 2 - height / 2;
         const authUrl = `${API_BASE_URL}/api/auth/${platform}`;
 
-        const authWindow = window.open(authUrl, `${platform}Auth`, `width=${width},height=${height},left=${left},top=${top}`);
-
-        // Check if the popup was closed by the user and re-enable the button
-        const checkPopup = setInterval(() => {
-            if (!authWindow || authWindow.closed) {
-                clearInterval(checkPopup);
-                setAuthenticating(null);
-            }
-        }, 1000);
+        window.open(authUrl, `${platform}Auth`, `width=${width},height=${height},left=${left},top=${top}`);
     };
 
     return (
