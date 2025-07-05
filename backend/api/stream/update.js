@@ -60,6 +60,13 @@ const handler = async (req, res) => {
   const { title, category, tags, broadcasterId } = req.body;
   const results = {};
 
+  // If no broadcasterId is provided, we can't update Twitch.
+  // This prevents the API from failing silently.
+  if (!broadcasterId) {
+      // For now, we'll return an error if the primary target is missing data.
+      return res.status(400).json({ message: 'Missing required field in request body: broadcasterId' });
+  }
+
   // --- Twitch Update ---
   // Check for the necessary data. The token comes from the header, the ID from the body.
   if (token && broadcasterId) {
