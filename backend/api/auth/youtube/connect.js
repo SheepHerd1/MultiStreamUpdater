@@ -2,6 +2,13 @@ import { google } from 'googleapis';
 
 // This function will be hosted at /api/auth/youtube/connect
 export default function handler(req, res) {
+  // Pre-flight check for required environment variables
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.YOUTUBE_REDIRECT_URI) {
+    console.error("Missing Google OAuth environment variables.");
+    res.status(500).send("Server configuration error. Unable to connect to YouTube.");
+    return;
+  }
+
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
