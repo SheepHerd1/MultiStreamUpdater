@@ -2,7 +2,6 @@ import { google } from 'googleapis';
 
 export default async function handler(req, res) {
   // --- Manual CORS Preflight Handling ---
-  // This is a workaround for when vercel.json is not being applied correctly.
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
@@ -27,7 +26,7 @@ export default async function handler(req, res) {
   }
 
   const oauth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
-  oauth2client.setCredentials({ access_token: accessToken });
+  oauth2Client.setCredentials({ access_token: accessToken });
 
   const youtube = google.youtube({
     version: 'v3',
@@ -51,12 +50,12 @@ export default async function handler(req, res) {
     let response;
     if (updateType === 'broadcast') {
       response = await youtube.liveBroadcasts.update({
-        part: 'snippet',
+        part: 'snippet', // Correct: Only specify the part being updated.
         requestBody: requestBody,
       });
     } else if (updateType === 'stream') {
       response = await youtube.liveStreams.update({
-        part: 'snippet',
+        part: 'snippet', // Correct: Only specify the part being updated.
         requestBody: requestBody,
       });
     } else {
