@@ -4,6 +4,16 @@ import axios from 'axios';
 const { TWITCH_CLIENT_ID } = process.env;
 
 const handler = async (req, res) => {
+    // --- Manual CORS Preflight Handling ---
+    // This is a workaround for when vercel.json is not being applied correctly.
+    if (req.method === 'OPTIONS') {
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
+        res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,POST,PUT,DELETE');
+        res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+        return res.status(204).send('');
+    }
+
     // Defensive check for environment variables to prevent a crash
     if (!TWITCH_CLIENT_ID) {
         console.error("Function crash averted in info.js: Missing TWITCH_CLIENT_ID environment variable.");
