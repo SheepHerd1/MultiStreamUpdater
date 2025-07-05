@@ -1,17 +1,10 @@
 {
-  "name": "multi-stream-updater-backend",
+  "name": "multistream-backend",
   "version": "1.0.0",
-  "description": "Backend for multi-stream updater",
-  "main": "index.js",
-  "scripts": {
-    "start": "vercel dev"
-  },
+  "description": "Serverless functions for the Multi-Stream Updater",
+  "type": "module",
   "dependencies": {
-    "axios": "^1.4.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "googleapis": "^134.0.0",
-    "node-fetch": "^2.7.0"
+    "axios": "^1.6.8",
+    "googleapis": "^134.0.0"
   }
 }

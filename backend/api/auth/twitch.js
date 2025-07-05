@@ -9,6 +9,13 @@ export default function handler(req, res) {
         VITE_APP_VERCEL_URL // Your Vercel deployment URL
     } = process.env;
 
+    // Defensive check to ensure the function doesn't run with missing configuration.
+    if (!TWITCH_CLIENT_ID || !VITE_APP_VERCEL_URL) {
+        console.error('Function error in twitch.js: Missing TWITCH_CLIENT_ID or VITE_APP_VERCEL_URL environment variables.');
+        res.status(500).send('Server configuration error. Please contact the site administrator.');
+        return;
+    }
+
     // This is the full URL to your NEW callback function on Vercel
     const REDIRECT_URI = `${VITE_APP_VERCEL_URL}/api/auth/twitch-callback`;
     const TWITCH_SCOPES = 'channel:manage:broadcast openid user:read:broadcast';
