@@ -34,30 +34,39 @@ export default async function handler(req, res) {
   try {
     let broadcasts = [];
     try {
-      // First, try to find an active live broadcast
-      let response = await youtube.liveBroadcasts.list({
+      // Find all non-completed broadcasts to get the most relevant one
+      const response = await youtube.liveBroadcasts.list({
         part: 'id,snippet,contentDetails,status',
-        broadcastStatus: 'active',
+        broadcastStatus: 'all', // Get all broadcasts to avoid missing states like 'ready'
         mine: true,
-        maxResults: 1,
       });
 
-      broadcasts = response.data.items;
+      if (response.data.items && response.data.items.length > 0) {
+        // Filter out any streams that are already completed or revoked.
+        const nonCompleted = response.data.items.filter(
+          (b) => b.status.lifeCycleStatus !== 'complete' && b.status.lifeCycleStatus !== 'revoked'
+        );
 
-      // If no active stream is found, look for upcoming ones
-      if (!broadcasts || broadcasts.length === 0) {
-        response = await youtube.liveBroadcasts.list({
-          part: 'id,snippet,contentDetails,status',
-          broadcastStatus: 'upcoming',
-          mine: true,
-        });
-        
-        if (response.data.items && response.data.items.length > 0) {
-          // Sort upcoming streams to find the one scheduled soonest
-          const sortedUpcoming = response.data.items.sort((a, b) => 
-            new Date(a.snippet.scheduledStartTime) - new Date(b.snippet.scheduledStartTime)
-          );
-          broadcasts = [sortedUpcoming[0]]; // Take the soonest one
+        if (nonCompleted.length > 0) {
+          // Prioritize the most relevant stream. 'live' is most important, then 'ready', etc.
+          const statusPriority = {
+            live: 1,
+            ready: 2,
+            testing: 3,
+            created: 4,
+          };
+
+          nonCompleted.sort((a, b) => {
+            const priorityA = statusPriority[a.status.lifeCycleStatus] || 99;
+            const priorityB = statusPriority[b.status.lifeCycleStatus] || 99;
+            if (priorityA !== priorityB) {
+              return priorityA - priorityB;
+            }
+            // If priorities are the same, sort by scheduled start time (earliest first)
+            return new Date(a.snippet.scheduledStartTime) - new Date(b.snippet.scheduledStartTime);
+          });
+
+          broadcasts = [nonCompleted[0]]; // The most relevant broadcast is the first in the sorted list
         }
       }
     } catch (broadcastError) {
