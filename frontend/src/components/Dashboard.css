@@ -104,6 +104,10 @@
     object-fit: cover;
 }
 
+.category-result-item:hover span {
+    color: white;
+}
+
 /* --- Tag Input Styles --- */
 .tag-input-container {
     display: flex;

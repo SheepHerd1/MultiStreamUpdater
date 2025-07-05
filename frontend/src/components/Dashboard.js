@@ -21,8 +21,10 @@ function Dashboard({ auth, onLogout }) {
   const [description, setDescription] = useState('');
   const [youtubeStreamId, setYoutubeStreamId] = useState(null);
   const [youtubeUpdateType, setYoutubeUpdateType] = useState(null);
-  const [youtubeCategoryId, setYoutubeCategoryId] = useState('');
+  const [youtubeCategory, setYoutubeCategory] = useState({ id: '', name: '' });
+  const [youtubeCategoryQuery, setYoutubeCategoryQuery] = useState('');
   const [youtubeCategories, setYoutubeCategories] = useState([]);
+  const [youtubeCategoryResults, setYoutubeCategoryResults] = useState([]);
   const [notification, setNotification] = useState('');
 
   // Get auth details from the prop
@@ -96,7 +98,9 @@ function Dashboard({ auth, onLogout }) {
         setDescription(response.data.description || '');
         setYoutubeStreamId(response.data.id);
         setYoutubeUpdateType(response.data.updateType);
-        setYoutubeCategoryId(response.data.categoryId || '');
+        // Find the category name from the full list using the ID
+        const categoryName = youtubeCategories.find(c => c.id === response.data.categoryId)?.snippet?.title || '';
+        setYoutubeCategory({ id: response.data.categoryId || '', name: categoryName });
       } else if (response.data.message) {
         console.log('YouTube Info:', response.data.message);
       }
@@ -105,7 +109,7 @@ function Dashboard({ auth, onLogout }) {
       const errorMessage = err.response?.data?.error || 'Failed to fetch YouTube info.';
       setError(`YouTube Fetch Error: ${errorMessage}`);
     }
-  }, [youtubeAuth]);
+  }, [youtubeAuth, youtubeCategories]);
 
   // Fetch the list of YouTube categories when the component loads
   useEffect(() => {
@@ -159,6 +163,16 @@ function Dashboard({ auth, onLogout }) {
     const handler = setTimeout(() => searchTwitchCategories(twitchCategoryQuery), 300);
     return () => clearTimeout(handler);
   }, [twitchCategoryQuery, searchTwitchCategories]);
+
+  // Client-side search for YouTube categories
+  useEffect(() => {
+    if (!youtubeCategoryQuery) {
+      setYoutubeCategoryResults([]);
+      return;
+    }
+    const results = youtubeCategories.filter(cat => cat.snippet.title.toLowerCase().includes(youtubeCategoryQuery.toLowerCase()));
+    setYoutubeCategoryResults(results);
+  }, [youtubeCategoryQuery, youtubeCategories]);
 
   // Effect to handle auto-hiding the notification message
   useEffect(() => {
@@ -255,7 +269,7 @@ function Dashboard({ auth, onLogout }) {
           description,
           streamId: youtubeStreamId,
           updateType: youtubeUpdateType,
-          categoryId: youtubeCategoryId,
+          categoryId: youtubeCategory.id,
         },
         { headers: { 'Authorization': `Bearer ${youtubeAuth.token}`, 'Content-Type': 'application/json' } }
       );
@@ -351,12 +365,32 @@ function Dashboard({ auth, onLogout }) {
           </div>
           <div className="form-group">
             <label htmlFor="youtubeCategory">YouTube Category</label>
-            <select id="youtubeCategory" value={youtubeCategoryId} onChange={(e) => setYoutubeCategoryId(e.target.value)} disabled={!youtubeAuth}>
-              <option value="">-- Select a Category --</option>
-              {youtubeCategories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.snippet.title}</option>
-              ))}
-            </select>
+            <div className="category-search-container">
+              <input
+                id="youtubeCategory"
+                type="text"
+                value={youtubeCategoryQuery || youtubeCategory.name}
+                onChange={(e) => {
+                  setYoutubeCategory({ id: '', name: '' });
+                  setYoutubeCategoryQuery(e.target.value);
+                }}
+                placeholder="Search for a category..."
+                disabled={!youtubeAuth}
+              />
+              {youtubeCategoryResults.length > 0 && (
+                <div className="category-results">
+                  {youtubeCategoryResults.map(cat => (
+                    <div key={cat.id} className="category-result-item" onClick={() => {
+                      setYoutubeCategory({ id: cat.id, name: cat.snippet.title });
+                      setYoutubeCategoryQuery('');
+                      setYoutubeCategoryResults([]);
+                    }}>
+                      <span>{cat.snippet.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="form-group">
             <label htmlFor="tags">Twitch Tags</label>
