@@ -70,6 +70,8 @@ function Dashboard({ auth, onLogout }) {
 
   const fetchYouTubeStreamInfo = useCallback(async () => {
     if (!youtubeAuth) return;
+    // Reset status before fetching to provide immediate feedback
+    setYoutubeStatus('Fetching YouTube status...');
     try {
       const response = await api.get(`/api/youtube/stream/info`, {
         headers: { 'Authorization': `Bearer ${youtubeAuth.token}` },
@@ -91,7 +93,9 @@ function Dashboard({ auth, onLogout }) {
       }
     } catch (err) {
       console.error('Could not fetch YouTube info:', err);
-      throw new Error('Failed to fetch YouTube info.');
+      // Set a user-friendly error message in the status indicator
+      const errorMessage = err.response?.data?.error || 'Failed to fetch YouTube info.';
+      setYoutubeStatus(`Error: ${errorMessage}`);
     }
   }, [youtubeAuth]);
 
