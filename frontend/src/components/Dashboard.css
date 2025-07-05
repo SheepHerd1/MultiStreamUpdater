@@ -51,3 +51,18 @@
     background-color: #333;
     color: #ccc;
 }
+
+.notification {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.notification.success {
+    background-color: #28a745;
+    color: white;
+    border: 1px solid #1e7e34;
+}

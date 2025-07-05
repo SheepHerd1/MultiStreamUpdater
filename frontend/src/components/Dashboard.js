@@ -17,7 +17,7 @@ function Dashboard({ auth, onLogout }) {
   const [description, setDescription] = useState('');
   const [youtubeStreamId, setYoutubeStreamId] = useState(null);
   const [youtubeUpdateType, setYoutubeUpdateType] = useState(null);
-  const [youtubeStatus, setYoutubeStatus] = useState('');
+  const [notification, setNotification] = useState('');
 
   // Get auth details from the prop
   const twitchAuth = auth.twitch; // Twitch auth is managed by the parent
@@ -63,15 +63,14 @@ function Dashboard({ auth, onLogout }) {
       setTags((response.data.tags || []).join(', '));
     } catch (err) {
       console.error('Could not fetch Twitch info:', err);
-      // This error will be caught by the Promise.allSettled in fetchAllStreamInfo
-      throw new Error('Failed to fetch Twitch info.');
+      const errorMessage = err.response?.data?.error || 'Failed to fetch Twitch info.';
+      setError(`Twitch Fetch Error: ${errorMessage}`);
     }
   }, [twitchAuth]);
 
   const fetchYouTubeStreamInfo = useCallback(async () => {
     if (!youtubeAuth) return;
     // Reset status before fetching to provide immediate feedback
-    setYoutubeStatus('Fetching YouTube status...');
     try {
       const response = await api.get(`/api/youtube/stream/info`, {
         headers: { 'Authorization': `Bearer ${youtubeAuth.token}` },
@@ -82,20 +81,13 @@ function Dashboard({ auth, onLogout }) {
         setDescription(response.data.description || '');
         setYoutubeStreamId(response.data.id);
         setYoutubeUpdateType(response.data.updateType);
-        // Set a helpful status message for the user
-        if (response.data.updateType === 'broadcast') {
-          setYoutubeStatus(`Editing Scheduled/Live Stream: "${response.data.title}"`);
-        } else {
-          setYoutubeStatus('Editing Default Stream Settings');
-        }
       } else if (response.data.message) {
-        setYoutubeStatus(response.data.message);
+        console.log('YouTube Info:', response.data.message);
       }
     } catch (err) {
       console.error('Could not fetch YouTube info:', err);
-      // Set a user-friendly error message in the status indicator
       const errorMessage = err.response?.data?.error || 'Failed to fetch YouTube info.';
-      setYoutubeStatus(`Error: ${errorMessage}`);
+      setError(`YouTube Fetch Error: ${errorMessage}`);
     }
   }, [youtubeAuth]);
 
@@ -114,6 +106,16 @@ function Dashboard({ auth, onLogout }) {
   useEffect(() => {
     fetchAllStreamInfo();
   }, [fetchAllStreamInfo]);
+
+  // Effect to handle auto-hiding the notification message
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification('');
+      }, 5000); // Hide after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const handleYouTubeConnect = () => {
     const authUrl = `${api.defaults.baseURL}/api/auth/youtube/connect`;
@@ -198,8 +200,9 @@ function Dashboard({ auth, onLogout }) {
         throw new Error('One or more platforms failed to update. Check console.');
       }
       
-      alert('Stream(s) updated successfully!');
+      setNotification('Stream(s) updated successfully!');
       // After a successful update, re-fetch the latest stream info to update the UI
+      setError(''); // Clear any previous errors on success
       fetchAllStreamInfo();
     } catch (err) {
       console.error('Error updating stream(s):', err);
@@ -240,7 +243,6 @@ function Dashboard({ auth, onLogout }) {
           </div>
           <div className="form-group">
             <label htmlFor="description">YouTube Description</label>
-            {youtubeAuth && youtubeStatus && <p className="editor-status youtube">{youtubeStatus}</p>}
             <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="YouTube video description" disabled={!youtubeAuth} />
           </div>
           <div className="form-group">
@@ -252,6 +254,7 @@ function Dashboard({ auth, onLogout }) {
             <button type="button" onClick={fetchAllStreamInfo} disabled={isLoading}>Refresh All Info</button>
           </div>
         </form>
+        {notification && <div className="notification success">{notification}</div>}
         {error && <p className="error-message">{error}</p>}
       </div>
     </div>
