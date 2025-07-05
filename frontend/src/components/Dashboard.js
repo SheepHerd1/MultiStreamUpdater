@@ -134,6 +134,15 @@ function Dashboard({ auth, onLogout, setAuth }) {
     window.open(authUrl, 'youtubeAuth', windowFeatures);
   };
 
+  const handleTwitchConnect = () => {
+    const authUrl = `${api.defaults.baseURL}/api/auth/twitch/connect`;
+    const width = 500, height = 650;
+    const left = (window.screen.width / 2) - (width / 2);
+    const top = (window.screen.height / 2) - (height / 2);
+    const windowFeatures = `width=${width},height=${height},top=${top},left=${left}`;
+    window.open(authUrl, 'twitchAuth', windowFeatures);
+  };
+
   const handleTagInputChange = (e) => setTagInput(e.target.value);
 
   const handleTagInputKeyDown = (e) => {
@@ -207,6 +216,11 @@ function Dashboard({ auth, onLogout, setAuth }) {
       <div className="connected-platforms">
         <div className={`platform-status twitch ${twitchAuth ? 'connected' : ''}`}>
           Twitch {twitchAuth ? 'Connected' : 'Not Connected'}
+          {!twitchAuth && (
+            <button type="button" onClick={handleTwitchConnect} className="connect-btn twitch">
+              Connect
+            </button>
+          )}
         </div>
         <div className={`platform-status youtube ${youtubeAuth ? 'connected' : ''}`}>
           YouTube {youtubeAuth ? 'Connected' : 'Not Connected'}

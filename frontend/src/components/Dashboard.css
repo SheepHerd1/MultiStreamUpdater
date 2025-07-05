@@ -72,8 +72,7 @@
     opacity: 0.6;
 }
 
-.connect-btn.youtube {
-    background-color: #ff0000;
+.connect-btn {
     color: white;
     padding: 5px 10px;
     border: none;
@@ -82,6 +81,18 @@
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
+}
+
+.connect-btn.twitch {
+    background-color: #9147ff;
+}
+
+.connect-btn.twitch:hover {
+    background-color: #772ce8;
+}
+
+.connect-btn.youtube {
+    background-color: #ff0000;
 }
 
 .connect-btn.youtube:hover {
