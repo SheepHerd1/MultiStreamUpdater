@@ -20,11 +20,24 @@ async function handleUserInfo(req, res) {
 
 async function handleStreamInfo(req, res) {
   const { channel } = req.query;
+  const token = req.headers.authorization?.split(' ')[1]; // Get token from our frontend
+
   if (!channel) return res.status(400).json({ error: 'Channel parameter is required.' });
+  if (!token) return res.status(401).json({ error: 'Authorization token not provided.' }); // Require token
 
   try {
+    // This is the correct API endpoint for channel data
     const kickApiUrl = `https://kick.com/api/v2/channels/${channel}`;
-    const response = await axios.get(kickApiUrl, { headers: { 'Accept': 'application/json' } });
+    
+    // Add the Authorization header to the request to Kick's API to use the 'channel:read' scope
+    const response = await axios.get(kickApiUrl, { 
+        headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json' 
+        } 
+    });
+    
+    // The livestream object is only present if the user is live
     const livestreamData = response.data.livestream || {};
     res.status(200).json(livestreamData);
   } catch (error) {

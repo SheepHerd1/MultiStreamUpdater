@@ -28,8 +28,8 @@ function handler(req, res) {
   ]);
 
   // Scopes required for the application
-  // Corrected scope based on official documentation ('channel:write' instead of 'channel:update')
-  const scope = 'user:read channel:write';
+  // Adding 'channel:read' to view channel info like category and description.
+  const scope = 'user:read channel:read channel:write';
 
   const params = new URLSearchParams({
     client_id: KICK_CLIENT_ID,
