@@ -72,10 +72,17 @@ async function handleStreamUpdate(req, res) {
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
   const { channel, title, category } = req.body;
   if (!channel) return res.status(400).json({ error: 'Channel is required.' });
+  if (!title && !category) {
+    return res.status(400).json({ error: 'At least title or category must be provided for an update.' });
+  }
 
   try {
     const apiClient = createKickApiClient(token);
-    const payload = { session_title: title, category_name: category };
+    // Dynamically build the payload to only include fields that are being updated.
+    const payload = {};
+    if (title) payload.session_title = title;
+    if (category) payload.category_name = category;
+
     await apiClient.patch(`/channels/${channel}`, payload);
     res.status(200).json({ success: true, message: 'Kick stream updated successfully.' });
   } catch (error) {
@@ -94,17 +101,15 @@ async function handler(req, res) {
       case 'stream_info':
         return handleStreamInfo(req, res);
       default:
-        return res.status(400).json({ error: 'Invalid action' });
+        return res.status(400).json({ error: 'Invalid action for GET request' });
     }
   }
 
   if (req.method === 'POST') {
-    switch (action) {
-      case 'stream_update':
-        return handleStreamUpdate(req, res);
-      default:
-        return res.status(400).json({ error: 'Invalid action' });
+    if (action === 'stream_update') {
+      return handleStreamUpdate(req, res);
     }
+    return res.status(400).json({ error: 'Invalid action for POST request' });
   }
 
   return res.status(405).json({ error: 'Method Not Allowed' });
