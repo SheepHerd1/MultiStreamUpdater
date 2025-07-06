@@ -17,8 +17,8 @@ function handler(req, res) {
     scope: scope,
   });
 
-  // NOTE: The authorization URL should be confirmed from the official Kick API documentation.
-  const kickAuthUrl = `https://kick.com/api/v2/oauth/authorize?${params.toString()}`;
+  // Correct authorization URL for user-facing consent screen.
+  const kickAuthUrl = `https://kick.com/oauth2/authorize?${params.toString()}`;
 
   res.redirect(302, kickAuthUrl);
 }
