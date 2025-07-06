@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './Login.css';
 import TwitchIcon from './icons/TwitchIcon';
 import YouTubeIcon from './icons/YouTubeIcon';
+import KickIcon from './icons/KickIcon';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://multi-stream-updater.vercel.app';
 
@@ -52,8 +53,11 @@ function Login() {
                         <YouTubeIcon className="platform-icon" />
                         {authenticating === 'youtube' ? 'Authenticating...' : 'Connect with YouTube'}
                     </button>
+                    <button className="platform-btn kick-btn" onClick={() => handleLogin('kick')} disabled={!!authenticating}>
+                        <KickIcon className="platform-icon" />
+                        {authenticating === 'kick' ? 'Authenticating...' : 'Connect with Kick'}
+                    </button>
                     <div className="coming-soon">
-                        <button className="platform-btn" disabled>Connect with Kick (Coming Soon)</button>
                         <button className="platform-btn" disabled>Connect with Trovo (Coming Soon)</button>
                     </div>
                 </div>
