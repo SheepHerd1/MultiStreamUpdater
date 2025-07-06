@@ -1,34 +1,52 @@
 import axios from 'axios';
+import { withCors } from '../_utils/cors';
+import { validateEnv } from '../_utils/env';
 
+// Ensure required environment variables are set at initialization.
+validateEnv(['TWITCH_CLIENT_ID', 'TWITCH_CLIENT_SECRET']);
 const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = process.env;
 
-let appAccessToken = null;
+// A more robust in-memory cache for the app access token.
+// In a serverless environment, this cache will persist for the lifetime of the function instance.
+const tokenCache = {
+  token: null,
+  expiresAt: 0, // Expiration time in milliseconds
+};
 
 async function getAppAccessToken() {
-  // If we already have a valid token, reuse it.
-  // In a real-world, high-traffic app, you'd also check for expiration.
-  if (appAccessToken) return appAccessToken;
+  const now = Date.now();
+  // Check if we have a token and it's not expired (with a 60-second buffer).
+  if (tokenCache.token && now < tokenCache.expiresAt - 60000) {
+    return tokenCache.token;
+  }
 
+  // If the token is missing or expired, fetch a new one.
   try {
-    const response = await axios.post(`https://id.twitch.tv/oauth2/token?client_id=${TWITCH_CLIENT_ID}&client_secret=${TWITCH_CLIENT_SECRET}&grant_type=client_credentials`);
-    appAccessToken = response.data.access_token;
-    return appAccessToken;
+    const response = await axios.post(`https://id.twitch.tv/oauth2/token`, null, {
+      params: {
+        client_id: TWITCH_CLIENT_ID,
+        client_secret: TWITCH_CLIENT_SECRET,
+        grant_type: 'client_credentials',
+      },
+    });
+    
+    const { access_token, expires_in } = response.data;
+    
+    // Update the cache
+    tokenCache.token = access_token;
+    tokenCache.expiresAt = now + (expires_in * 1000);
+
+    return access_token;
   } catch (error) {
     console.error('Error getting Twitch App Access Token:', error.response?.data);
+    // Clear the cache on failure to force a retry on the next call.
+    tokenCache.token = null;
+    tokenCache.expiresAt = 0;
     throw new Error('Could not authenticate with Twitch.');
   }
 }
 
-export default async function handler(req, res) {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', 'https://sheepherd1.github.io');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    return res.status(204).send('');
-  }
-
+async function handler(req, res) {
   const { query } = req.query;
   if (!query) {
     return res.status(400).json({ error: 'Query parameter is required.' });
@@ -45,3 +63,5 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'Failed to search Twitch categories.' });
   }
 }
+
+export default withCors(handler);

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import './Login.css';
+import TwitchIcon from './icons/TwitchIcon';
+import YouTubeIcon from './icons/YouTubeIcon';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://multi-stream-updater.vercel.app';
 
@@ -43,9 +45,11 @@ function Login() {
                 <p>Connect your accounts to get started.</p>
                 <div className="platform-buttons">
                     <button className="platform-btn twitch-btn" onClick={() => handleLogin('twitch')} disabled={!!authenticating}>
+                        <TwitchIcon className="platform-icon" />
                         {authenticating === 'twitch' ? 'Authenticating...' : 'Connect with Twitch'}
                     </button>
                     <button className="platform-btn youtube-btn" onClick={() => handleLogin('youtube')} disabled={!!authenticating}>
+                        <YouTubeIcon className="platform-icon" />
                         {authenticating === 'youtube' ? 'Authenticating...' : 'Connect with YouTube'}
                     </button>
                     <div className="coming-soon">

@@ -1,93 +1,50 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api'; // Import our configured axios instance
+import { useTokenRefresh } from '../context/TokenRefreshContext';
 import './Dashboard.css';
+import { useTwitchStream } from '../hooks/useTwitchStream';
+import { useYouTubeStream } from '../hooks/useYouTubeStream';
 import PlatformCard from './PlatformCard';
 import TwitchIcon from './icons/TwitchIcon';
 import YouTubeIcon from './icons/YouTubeIcon';
+import Spinner from './icons/Spinner';
 
 function Dashboard({ auth, onLogout, setAuth }) {
   // Shared state
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // Twitch-specific state
-  const [twitchCategory, setTwitchCategory] = useState('');
-  const [twitchCategoryQuery, setTwitchCategoryQuery] = useState('');
-  const [twitchCategoryResults, setTwitchCategoryResults] = useState([]);
-  const [isTwitchCategoryLoading, setIsTwitchCategoryLoading] = useState(false);
-  const [tags, setTags] = useState([]);
-  const [tagInput, setTagInput] = useState('');
-
-  // YouTube-specific state
-  const [description, setDescription] = useState('');
-  const [youtubeStreamId, setYoutubeStreamId] = useState(null);
-  const [youtubeUpdateType, setYoutubeUpdateType] = useState(null);
-  const [youtubeCategoryId, setYoutubeCategoryId] = useState('');
-  const [youtubeCategories, setYoutubeCategories] = useState([]);
+  const [error, setError] = useState({}); // Use an object for platform-specific errors
   const [notification, setNotification] = useState('');
 
   // Get auth details from the prop
   const { twitch: twitchAuth, youtube: youtubeAuth } = auth;
 
-  // --- Data Fetching ---
-  const fetchTwitchStreamInfo = useCallback(async () => {
-    if (!twitchAuth) return;
-    try {
-      const response = await api.get(`/api/stream/info`, {
-        params: { broadcaster_id: twitchAuth.userId },
-        headers: { 'Authorization': `Bearer ${twitchAuth.token}` },
-      });
-      setTitle(currentTitle => currentTitle || response.data.title || '');
-      setTwitchCategory(response.data.game_name || '');
-      setTags(response.data.tags || []);
-    } catch (err) {
-      console.error('Could not fetch Twitch info:', err);
-      const errorMessage = err.response?.data?.error || 'Failed to fetch Twitch info.';
-      setError(prev => prev ? `${prev}\nTwitch: ${errorMessage}` : `Twitch: ${errorMessage}`);
-    }
-  }, [twitchAuth]);
+  // --- Custom Hooks for Platform Logic ---
+  const {
+    twitchCategory, setTwitchCategory, twitchCategoryQuery, setTwitchCategoryQuery,
+    twitchCategoryResults, setTwitchCategoryResults, isTwitchCategoryLoading,
+    tags, tagInput, handleTagInputChange, handleTagInputKeyDown, removeTag,
+    fetchTwitchStreamInfo
+  } = useTwitchStream(twitchAuth, setTitle, setError);
 
-  const fetchYouTubeStreamInfo = useCallback(async () => {
-    if (!youtubeAuth) return;
-    try {
-      const response = await api.get(`/api/youtube/stream/info`, {
-        headers: { 'Authorization': `Bearer ${youtubeAuth.token}` },
-      });
-      if (response.data.id) {
-        setTitle(currentTitle => currentTitle || response.data.title || '');
-        setDescription(response.data.description || '');
-        setYoutubeStreamId(response.data.id);
-        setYoutubeUpdateType(response.data.updateType);
-        setYoutubeCategoryId(response.data.categoryId || '');
-      } else if (response.data.message) {
-        console.log('YouTube Info:', response.data.message);
-      }
-    } catch (err) {
-      console.error('Could not fetch YouTube info:', err);
-      const errorMessage = err.response?.data?.error || 'Failed to fetch YouTube info.';
-      setError(prev => prev ? `${prev}\nYouTube: ${errorMessage}` : `YouTube: ${errorMessage}`);
-    }
-  }, [youtubeAuth]);
+  const {
+    description, setDescription, youtubeStreamId, youtubeUpdateType,
+    youtubeCategoryId, setYoutubeCategoryId, youtubeCategories,
+    fetchYouTubeStreamInfo
+  } = useYouTubeStream(youtubeAuth, setTitle, setError);
 
-  useEffect(() => {
-    const fetchYoutubeCategories = async () => {
-      try {
-        const response = await api.get('/api/youtube/categories');
-        const assignableCategories = response.data.filter(cat => cat.snippet?.assignable);
-        setYoutubeCategories(assignableCategories);
-      } catch (error) {
-        console.error("Could not fetch YouTube categories", error);
-      }
-    };
-    fetchYoutubeCategories();
-  }, []);
+  // Get token refreshing state from context
+  const { isRefreshing } = useTokenRefresh();
 
   const fetchAllStreamInfo = useCallback(async () => {
     setIsLoading(true);
-    setError('');
+    setError({}); // Clear previous errors
     try {
-      await Promise.allSettled([fetchTwitchStreamInfo(), fetchYouTubeStreamInfo()]);
+      // The fetch functions are now dependencies of this callback
+      await Promise.allSettled([
+        fetchTwitchStreamInfo(),
+        fetchYouTubeStreamInfo()
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -96,28 +53,6 @@ function Dashboard({ auth, onLogout, setAuth }) {
   useEffect(() => {
     fetchAllStreamInfo();
   }, [fetchAllStreamInfo]);
-
-  // Debounced search for Twitch categories
-  const searchTwitchCategories = useCallback(async (query) => {
-    if (!query) {
-      setTwitchCategoryResults([]);
-      return;
-    }
-    setIsTwitchCategoryLoading(true);
-    try {
-      const response = await api.get(`/api/twitch/categories?query=${query}`);
-      setTwitchCategoryResults(response.data);
-    } catch (error) {
-      console.error('Error searching categories:', error);
-    } finally {
-      setIsTwitchCategoryLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const handler = setTimeout(() => searchTwitchCategories(twitchCategoryQuery), 300);
-    return () => clearTimeout(handler);
-  }, [twitchCategoryQuery, searchTwitchCategories]);
 
   useEffect(() => {
     if (notification) {
@@ -144,67 +79,75 @@ function Dashboard({ auth, onLogout, setAuth }) {
     window.open(authUrl, 'twitchAuth', windowFeatures);
   };
 
-  const handleTagInputChange = (e) => setTagInput(e.target.value);
-
-  const handleTagInputKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      const newTag = tagInput.trim();
-      if (newTag && !tags.includes(newTag) && tags.length < 10) {
-        setTags([...tags, newTag]);
-        setTagInput('');
-      }
-    } else if (e.key === 'Backspace' && !tagInput) {
-      e.preventDefault();
-      setTags(tags.slice(0, -1));
-    }
-  };
-
-  const removeTag = (tagToRemove) => setTags(tags.filter(tag => tag !== tagToRemove));
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError({}); // Clear previous errors
     setNotification('');
 
-    const updatePromises = [];
+    const updateOperations = [];
 
     if (twitchAuth) {
-      updatePromises.push(api.post(`/api/stream/update`, {
-        title, category: twitchCategory, tags, broadcasterId: twitchAuth.userId,
-      }, { headers: { 'Authorization': `Bearer ${twitchAuth.token}` } }));
+      updateOperations.push({
+        platform: 'twitch',
+        promise: api.post(`/api/stream/update`, {
+          title, category: twitchCategory, tags, broadcasterId: twitchAuth.userId,
+        }, { headers: { 'Authorization': `Bearer ${twitchAuth.token}` } })
+      });
     }
 
     if (youtubeAuth && youtubeStreamId) {
-      updatePromises.push(api.post(`/api/youtube/stream/update`, {
-        title, description, streamId: youtubeStreamId, updateType: youtubeUpdateType, categoryId: youtubeCategoryId,
-      }, { headers: { 'Authorization': `Bearer ${youtubeAuth.token}` } }));
+      updateOperations.push({
+        platform: 'youtube',
+        promise: api.post(`/api/youtube/stream/update`, {
+          title, description, streamId: youtubeStreamId, updateType: youtubeUpdateType, categoryId: youtubeCategoryId,
+        }, { headers: { 'Authorization': `Bearer ${youtubeAuth.token}` } })
+      });
     }
 
-    if (updatePromises.length === 0) {
-      setError("No platforms connected to update.");
+    if (updateOperations.length === 0) {
+      setError({ general: "No platforms connected to update." });
       setIsLoading(false);
       return;
     }
 
     try {
-      const results = await Promise.allSettled(updatePromises);
-      const failedUpdates = results.filter(r => r.status === 'rejected');
-      if (failedUpdates.length > 0) {
-        failedUpdates.forEach(failure => console.error('An update failed:', failure.reason));
-        throw new Error('One or more platforms failed to update. Check console.');
+      const results = await Promise.allSettled(updateOperations.map(op => op.promise));
+      
+      const newErrors = {};
+      let hasFailures = false;
+
+      results.forEach((result, index) => {
+        const platform = updateOperations[index].platform;
+        if (result.status === 'rejected') {
+          hasFailures = true;
+          const reason = result.reason;
+          const errorMessage = reason.response?.data?.error || `An unknown error occurred on ${platform}.`;
+          console.error(`Update failed for ${platform}:`, reason);
+          newErrors[platform] = errorMessage;
+        }
+      });
+
+      setError(newErrors);
+
+      if (!hasFailures) {
+        setNotification('Stream(s) updated successfully!');
+        fetchAllStreamInfo(); // Refresh data on full success
       }
-      setNotification('Stream(s) updated successfully!');
-      setError('');
-      fetchAllStreamInfo();
     } catch (err) {
-      console.error('Error updating stream(s):', err);
-      setError(err.message || 'Failed to update stream(s). Please check the console.');
+      console.error('Error during the update submission process:', err);
+      setError({ general: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const errorMessages = Object.entries(error)
+    .map(([platform, message]) => {
+      if (platform === 'general') return message;
+      return `${platform.charAt(0).toUpperCase() + platform.slice(1)}: ${message}`;
+    })
+    .join('\n');
 
   return (
     <div className="dashboard">
@@ -217,7 +160,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
       <div className="connected-platforms">
         <div className={`platform-status twitch ${twitchAuth ? 'connected' : ''}`}>
           <TwitchIcon className="platform-icon-status" />
-          Twitch {twitchAuth ? 'Connected' : 'Not Connected'}
+          Twitch {twitchAuth ? 'Connected' : 'Not Connected'} {isRefreshing.twitch && <Spinner />}
           {!twitchAuth && (
             <button type="button" onClick={handleTwitchConnect} className="connect-btn twitch">
               Connect
@@ -226,7 +169,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
         </div>
         <div className={`platform-status youtube ${youtubeAuth ? 'connected' : ''}`}>
           <YouTubeIcon className="platform-icon-status" />
-          YouTube {youtubeAuth ? 'Connected' : 'Not Connected'}
+          YouTube {youtubeAuth ? 'Connected' : 'Not Connected'} {isRefreshing.youtube && <Spinner />}
           {!youtubeAuth && (
             <button type="button" onClick={handleYouTubeConnect} className="connect-btn youtube">
               Connect
@@ -322,7 +265,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
       </form>
       
       {notification && <div className="notification success">{notification}</div>}
-      {error && <div className="notification error">{error}</div>}
+      {errorMessages && <div className="notification error">{errorMessages}</div>}
     </div>
   );
 }

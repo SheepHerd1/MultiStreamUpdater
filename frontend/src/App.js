@@ -1,108 +1,105 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import jwtDecode from 'jwt-decode';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import api from './api'; // Import api to get the base URL
+
+// A helper to get the initial auth state from localStorage
+const getInitialAuth = () => {
+  try {
+    const storedAuth = localStorage.getItem('auth');
+    if (storedAuth) {
+      // Basic validation to ensure it's a plausible auth object
+      const auth = JSON.parse(storedAuth);
+      if (auth && (auth.twitch || auth.youtube)) {
+        return auth;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to parse auth from localStorage", error);
+    localStorage.removeItem('auth'); // Clear corrupted item
+  }
+  return { twitch: null, youtube: null };
+};
+
 
 function App() {
-  const [auth, setAuth] = useState({ twitch: null, youtube: null });
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [auth, setAuth] = useState(getInitialAuth);
+  const [isAuthLoading, setIsAuthLoading] = useState(false); // Can be false, initial check is synchronous
 
-  const handleLogout = () => {
-    // Clear the auth state in React
+  const handleLogout = useCallback(() => {
     setAuth({ twitch: null, youtube: null });
-    // Remove the persisted session from the browser's storage
-    localStorage.removeItem('twitchAuth');
-    localStorage.removeItem('yt_access_token');
-    localStorage.removeItem('yt_refresh_token');
-  };
+    localStorage.removeItem('auth');
+  }, []);
+
+  // This function will be our single source for updating auth state and localStorage
+  const updateAuth = useCallback((newAuthData) => {
+    setAuth(newAuthData);
+    localStorage.setItem('auth', JSON.stringify(newAuthData));
+  }, []);
+
 
   useEffect(() => {
+    // This listener handles the successful authentication from the popup window
     const handleAuthMessage = (event) => {
-      // It's good practice to check the origin, but for now we'll focus on the message type.
-      // You can add an origin check later if needed: if (event.origin !== 'YOUR_VERCEL_URL') return;
+      // It's good practice to check the origin in a production app
+      // if (event.origin !== 'YOUR_VERCEL_URL') return;
 
-      if (event.data.type === 'twitch-auth-success' && event.data.token && event.data.id_token && event.data.refreshToken) {
+      const currentAuth = getInitialAuth();
+      let newAuthData = { ...currentAuth };
+
+      if (event.data.type === 'twitch-auth-success' && event.data.token && event.data.id_token) {
         try {
           const decoded = jwtDecode(event.data.id_token);
-          const twitchAuth = {
+          newAuthData.twitch = {
             token: event.data.token,
             userId: decoded.sub,
             userName: decoded.preferred_username || 'user',
-            refreshToken: event.data.refreshToken, // Store the refresh token
+            refreshToken: event.data.refreshToken,
           };
-          // Save the full session to localStorage
-          localStorage.setItem('twitchAuth', JSON.stringify(twitchAuth));
-          // Update the state to show the dashboard
-          setAuth(prevAuth => ({ ...prevAuth, twitch: twitchAuth }));
+          updateAuth(newAuthData);
         } catch (e) {
           console.error("Failed to process Twitch token from popup:", e);
         }
       } else if (event.data.type === 'youtube-auth-success' && event.data.accessToken) {
         try {
-          const youtubeAuth = {
+          newAuthData.youtube = {
             token: event.data.accessToken,
             refreshToken: event.data.refreshToken,
           };
-          localStorage.setItem('yt_access_token', youtubeAuth.token);
-          if (youtubeAuth.refreshToken) {
-            localStorage.setItem('yt_refresh_token', youtubeAuth.refreshToken);
-          }
-          setAuth(prevAuth => ({ ...prevAuth, youtube: youtubeAuth }));
+          updateAuth(newAuthData);
         } catch (e) {
           console.error("Failed to process YouTube token from popup:", e);
         }
       }
     };
 
+    // This listener handles auth updates from the API interceptor (token refresh)
+    const handleAuthUpdateFromInterceptor = (event) => {
+      if (event.detail) {
+        setAuth(event.detail);
+      }
+    };
+
+    // This listener handles auth updates from other tabs
+    const handleStorageChange = (event) => {
+      if (event.key === 'auth') {
+        setAuth(getInitialAuth());
+      }
+    };
+
     window.addEventListener('message', handleAuthMessage);
+    window.addEventListener('authUpdated', handleAuthUpdateFromInterceptor);
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
       window.removeEventListener('message', handleAuthMessage);
+      window.removeEventListener('authUpdated', handleAuthUpdateFromInterceptor);
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, []); // Empty dependency array ensures this runs only once.
-  
-  // Effect to initialize auth state from all sources on mount
-  useEffect(() => {
-    const authState = { twitch: null, youtube: null };
-
-    // 1. Check for Twitch auth in localStorage
-    const storedTwitchAuth = localStorage.getItem('twitchAuth');
-    if (storedTwitchAuth) {
-      try {
-        authState.twitch = JSON.parse(storedTwitchAuth);
-      } catch (e) {
-        console.error("Failed to parse stored Twitch auth:", e);
-        localStorage.removeItem('twitchAuth');
-      }
-    }
-
-    // 2. Check for YouTube auth in localStorage
-    const accessToken = localStorage.getItem('yt_access_token');
-    if (accessToken) {
-      authState.youtube = { token: accessToken, refreshToken: localStorage.getItem('yt_refresh_token') };
-    }
-
-    setAuth(authState);
-    setIsAuthLoading(false);
-  }, []);
-
-  // Effect to sync auth state across tabs
-  useEffect(() => {
-    const handleStorageChange = (event) => {
-      if (event.key === 'yt_access_token') {
-        setAuth(prev => ({ ...prev, youtube: { ...prev.youtube, token: event.newValue }}));
-      }
-      if (event.key === 'twitchAuth') {
-        setAuth(prev => ({ ...prev, twitch: event.newValue ? JSON.parse(event.newValue) : null }));
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [updateAuth]);
 
   if (isAuthLoading) {
-    return <div>Loading...</div>; // Or a proper spinner component
+    return <div>Loading...</div>;
   }
 
   return (
