@@ -20,6 +20,8 @@ const createKickApiClient = (token) => {
       'Accept': 'application/json',
       'User-Agent': 'MultiStreamUpdater/1.0.0',
     },
+    // Prevent axios from following redirects, so we can catch auth failures that redirect to the homepage.
+    maxRedirects: 0,
   });
 };
 
