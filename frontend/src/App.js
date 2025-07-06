@@ -76,15 +76,19 @@ function App() {
           // Immediately after getting the token, fetch user info from our backend
           api.get('/api/kick?action=user_info', {
             headers: { 'Authorization': `Bearer ${event.data.accessToken}` }
-          }).then(userInfoResponse => {
-            newAuthData.kick = {
-              token: event.data.accessToken,
-              refreshToken: event.data.refreshToken,
-              userId: userInfoResponse.data.id,
-              userName: userInfoResponse.data.username,
-            };
-            updateAuth(newAuthData);
-          });
+          })
+            .then(userInfoResponse => {
+              newAuthData.kick = {
+                token: event.data.accessToken,
+                refreshToken: event.data.refreshToken,
+                userId: userInfoResponse.data.id,
+                userName: userInfoResponse.data.username,
+              };
+              updateAuth(newAuthData);
+            })
+            .catch(err => {
+              console.error("Failed to fetch Kick user info after auth:", err);
+            });
         } catch (e) {
           console.error("Failed to process Kick token from popup:", e);
         }
