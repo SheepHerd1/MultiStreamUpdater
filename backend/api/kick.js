@@ -1,83 +1,85 @@
 import axios from 'axios';
 import { withCors } from './_utils/cors.js';
 
-// The official Kick API is hosted at kick.com/api, not on a separate subdomain.
+// The Kick API is hosted at kick.com/api, not a separate subdomain.
 // This is confirmed by server responses (404 on api.kick.com vs 401 on kick.com/api).
 const KICK_API_BASE_URL = 'https://kick.com/api/v2';
 
+// --- Reusable API Client & Error Handler ---
+
+/**
+ * Creates a pre-configured Axios instance for making requests to the Kick API.
+ * @param {string} token The user's OAuth Bearer token.
+ * @returns A configured Axios instance.
+ */
+const createKickApiClient = (token) => {
+  return axios.create({
+    baseURL: KICK_API_BASE_URL,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+      'User-Agent': 'MultiStreamUpdater/1.0.0',
+    },
+  });
+};
+
+/**
+ * Centralized error handler for API requests.
+ * @param {object} res The Express response object.
+ * @param {Error} error The error caught from the API call.
+ * @param {string} context A descriptive string for the action that failed.
+ */
+const handleApiError = (res, error, context) => {
+  console.error(`Error ${context}:`, error.response?.data || error.message);
+  const status = error.response?.status || 500;
+  const message = error.response?.data?.message || `Failed to ${context}.`;
+  res.status(status).json({ error: message });
+};
+
 // --- Route Handlers ---
+
 async function handleUserInfo(req, res) {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
 
   try {
-    const kickApiUrl = `${KICK_API_BASE_URL}/user`;
-    const response = await axios.get(kickApiUrl, {
-      headers: { 
-        'Authorization': `Bearer ${token}`, 
-        'Accept': 'application/json',
-        'User-Agent': 'MultiStreamUpdater/1.0.0'
-      },
-    });
+    const apiClient = createKickApiClient(token);
+    const response = await apiClient.get('/user');
     res.status(200).json(response.data);
   } catch (error) {
-    console.error('Error fetching Kick user info:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({ error: 'Failed to fetch user info from Kick.' });
+    handleApiError(res, error, 'fetch user info from Kick');
   }
 }
 
 async function handleStreamInfo(req, res) {
   const { channel } = req.query;
   const token = req.headers.authorization?.split(' ')[1];
-
   if (!channel) return res.status(400).json({ error: 'Channel parameter is required.' });
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
 
   try {
-    const kickApiUrl = `${KICK_API_BASE_URL}/channels/${channel}`;
-    
-    const response = await axios.get(kickApiUrl, {
-        headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-            'User-Agent': 'MultiStreamUpdater/1.0.0'
-        } 
-    });
-    
+    const apiClient = createKickApiClient(token);
+    const response = await apiClient.get(`/channels/${channel}`);
     const livestreamData = response.data.livestream || {};
     res.status(200).json(livestreamData);
   } catch (error) {
-    console.error('Error fetching Kick channel info:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({ error: 'Failed to fetch channel info from Kick.' });
+    handleApiError(res, error, 'fetch channel info from Kick');
   }
 }
 
 async function handleStreamUpdate(req, res) {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
-
   const { channel, title, category } = req.body;
-  if (!channel || (!title && !category)) {
-    return res.status(400).json({ error: 'Channel and at least title or category are required.' });
-  }
+  if (!channel) return res.status(400).json({ error: 'Channel is required.' });
 
   try {
-    const kickApiUrl = `${KICK_API_BASE_URL}/channels/${channel}`;
+    const apiClient = createKickApiClient(token);
     const payload = { session_title: title, category_name: category };
-    await axios.patch(kickApiUrl, payload, {
-      headers: { 
-        'Authorization': `Bearer ${token}`, 
-        'Content-Type': 'application/json', 
-        'Accept': 'application/json',
-        'User-Agent': 'MultiStreamUpdater/1.0.0'
-      },
-    });
+    await apiClient.patch(`/channels/${channel}`, payload);
     res.status(200).json({ success: true, message: 'Kick stream updated successfully.' });
-  } catch (error)
-  {
-    console.error('Error updating Kick stream info:', error.response?.data || error.message);
-    const errorMessage = error.response?.data?.message || 'Failed to update Kick stream info.';
-    res.status(error.response?.status || 500).json({ error: errorMessage });
+  } catch (error) {
+    handleApiError(res, error, 'update Kick stream info');
   }
 }
 
