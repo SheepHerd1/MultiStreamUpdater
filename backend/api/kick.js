@@ -9,6 +9,7 @@ async function handleUserInfo(req, res) {
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
 
   try {
+    // Using a more standard endpoint for fetching the authenticated user's info.
     const kickApiUrl = `${KICK_API_BASE_URL}/user`;
     const response = await axios.get(kickApiUrl, {
       headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },

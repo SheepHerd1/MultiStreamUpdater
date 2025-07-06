@@ -17,7 +17,7 @@ async function handler(req, res) {
   const { KICK_CLIENT_ID, KICK_CLIENT_SECRET } = process.env;
 
   try {
-    // Correct token endpoint URL from Kick's documentation
+    // Correct token endpoint URL from Kick's documentation for all auth actions
     const tokenUrl = 'https://id.kick.com/oauth/token';
     
     const response = await axios.post(tokenUrl, new URLSearchParams({
