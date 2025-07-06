@@ -13,7 +13,7 @@ const KICK_API_BASE_URL = 'https://kick.com/api/v2';
  * @returns A configured Axios instance.
  */
 const createKickApiClient = (token) => {
-  return axios.create({
+  const client = axios.create({
     baseURL: KICK_API_BASE_URL,
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -22,7 +22,28 @@ const createKickApiClient = (token) => {
     },
     // Prevent axios from following redirects, so we can catch auth failures that redirect to the homepage.
     maxRedirects: 0,
+    // We must also validate the response, because Kick's API can return a 200 OK status
+    // with an HTML page on auth failure instead of a proper 401 error.
+    validateStatus: (status) => status >= 200 && status < 300,
   });
+
+  // Use an interceptor to ensure the response is JSON. If not, reject the promise.
+  client.interceptors.response.use(
+    (response) => {
+      const contentType = response.headers['content-type'];
+      if (contentType && contentType.includes('application/json')) {
+        return response; // Response is valid JSON, continue.
+      }
+      // If not JSON, it's an error. This triggers the .catch() in our route handlers.
+      return Promise.reject(new Error('Authentication failed: Kick API returned a non-JSON response.'));
+    },
+    (error) => {
+      // Pass through any other network or status code errors.
+      return Promise.reject(error);
+    }
+  );
+
+  return client;
 };
 
 /**
