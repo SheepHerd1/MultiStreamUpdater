@@ -1,13 +1,15 @@
 import axios from 'axios';
 import { withCors } from './_utils/cors.js';
 
+const KICK_API_BASE_URL = 'https://api.kick.com/api/v2';
+
 // --- Route Handlers ---
 async function handleUserInfo(req, res) {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
 
   try {
-    const kickApiUrl = 'https://kick.com/api/v2/user';
+    const kickApiUrl = `${KICK_API_BASE_URL}/user`;
     const response = await axios.get(kickApiUrl, {
       headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
     });
@@ -26,10 +28,8 @@ async function handleStreamInfo(req, res) {
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' }); // Require token
 
   try {
-    // This is the correct API endpoint for channel data
-    const kickApiUrl = `https://kick.com/api/v2/channels/${channel}`;
+    const kickApiUrl = `${KICK_API_BASE_URL}/channels/${channel}`;
     
-    // Add the Authorization header to the request to Kick's API to use the 'channel:read' scope
     const response = await axios.get(kickApiUrl, { 
         headers: { 
             'Authorization': `Bearer ${token}`,
@@ -37,7 +37,6 @@ async function handleStreamInfo(req, res) {
         } 
     });
     
-    // The livestream object is only present if the user is live
     const livestreamData = response.data.livestream || {};
     res.status(200).json(livestreamData);
   } catch (error) {
@@ -56,7 +55,7 @@ async function handleStreamUpdate(req, res) {
   }
 
   try {
-    const kickApiUrl = `https://kick.com/api/v2/channels/${channel}`;
+    const kickApiUrl = `${KICK_API_BASE_URL}/channels/${channel}`;
     const payload = { session_title: title, category_name: category };
     await axios.patch(kickApiUrl, payload, {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
