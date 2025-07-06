@@ -16,9 +16,15 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
         headers: { 'Authorization': `Bearer ${kickAuth.token}` },
       });
 
-      const channelName = userInfoResponse.data?.slug;
+      // The user object from Kick should contain a 'slug' which is the channel name.
+      // We'll also check for 'username' as a fallback and log the object for debugging.
+      const userData = userInfoResponse.data;
+      console.log('Received Kick User Info for debugging:', userData);
+
+      const channelName = userData?.slug || userData?.username;
       if (!channelName) {
-        throw new Error('Could not determine Kick channel name from user info.');
+        // Throw a more informative error if we can't find the channel name.
+        throw new Error('Could not determine Kick channel name from user info object. Check the console log above for details.');
       }
 
       // Step 2: Use the retrieved channel name to fetch the stream info.
@@ -33,7 +39,7 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
       }
     } catch (err) {
       console.error('Could not fetch Kick info:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'Failed to fetch Kick info.';
+      const errorMessage = err.response?.data?.error || err.message || 'An unknown error occurred while fetching Kick info.';
       setError(prev => ({ ...prev, kick: errorMessage }));
     }
   }, [kickAuth?.token, setTitle, setError]);
