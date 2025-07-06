@@ -28,7 +28,8 @@ function handler(req, res) {
   ]);
 
   // Scopes required for the application
-  const scope = 'user:read channel:update';
+  // Corrected scope based on official documentation ('channel:write' instead of 'channel:update')
+  const scope = 'user:read channel:write';
 
   const params = new URLSearchParams({
     client_id: KICK_CLIENT_ID,
@@ -42,6 +43,9 @@ function handler(req, res) {
 
   // Correct authorization URL from Kick's documentation
   const kickAuthUrl = `https://id.kick.com/oauth/authorize?${params.toString()}`;
+
+  // Log the generated URL for debugging purposes in Vercel logs.
+  console.log('Redirecting to Kick auth URL:', kickAuthUrl);
 
   res.redirect(302, kickAuthUrl);
 }
