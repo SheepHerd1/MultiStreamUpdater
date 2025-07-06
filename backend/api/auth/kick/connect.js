@@ -7,9 +7,8 @@ function handler(req, res) {
   const { KICK_CLIENT_ID, NEXT_PUBLIC_KICK_REDIRECT_URI } = process.env;
 
   // Correct scopes based on Kick's official API documentation.
-  // 'user:read' is for getting the authenticated user's info (e.g., username).
   // 'channel:update' is for updating the stream title and category.
-  const scope = 'user:read channel:update';
+  const scope = 'channel:update';
 
   const params = new URLSearchParams({
     client_id: KICK_CLIENT_ID,
