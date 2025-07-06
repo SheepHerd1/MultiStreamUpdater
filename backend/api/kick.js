@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { withCors } from './_utils/cors.js';
 
-// The correct base URL for Kick's data API, using the standard 'api' subdomain.
-const KICK_API_BASE_URL = 'https://api.kick.com/v2';
+const KICK_API_BASE_URL = 'https://kick.com/api/v2';
 
 // --- Route Handlers ---
 async function handleUserInfo(req, res) {
@@ -12,7 +11,11 @@ async function handleUserInfo(req, res) {
   try {
     const kickApiUrl = `${KICK_API_BASE_URL}/user`;
     const response = await axios.get(kickApiUrl, {
-      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+      headers: { 
+        'Authorization': `Bearer ${token}`, 
+        'Accept': 'application/json',
+        'User-Agent': 'MultiStreamUpdater/1.0.0' // Some APIs require a User-Agent
+      },
     });
     res.status(200).json(response.data);
   } catch (error) {
@@ -31,10 +34,11 @@ async function handleStreamInfo(req, res) {
   try {
     const kickApiUrl = `${KICK_API_BASE_URL}/channels/${channel}`;
     
-    const response = await axios.get(kickApiUrl, { 
+    const response = await axios.get(kickApiUrl, {
         headers: { 
             'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json' 
+            'Accept': 'application/json',
+            'User-Agent': 'MultiStreamUpdater/1.0.0'
         } 
     });
     
@@ -59,7 +63,12 @@ async function handleStreamUpdate(req, res) {
     const kickApiUrl = `${KICK_API_BASE_URL}/channels/${channel}`;
     const payload = { session_title: title, category_name: category };
     await axios.patch(kickApiUrl, payload, {
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: { 
+        'Authorization': `Bearer ${token}`, 
+        'Content-Type': 'application/json', 
+        'Accept': 'application/json',
+        'User-Agent': 'MultiStreamUpdater/1.0.0'
+      },
     });
     res.status(200).json({ success: true, message: 'Kick stream updated successfully.' });
   } catch (error)
