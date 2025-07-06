@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { withCors } from './_utils/cors.js';
 
-const KICK_API_BASE_URL = 'https://api.kick.com/api/v2';
+const KICK_API_BASE_URL = 'https://kick.com/api/v2';
 
 // --- Route Handlers ---
 async function handleUserInfo(req, res) {
