@@ -12,7 +12,7 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
   const fetchTwitchStreamInfo = useCallback(async () => {
     if (!twitchAuth) return;
     try {
-      const response = await api.get(`/api/stream/info`, {
+      const response = await api.get(`/api/twitch?action=stream_info`, {
         params: { broadcaster_id: twitchAuth.userId },
         headers: { 'Authorization': `Bearer ${twitchAuth.token}` },
       });
@@ -33,7 +33,7 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     }
     setIsTwitchCategoryLoading(true);
     try {
-      const response = await api.get(`/api/twitch/categories?query=${query}`);
+      const response = await api.get(`/api/twitch?action=categories&query=${query}`);
       setTwitchCategoryResults(response.data);
     } catch (error) {
       console.error('Error searching categories:', error);

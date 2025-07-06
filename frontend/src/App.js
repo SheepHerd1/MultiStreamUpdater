@@ -74,7 +74,7 @@ function App() {
       } else if (event.data.type === 'kick-auth-success' && event.data.accessToken) {
         try {
           // Immediately after getting the token, fetch user info from our backend
-          api.get('/api/kick/user/info', {
+          api.get('/api/kick?action=user_info', {
             headers: { 'Authorization': `Bearer ${event.data.accessToken}` }
           }).then(userInfoResponse => {
             newAuthData.kick = {

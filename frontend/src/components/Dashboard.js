@@ -107,7 +107,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
     if (twitchAuth) {
       updateOperations.push({
         platform: 'twitch',
-        promise: api.post(`/api/stream/update`, {
+        promise: api.post(`/api/twitch?action=stream_update`, {
           title, category: twitchCategory, tags, broadcasterId: twitchAuth.userId,
         }, { headers: { 'Authorization': `Bearer ${twitchAuth.token}` } })
       });
@@ -116,7 +116,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
     if (youtubeAuth && youtubeStreamId) {
       updateOperations.push({
         platform: 'youtube',
-        promise: api.post(`/api/youtube/stream/update`, {
+        promise: api.post(`/api/youtube?action=stream_update`, {
           title, description, streamId: youtubeStreamId, updateType: youtubeUpdateType, categoryId: youtubeCategoryId,
         }, { headers: { 'Authorization': `Bearer ${youtubeAuth.token}` } })
       });
@@ -125,7 +125,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
     if (kickAuth) {
       updateOperations.push({
         platform: 'kick',
-        promise: api.post(`/api/kick/stream/update`, {
+        promise: api.post(`/api/kick?action=stream_update`, {
           channel: kickAuth.userName,
           title,
           category: kickCategory,

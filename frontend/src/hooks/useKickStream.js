@@ -9,7 +9,7 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
     if (!kickAuth) return;
     try {
       // We pass the username (which is the channel slug) to the backend.
-      const response = await api.get(`/api/kick/stream/info`, {
+      const response = await api.get(`/api/kick?action=stream_info`, {
         params: { channel: kickAuth.userName },
         headers: { 'Authorization': `Bearer ${kickAuth.token}` }, // Pass token for auth context
       });

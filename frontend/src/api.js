@@ -13,14 +13,13 @@ const refreshingPromises = {
 
 // Utility to extract platform from URL, required for the interceptor
 const getPlatformFromUrl = (url) => {
-  if (url.includes('/api/twitch/') || url.includes('/api/stream/')) {
-    // We assume /api/stream/ is for Twitch based on the Dashboard logic
+  if (url.startsWith('/api/twitch')) {
     return 'twitch';
   }
-  if (url.includes('/api/youtube/')) {
+  if (url.startsWith('/api/youtube')) {
     return 'youtube';
   }
-  if (url.includes('/api/kick/')) {
+  if (url.startsWith('/api/kick')) {
     return 'kick';
   }
   return null;

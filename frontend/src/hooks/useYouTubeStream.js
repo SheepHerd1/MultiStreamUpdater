@@ -11,7 +11,7 @@ export const useYouTubeStream = (youtubeAuth, setTitle, setError) => {
   const fetchYouTubeStreamInfo = useCallback(async () => {
     if (!youtubeAuth) return;
     try {
-      const response = await api.get(`/api/youtube/stream/info`, {
+      const response = await api.get(`/api/youtube?action=stream_info`, {
         headers: { 'Authorization': `Bearer ${youtubeAuth.token}` },
       });
       if (response.data.id) {
@@ -34,7 +34,7 @@ export const useYouTubeStream = (youtubeAuth, setTitle, setError) => {
     const fetchYoutubeCategories = async () => {
       if (!youtubeAuth) return;
       try {
-        const response = await api.get('/api/youtube/categories');
+        const response = await api.get('/api/youtube?action=categories');
         const assignableCategories = response.data.filter(cat => cat.snippet?.assignable);
         setYoutubeCategories(assignableCategories);
       } catch (error) {
