@@ -8,6 +8,7 @@ export const TokenRefreshProvider = ({ children }) => {
   const [isRefreshing, setIsRefreshing] = useState({
     twitch: false,
     youtube: false,
+    kick: false,
   });
 
   useEffect(() => {

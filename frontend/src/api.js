@@ -8,6 +8,7 @@ const api = axios.create({
 const refreshingPromises = {
   twitch: null,
   youtube: null,
+  kick: null,
 };
 
 // Utility to extract platform from URL, required for the interceptor
@@ -18,6 +19,9 @@ const getPlatformFromUrl = (url) => {
   }
   if (url.includes('/api/youtube/')) {
     return 'youtube';
+  }
+  if (url.includes('/api/kick/')) {
+    return 'kick';
   }
   return null;
 };

@@ -4,9 +4,11 @@ import { useTokenRefresh } from '../context/TokenRefreshContext';
 import './Dashboard.css';
 import { useTwitchStream } from '../hooks/useTwitchStream';
 import { useYouTubeStream } from '../hooks/useYouTubeStream';
+import { useKickStream } from '../hooks/useKickStream';
 import PlatformCard from './PlatformCard';
 import TwitchIcon from './icons/TwitchIcon';
 import YouTubeIcon from './icons/YouTubeIcon';
+import KickIcon from './icons/KickIcon';
 import Spinner from './icons/Spinner';
 
 function Dashboard({ auth, onLogout, setAuth }) {
@@ -17,7 +19,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
   const [notification, setNotification] = useState('');
 
   // Get auth details from the prop
-  const { twitch: twitchAuth, youtube: youtubeAuth } = auth;
+  const { twitch: twitchAuth, youtube: youtubeAuth, kick: kickAuth } = auth;
 
   // --- Custom Hooks for Platform Logic ---
   const {
@@ -33,6 +35,12 @@ function Dashboard({ auth, onLogout, setAuth }) {
     fetchYouTubeStreamInfo
   } = useYouTubeStream(youtubeAuth, setTitle, setError);
 
+  const {
+    kickCategory,
+    setKickCategory,
+    fetchKickStreamInfo
+  } = useKickStream(kickAuth, setTitle, setError);
+
   // Get token refreshing state from context
   const { isRefreshing } = useTokenRefresh();
 
@@ -43,12 +51,13 @@ function Dashboard({ auth, onLogout, setAuth }) {
       // The fetch functions are now dependencies of this callback
       await Promise.allSettled([
         fetchTwitchStreamInfo(),
-        fetchYouTubeStreamInfo()
+        fetchYouTubeStreamInfo(),
+        fetchKickStreamInfo()
       ]);
     } finally {
       setIsLoading(false);
     }
-  }, [fetchTwitchStreamInfo, fetchYouTubeStreamInfo]);
+  }, [fetchTwitchStreamInfo, fetchYouTubeStreamInfo, fetchKickStreamInfo]);
 
   useEffect(() => {
     fetchAllStreamInfo();
@@ -79,6 +88,14 @@ function Dashboard({ auth, onLogout, setAuth }) {
     window.open(authUrl, 'twitchAuth', windowFeatures);
   };
 
+  const handleKickConnect = () => {
+    const authUrl = `${api.defaults.baseURL}/api/auth/kick/connect`;
+    const width = 500, height = 650;
+    const left = (window.screen.width / 2) - (width / 2);
+    const top = (window.screen.height / 2) - (height / 2);
+    const windowFeatures = `width=${width},height=${height},top=${top},left=${left}`;
+    window.open(authUrl, 'kickAuth', windowFeatures);
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -102,6 +119,17 @@ function Dashboard({ auth, onLogout, setAuth }) {
         promise: api.post(`/api/youtube/stream/update`, {
           title, description, streamId: youtubeStreamId, updateType: youtubeUpdateType, categoryId: youtubeCategoryId,
         }, { headers: { 'Authorization': `Bearer ${youtubeAuth.token}` } })
+      });
+    }
+
+    if (kickAuth) {
+      updateOperations.push({
+        platform: 'kick',
+        promise: api.post(`/api/kick/stream/update`, {
+          channel: kickAuth.userName,
+          title,
+          category: kickCategory,
+        }, { headers: { 'Authorization': `Bearer ${kickAuth.token}` } })
       });
     }
 
@@ -155,7 +183,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
         <h2>Multi-Stream Updater</h2>
         <button onClick={onLogout} className="logout-btn">Logout</button>
       </div>
-      <p>Welcome, {twitchAuth?.userName || 'Streamer'}!</p>
+      <p>Welcome, {twitchAuth?.userName || youtubeAuth?.userName || kickAuth?.userName || 'Streamer'}!</p>
       
       <div className="connected-platforms">
         <div className={`platform-status twitch ${twitchAuth ? 'connected' : ''}`}>
@@ -176,6 +204,15 @@ function Dashboard({ auth, onLogout, setAuth }) {
             </button>
           )}
         </div>
+        <div className={`platform-status kick ${kickAuth ? 'connected' : ''}`}>
+          <KickIcon className="platform-icon-status" />
+          Kick {kickAuth ? 'Connected' : 'Not Connected'} {isRefreshing.kick && <Spinner />}
+          {!kickAuth && (
+            <button type="button" onClick={handleKickConnect} className="connect-btn kick">
+              Connect
+            </button>
+          )}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -183,7 +220,7 @@ function Dashboard({ auth, onLogout, setAuth }) {
           <PlatformCard title="Shared Information" className="shared-card">
             <div className="form-group">
               <label htmlFor="title">Stream Title</label>
-              <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Your stream title..." disabled={!twitchAuth && !youtubeAuth} />
+              <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Your stream title..." disabled={!twitchAuth && !youtubeAuth && !kickAuth} />
             </div>
           </PlatformCard>
 
@@ -256,10 +293,25 @@ function Dashboard({ auth, onLogout, setAuth }) {
               </select>
             </div>
           </PlatformCard>
+
+          <PlatformCard title="Kick Settings" className="kick-card" isConnected={!!kickAuth}>
+            <div className="form-group">
+              <label htmlFor="kickCategory">Category</label>
+              <input
+                id="kickCategory"
+                type="text"
+                value={kickCategory}
+                onChange={(e) => setKickCategory(e.target.value)}
+                placeholder="Enter a category..."
+                disabled={!kickAuth}
+              />
+              <small>Note: Kick's API currently requires manual category entry.</small>
+            </div>
+          </PlatformCard>
         </div>
 
         <div className="form-actions">
-          <button type="submit" disabled={isLoading || (!twitchAuth && !youtubeAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
+          <button type="submit" disabled={isLoading || (!twitchAuth && !youtubeAuth && !kickAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
           <button type="button" onClick={fetchAllStreamInfo} disabled={isLoading} className="secondary-action">Refresh All Info</button>
         </div>
       </form>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import jwtDecode from 'jwt-decode';
+import api from './api';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 
@@ -10,7 +11,7 @@ const getInitialAuth = () => {
     if (storedAuth) {
       // Basic validation to ensure it's a plausible auth object
       const auth = JSON.parse(storedAuth);
-      if (auth && (auth.twitch || auth.youtube)) {
+      if (auth && (auth.twitch || auth.youtube || auth.kick)) {
         return auth;
       }
     }
@@ -18,7 +19,7 @@ const getInitialAuth = () => {
     console.error("Failed to parse auth from localStorage", error);
     localStorage.removeItem('auth'); // Clear corrupted item
   }
-  return { twitch: null, youtube: null };
+  return { twitch: null, youtube: null, kick: null };
 };
 
 
@@ -27,7 +28,7 @@ function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(false); // Can be false, initial check is synchronous
 
   const handleLogout = useCallback(() => {
-    setAuth({ twitch: null, youtube: null });
+    setAuth({ twitch: null, youtube: null, kick: null });
     localStorage.removeItem('auth');
   }, []);
 
@@ -70,6 +71,23 @@ function App() {
         } catch (e) {
           console.error("Failed to process YouTube token from popup:", e);
         }
+      } else if (event.data.type === 'kick-auth-success' && event.data.accessToken) {
+        try {
+          // Immediately after getting the token, fetch user info from our backend
+          api.get('/api/kick/user/info', {
+            headers: { 'Authorization': `Bearer ${event.data.accessToken}` }
+          }).then(userInfoResponse => {
+            newAuthData.kick = {
+              token: event.data.accessToken,
+              refreshToken: event.data.refreshToken,
+              userId: userInfoResponse.data.id,
+              userName: userInfoResponse.data.username,
+            };
+            updateAuth(newAuthData);
+          });
+        } catch (e) {
+          console.error("Failed to process Kick token from popup:", e);
+        }
       }
     };
 
@@ -104,7 +122,7 @@ function App() {
 
   return (
     <div className="App">
-      {auth.twitch || auth.youtube ? <Dashboard auth={auth} onLogout={handleLogout} setAuth={setAuth} /> : <Login />}
+      {auth.twitch || auth.youtube || auth.kick ? <Dashboard auth={auth} onLogout={handleLogout} setAuth={setAuth} /> : <Login />}
     </div>
   );
 }
