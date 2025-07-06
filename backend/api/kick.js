@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { withCors } from './_utils/cors.js';
 
-const KICK_API_BASE_URL = 'https://api.kick.com/v2';
+// The correct base URL for Kick's data API
+const KICK_API_BASE_URL = 'https://kick.com/api/v2';
 
 // --- Route Handlers ---
 async function handleUserInfo(req, res) {
@@ -61,7 +62,8 @@ async function handleStreamUpdate(req, res) {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
     });
     res.status(200).json({ success: true, message: 'Kick stream updated successfully.' });
-  } catch (error) {
+  } catch (error)
+  {
     console.error('Error updating Kick stream info:', error.response?.data || error.message);
     const errorMessage = error.response?.data?.message || 'Failed to update Kick stream info.';
     res.status(error.response?.status || 500).json({ error: errorMessage });
