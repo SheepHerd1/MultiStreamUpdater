@@ -34,11 +34,18 @@ const createKickApiClient = (token) => {
       if (contentType && contentType.includes('application/json')) {
         return response; // Response is valid JSON, continue.
       }
-      // If not JSON, it's an error. This triggers the .catch() in our route handlers.
-      return Promise.reject(new Error('Authentication failed: Kick API returned a non-JSON response.'));
+      // If the response is not JSON, it's an authentication failure.
+      // We create a custom error that mimics an Axios error for consistent handling.
+      const error = new Error('Authentication failed: Kick API returned a non-JSON response (likely HTML).');
+      error.response = {
+        // We'll treat this as a 401 Unauthorized error.
+        status: 401,
+        data: { message: error.message }
+      };
+      return Promise.reject(error);
     },
     (error) => {
-      // Pass through any other network or status code errors.
+      // Pass through any other network or status code errors from Axios.
       return Promise.reject(error);
     }
   );
@@ -55,7 +62,7 @@ const createKickApiClient = (token) => {
 const handleApiError = (res, error, context) => {
   console.error(`Error ${context}:`, error.response?.data || error.message);
   const status = error.response?.status || 500;
-  const message = error.response?.data?.message || `Failed to ${context}.`;
+  const message = error.response?.data?.message || error.message || `Failed to ${context}.`;
   res.status(status).json({ error: message });
 };
 
