@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { withCors } from './_utils/cors.js';
 
-// The correct base URL for Kick's data API.
-const KICK_API_BASE_URL = 'https://api.kick.com';
+// The official Kick API is hosted at kick.com/api, not on a separate subdomain.
+// This is confirmed by server responses (404 on api.kick.com vs 401 on kick.com/api).
+const KICK_API_BASE_URL = 'https://kick.com/api/v2';
 
 // --- Route Handlers ---
 async function handleUserInfo(req, res) {
@@ -10,7 +11,6 @@ async function handleUserInfo(req, res) {
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
 
   try {
-    // Corrected endpoint path, removing /v2
     const kickApiUrl = `${KICK_API_BASE_URL}/user`;
     const response = await axios.get(kickApiUrl, {
       headers: { 
@@ -34,7 +34,6 @@ async function handleStreamInfo(req, res) {
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
 
   try {
-    // Corrected endpoint path, removing /v2
     const kickApiUrl = `${KICK_API_BASE_URL}/channels/${channel}`;
     
     const response = await axios.get(kickApiUrl, {
@@ -63,7 +62,6 @@ async function handleStreamUpdate(req, res) {
   }
 
   try {
-    // Corrected endpoint path, removing /v2
     const kickApiUrl = `${KICK_API_BASE_URL}/channels/${channel}`;
     const payload = { session_title: title, category_name: category };
     await axios.patch(kickApiUrl, payload, {
