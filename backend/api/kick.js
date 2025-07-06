@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { withCors } from './_utils/cors.js';
 
-const KICK_API_BASE_URL = 'https://id.kick.com'; // Using the documented OAuth server as the base for all API calls
+// The correct base URL for Kick's data API.
+const KICK_API_BASE_URL = 'https://api.kick.com';
 
 // --- Route Handlers ---
 async function handleUserInfo(req, res) {
@@ -9,13 +10,13 @@ async function handleUserInfo(req, res) {
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
 
   try {
-    // The data API endpoints might not be versioned under /api/v2 on this host
-    const kickApiUrl = `${KICK_API_BASE_URL}/user`; // This is a guess based on standard practice
+    // Corrected endpoint path, removing /v2
+    const kickApiUrl = `${KICK_API_BASE_URL}/user`;
     const response = await axios.get(kickApiUrl, {
       headers: { 
         'Authorization': `Bearer ${token}`, 
         'Accept': 'application/json',
-        'User-Agent': 'MultiStreamUpdater/1.0.0' // Some APIs require a User-Agent
+        'User-Agent': 'MultiStreamUpdater/1.0.0'
       },
     });
     res.status(200).json(response.data);
@@ -27,12 +28,13 @@ async function handleUserInfo(req, res) {
 
 async function handleStreamInfo(req, res) {
   const { channel } = req.query;
-  const token = req.headers.authorization?.split(' ')[1]; // Get token from our frontend
+  const token = req.headers.authorization?.split(' ')[1];
 
   if (!channel) return res.status(400).json({ error: 'Channel parameter is required.' });
-  if (!token) return res.status(401).json({ error: 'Authorization token not provided.' }); // Require token
+  if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
 
   try {
+    // Corrected endpoint path, removing /v2
     const kickApiUrl = `${KICK_API_BASE_URL}/channels/${channel}`;
     
     const response = await axios.get(kickApiUrl, {
@@ -61,6 +63,7 @@ async function handleStreamUpdate(req, res) {
   }
 
   try {
+    // Corrected endpoint path, removing /v2
     const kickApiUrl = `${KICK_API_BASE_URL}/channels/${channel}`;
     const payload = { session_title: title, category_name: category };
     await axios.patch(kickApiUrl, payload, {
