@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { withCors } from '../../_utils/cors';
+import { withCors } from '../../_utils/cors.js';
 
 // This endpoint updates the channel's stream information.
 // It requires an authenticated user token.

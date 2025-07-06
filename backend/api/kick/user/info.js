@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { withCors } from '../../_utils/cors';
+import { withCors } from '../../_utils/cors.js';
 
 async function handler(req, res) {
   const token = req.headers.authorization?.split(' ')[1];

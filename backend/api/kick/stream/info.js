@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { withCors } from '../../_utils/cors';
+import { withCors } from '../../_utils/cors.js';
 
 // This endpoint fetches public channel data.
 // An auth header is passed from the frontend but not required by this specific Kick API endpoint,

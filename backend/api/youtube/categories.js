@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
-import { withCors } from '../_utils/cors';
-import { validateEnv } from '../_utils/env';
+import { withCors } from '../_utils/cors.js';
+import { validateEnv } from '../_utils/env.js';
 
 // We need an API key for this public data endpoint.
 validateEnv(['GOOGLE_API_KEY']);

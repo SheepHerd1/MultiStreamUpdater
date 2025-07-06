@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { withCors } from '../_utils/cors';
-import { validateEnv } from '../_utils/env';
+import { withCors } from '../_utils/cors.js';
+import { validateEnv } from '../_utils/env.js';
 
 // Ensure required environment variables are set at initialization.
 validateEnv(['TWITCH_CLIENT_ID', 'TWITCH_CLIENT_SECRET']);
