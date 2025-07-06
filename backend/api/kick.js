@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { withCors } from './_utils/cors.js';
 
-// The correct base URL for Kick's data API
-const KICK_API_BASE_URL = 'https://kick.com/api/v2';
+// The correct base URL for Kick's data API, using the standard 'api' subdomain.
+const KICK_API_BASE_URL = 'https://api.kick.com/v2';
 
 // --- Route Handlers ---
 async function handleUserInfo(req, res) {
