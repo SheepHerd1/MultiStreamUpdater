@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { withCors } from './_utils/cors.js';
 
-const KICK_API_BASE_URL = 'https://kick.com/api/v2';
+const KICK_API_BASE_URL = 'https://id.kick.com'; // Using the documented OAuth server as the base for all API calls
 
 // --- Route Handlers ---
 async function handleUserInfo(req, res) {
@@ -9,7 +9,8 @@ async function handleUserInfo(req, res) {
   if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
 
   try {
-    const kickApiUrl = `${KICK_API_BASE_URL}/user`;
+    // The data API endpoints might not be versioned under /api/v2 on this host
+    const kickApiUrl = `${KICK_API_BASE_URL}/user`; // This is a guess based on standard practice
     const response = await axios.get(kickApiUrl, {
       headers: { 
         'Authorization': `Bearer ${token}`, 
