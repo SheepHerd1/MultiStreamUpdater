@@ -53,6 +53,20 @@ async function handler(req, res) {
         res.status(200).json(response.data.data?.[0] || {});
         break;
       
+      case 'stream_info': {
+        const { channel: channelSlug } = req.query;
+        if (!channelSlug) {
+          return res.status(400).json({ message: 'Channel slug is required for stream_info action.' });
+        }
+        console.log(`[Kick Proxy] Forwarding to GET ${kickApiBase}/channels with slug: ${channelSlug}`);
+        // The Kick API uses the 'slug' query parameter to find a channel by its name.
+        const url = `${kickApiBase}/channels?slug=${encodeURIComponent(channelSlug)}`;
+        response = await axios.get(url, { headers });
+        // The API returns an array, we want the first channel object.
+        res.status(200).json(response.data.data?.[0] || {});
+        break;
+      }
+
       case 'update_stream':
         if (req.method !== 'PATCH') {
             return res.status(405).json({ message: 'Method Not Allowed for this action.' });
