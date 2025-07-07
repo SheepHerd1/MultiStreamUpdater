@@ -9,31 +9,34 @@ const KickIcon = ({ className }) => (
   >
     <title>Kick</title>
     <defs>
-      <mask id="kick-negative-k-mask">
-        {/* Start with a solid white area */}
-        <rect width="100%" height="100%" fill="white" />
-        {/* Use a black 'K' path to punch a hole in the mask. This is more reliable than text. */}
-        <path 
-          d="M8 4H10V11L16 4H18L11.5 12L18 20H16L10 13V20H8V4Z" 
-          fill="black" 
+      <clipPath id="kick-logo-clip-path">
+        {/* 
+          This clip-path defines a single shape. It starts with the outer
+          rounded rectangle and then uses the K's path to "punch a hole" in it.
+          The 'evenodd' rule is what makes the punch-out effect work.
+        */}
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M4 2h16c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2zM8 4h2v7l6-7h2l-6.5 8L18 20h-2l-6-7v7H8V4z"
         />
-      </mask>
+      </clipPath>
     </defs>
-    {/* The hard shadow layer: a solid, offset rectangle with the K punched out */}
+    
+    {/* The hard shadow layer: a solid color filling the entire viewbox, offset, and then clipped by our shape. */}
     <rect 
-      x="3" y="3" 
-      width="20" height="20" 
-      rx="4" 
+      x="1" y="1" 
+      width="24" height="24" 
       fill="rgba(0,0,0,0.25)" 
-      mask="url(#kick-negative-k-mask)" 
+      clipPath="url(#kick-logo-clip-path)" 
     />
-    {/* The main shape, with the K cut out by the mask */}
+    
+    {/* The main shape, also clipped by the same path. */}
     <rect 
-      x="2" y="2" 
-      width="20" height="20" 
-      rx="4" 
+      x="0" y="0" 
+      width="24" height="24" 
       fill="currentColor" 
-      mask="url(#kick-negative-k-mask)" 
+      clipPath="url(#kick-logo-clip-path)" 
     />
   </svg>
 );
