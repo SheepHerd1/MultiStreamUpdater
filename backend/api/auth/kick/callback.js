@@ -57,7 +57,9 @@ export default async function handler(req, res) {
     console.log('Received payload from Kick token endpoint:', response.data);
 
     // Immediately use the new access token to fetch the user's profile information
-    const userResponse = await axios.get('https://kick.com/api/v2/user', {
+    // The /api/v2/user endpoint is protected by a WAF.
+    // The correct endpoint for getting the authenticated user's info via OAuth is /oauth/user.
+    const userResponse = await axios.get('https://kick.com/oauth/user', {
       headers: {
         'Authorization': `Bearer ${access_token}`,
         'Accept': 'application/json',
