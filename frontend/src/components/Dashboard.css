@@ -28,6 +28,7 @@
 }
 main {
   flex-grow: 1;
+  padding-bottom: 100px; /* Add space at the bottom of the main content area to prevent the sticky action bar from overlapping the last card */
 }
 
 .logout-btn {
@@ -171,32 +172,19 @@ main {
 
 /* Responsive grid for larger screens - Restoring this as you liked the grid layout */
 @media (min-width: 1024px) {
-  /* Show the desktop statuses inside the header */
   .connected-platforms-desktop {
     display: flex;
   }
-
-  /* Hide the mobile statuses */
   .connected-platforms-mobile {
     display: none;
   }
 
   .stream-editor-layout {
     grid-template-columns: repeat(2, 1fr);
-    grid-template-areas:
-      "shared shared"
-      "twitch youtube"
-      "kick .";
   }
-  .shared-card { grid-area: shared; }
-  .twitch-card { grid-area: twitch; }
-  .youtube-card { grid-area: youtube; }
-  .kick-card { grid-area: kick; }
-}
-
-/* Add padding to the bottom of the form to prevent the sticky bar from overlapping content */
-.dashboard-form {
-  padding-bottom: 100px; /* A fixed height to account for the sticky bar */
+  .shared-card {
+    grid-column: 1 / -1; /* Make the shared card span both columns */
+  }
 }
 
 
