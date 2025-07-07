@@ -11,21 +11,21 @@ export default async function handler(req, res) {
 
   if (error) {
     console.error('Kick auth error:', error);
-    return res.status(400).send(`<html><body><h1>Error</h1><p>${error}</p></body></html>`);
+    return res.status(400).send(`<!DOCTYPE html><html><body><h1>Error</h1><p>${error}</p></body></html>`);
   }
 
   if (!code) {
-    return res.status(400).send('<html><body><h1>Error</h1><p>No code provided.</p></body></html>');
+    return res.status(400).send('<!DOCTYPE html><html><body><h1>Error</h1><p>No code provided.</p></body></html>');
   }
 
   if (!state || !storedState || state !== storedState) {
-    return res.status(400).send('<html><body><h1>Error</h1><p>Invalid state. Please try again.</p></body></html>');
+    return res.status(400).send('<!DOCTYPE html><html><body><h1>Error</h1><p>Invalid state. Please try again.</p></body></html>');
   }
 
   // Explicitly check for the code_verifier cookie. This is critical for the PKCE flow.
   if (!codeVerifier) {
     console.error('Kick callback error: The "kick_code_verifier" cookie was missing or empty.');
-    return res.status(400).send('<html><body><h1>Authentication Error</h1><p>Your session may have expired or cookies are not being sent correctly. Please try logging in again.</p></body></html>');
+    return res.status(400).send('<!DOCTYPE html><html><body><h1>Authentication Error</h1><p>Your session may have expired or cookies are not being sent correctly. Please try logging in again.</p></body></html>');
   }
 
   const { KICK_CLIENT_ID, KICK_CLIENT_SECRET, NEXT_PUBLIC_KICK_REDIRECT_URI } = process.env;
@@ -58,15 +58,16 @@ export default async function handler(req, res) {
 
     // --- Get User Info via API Call ---
     // The access_token is opaque, so we must make an API call to get user info.
-    // We will use the /api/v1/user endpoint with browser-like headers, as the v2 endpoint is explicitly forbidden by Kick's security policy.
+    // We will try the /api/v2/user endpoint again, but with a Referer header to better mimic a browser and satisfy security policies.
     let userId, userName;
     try {
-      const userResponse = await axios.get('https://kick.com/api/v1/user', {
+      const userResponse = await axios.get('https://kick.com/api/v2/user', {
         headers: {
           'Authorization': `Bearer ${access_token}`,
           'Accept': 'application/json',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
           'Accept-Language': 'en-US,en;q=0.9',
+          'Referer': 'https://kick.com/',
         },
       });
       console.log('Received payload from Kick USER endpoint:', userResponse.data);
@@ -79,7 +80,7 @@ export default async function handler(req, res) {
       }
     } catch (apiError) {
       console.error('Failed to fetch user info from Kick API:', apiError);
-      return res.status(500).send(`<html><body><h1>Authentication Failed</h1><p>Could not fetch your user profile from Kick after logging in. The API may be temporarily unavailable or your account may have restrictions.</p></body></html>`);
+      return res.status(500).send(`<!DOCTYPE html><html><body><h1>Authentication Failed</h1><p>Could not fetch your user profile from Kick after logging in. The API may be temporarily unavailable or your account may have restrictions.</p></body></html>`);
     }
 
     // Clear the cookies after successful token exchange
@@ -117,7 +118,7 @@ export default async function handler(req, res) {
       </script>
     `;
     
-    res.status(200).send(`<html><body><p>Authenticating...</p>${script}</body></html>`);
+    res.status(200).send(`<!DOCTYPE html><html><body><p>Authenticating...</p>${script}</body></html>`);
 
   } catch (err) {
     // Log the detailed error on the server for your own debugging
@@ -142,6 +143,6 @@ export default async function handler(req, res) {
       // Likely a server-side code error (e.g., missing env var)
       userErrorMessage = 'An internal server error occurred. Please check the Vercel function logs for details.';
     }
-    res.status(500).send(`<html><body><h1>Authentication Failed</h1><p>${userErrorMessage}</p></body></html>`);
+    res.status(500).send(`<!DOCTYPE html><html><body><h1>Authentication Failed</h1><p>${userErrorMessage}</p></body></html>`);
   }
 }
