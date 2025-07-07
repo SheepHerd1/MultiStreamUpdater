@@ -100,11 +100,13 @@ function App() {
               updateAuth(finalAuthData);
             })
             .catch(err => {
-              console.error("Failed to fetch Kick user info after auth:", err);
-              // If this fails, remove the partial Kick auth to prevent a broken state.
-              const currentAuth = getInitialAuth();
-              delete currentAuth.kick;
-              updateAuth(currentAuth);
+              // The interceptor will handle 401s by refreshing the token.
+              // We only want to log the user out if the error is something else,
+              // or if the token refresh itself fails (which the interceptor will re-throw).
+              if (err.response?.status !== 401) {
+                console.error("Failed to fetch Kick user info after auth:", err);
+                handleLogout(); // A general logout is cleaner here.
+              }
             });
         } catch (e) {
           console.error("Failed to process Kick token from popup:", e);
