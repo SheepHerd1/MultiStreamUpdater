@@ -44,7 +44,8 @@
 .connected-platforms {
   padding: 0 2rem; /* Re-apply padding here */
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
+  align-items: center;
   margin-bottom: 2rem;
   flex-wrap: wrap;
   padding-bottom: 1.5rem;
@@ -54,13 +55,13 @@
 .platform-status {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid #c8e6c9;
-  border-radius: 20px;
+  gap: 0.6rem;
   font-weight: 500;
-  background-color: #ffffff;
   color: #37474f;
+}
+
+.platform-status:not(.connected) .platform-icon-status {
+  opacity: 0.4;
 }
 
 .platform-icon-status {
@@ -74,13 +75,11 @@
   height: 8px;
   border-radius: 50%;
   background-color: #4caf50; /* Green for connected */
-  margin-right: 4px;
 }
 
 .platform-status .connect-btn {
-  margin-left: 0.5rem;
   padding: 4px 12px;
-  border-radius: 12px;
+  border-radius: 6px;
   font-size: 0.8rem;
   font-weight: bold;
   border: none;
@@ -133,6 +132,11 @@
   .twitch-card { grid-area: twitch; }
   .youtube-card { grid-area: youtube; }
   .kick-card { grid-area: kick; }
+}
+
+/* Add padding to the bottom of the form to prevent the sticky bar from overlapping content */
+.dashboard-form {
+  padding-bottom: 100px; /* A fixed height to account for the sticky bar */
 }
 
 
@@ -285,12 +289,18 @@
 
 /* Form Actions (Submit/Refresh buttons) */
 .form-actions {
-  margin-top: 2rem;
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent white */
+  backdrop-filter: blur(8px); /* This creates the modern "frosted glass" effect */
   display: flex;
   gap: 1rem;
-  padding: 1.5rem 2rem; /* Re-apply padding here */
+  padding: 1rem 2rem;
   justify-content: flex-end;
-  border-top: 1px solid #dcedc8;
+  border-top: 1px solid #e0e0e0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .form-actions button {

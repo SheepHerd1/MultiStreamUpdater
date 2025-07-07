@@ -189,36 +189,36 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
         <p className="welcome-message">Welcome, {twitchAuth?.userName || youtubeAuth?.userName || kickAuth?.userName || 'Streamer'}!</p>
         
         <div className="connected-platforms">
-          <div className={`platform-status twitch ${twitchAuth ? 'connected' : ''}`}>
+          <div className={`platform-status ${twitchAuth ? 'connected' : ''}`}>
             <TwitchIcon className="platform-icon-status" />
-            Twitch {twitchAuth ? 'Connected' : 'Not Connected'} {isRefreshing.twitch && <Spinner />}
-            {!twitchAuth && (
-              <button type="button" onClick={handleTwitchConnect} className="connect-btn twitch">
-                Connect
-              </button>
+            {twitchAuth ? (
+              <span>{twitchAuth.userName}</span>
+            ) : (
+              <button type="button" onClick={handleTwitchConnect} className="connect-btn twitch">Connect</button>
             )}
+            {isRefreshing.twitch && <Spinner />}
           </div>
-          <div className={`platform-status youtube ${youtubeAuth ? 'connected' : ''}`}>
+          <div className={`platform-status ${youtubeAuth ? 'connected' : ''}`}>
             <YouTubeIcon className="platform-icon-status" />
-            YouTube {youtubeAuth ? 'Connected' : 'Not Connected'} {isRefreshing.youtube && <Spinner />}
-            {!youtubeAuth && (
-              <button type="button" onClick={handleYouTubeConnect} className="connect-btn youtube">
-                Connect
-              </button>
+            {youtubeAuth ? (
+              <span>{youtubeAuth.userName || 'YouTube'}</span>
+            ) : (
+              <button type="button" onClick={handleYouTubeConnect} className="connect-btn youtube">Connect</button>
             )}
+            {isRefreshing.youtube && <Spinner />}
           </div>
-          <div className={`platform-status kick ${kickAuth ? 'connected' : ''}`}>
+          <div className={`platform-status ${kickAuth ? 'connected' : ''}`}>
             <KickIcon className="platform-icon-status" />
-            Kick {kickAuth ? 'Connected' : 'Not Connected'} {isRefreshing.kick && <Spinner />}
-            {!kickAuth && (
-              <button type="button" onClick={handleKickConnect} className="connect-btn kick">
-                Connect
-              </button>
+            {kickAuth ? (
+              <span>{kickAuth.userName}</span>
+            ) : (
+              <button type="button" onClick={handleKickConnect} className="connect-btn kick">Connect</button>
             )}
+            {isRefreshing.kick && <Spinner />}
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="dashboard-form">
           <div className="stream-editor-layout">
             <PlatformCard title="Shared Information" className="shared-card">
               <div className="form-group">
