@@ -8,15 +8,32 @@ const KickIcon = ({ className }) => (
     role="img"
   >
     <title>Kick</title>
-    {/* The hard shadow layer, drawn first and offset slightly */}
-    <path 
-      d="M7 22V4h2v7l5-7h2l-6 8 6 8h-2l-5-7v7H7z" 
-      fill="rgba(0,0,0,0.2)" 
+    <defs>
+      <mask id="kick-negative-k-mask">
+        {/* Start with a solid white area */}
+        <rect width="100%" height="100%" fill="white" />
+        {/* Use a black 'K' path to punch a hole in the mask. This is more reliable than text. */}
+        <path 
+          d="M8 4H10V11L16 4H18L11.5 12L18 20H16L10 13V20H8V4Z" 
+          fill="black" 
+        />
+      </mask>
+    </defs>
+    {/* The hard shadow layer: a solid, offset rectangle with the K punched out */}
+    <rect 
+      x="3" y="3" 
+      width="20" height="20" 
+      rx="4" 
+      fill="rgba(0,0,0,0.25)" 
+      mask="url(#kick-negative-k-mask)" 
     />
-    {/* The main letter, drawn on top of the shadow */}
-    <path 
-      d="M6 21V3h2v7l5-7h2l-6 8 6 8h-2l-5-7v7H6z" 
+    {/* The main shape, with the K cut out by the mask */}
+    <rect 
+      x="2" y="2" 
+      width="20" height="20" 
+      rx="4" 
       fill="currentColor" 
+      mask="url(#kick-negative-k-mask)" 
     />
   </svg>
 );
