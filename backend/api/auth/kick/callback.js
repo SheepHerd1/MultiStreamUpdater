@@ -62,7 +62,9 @@ export default async function handler(req, res) {
       headers: {
         'Authorization': `Bearer ${access_token}`,
         'Accept': 'application/json',
-        'User-Agent': 'MultiStreamUpdater/1.0 (https://multi-stream-updater.vercel.app)',
+        // Mimic a real browser to bypass WAF/security measures that block server-to-server requests.
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
       },
     });
 
