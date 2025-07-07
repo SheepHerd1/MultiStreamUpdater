@@ -45,6 +45,7 @@
 .dashboard-content {
   padding: 2rem;
   flex-grow: 1;
+  width: 100%;
 }
 
 .welcome-message {
@@ -130,7 +131,20 @@
   gap: 1.5rem;
 }
 
-/* The layout is now a single column on all screen sizes for a simpler, full-width feel. */
+/* Responsive grid for larger screens - Restoring this as you liked the grid layout */
+@media (min-width: 1024px) {
+  .stream-editor-layout {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-areas:
+      "shared shared"
+      "twitch youtube"
+      "kick .";
+  }
+  .shared-card { grid-area: shared; }
+  .twitch-card { grid-area: twitch; }
+  .youtube-card { grid-area: youtube; }
+  .kick-card { grid-area: kick; }
+}
 
 
 /* General Form Styling */
