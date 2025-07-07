@@ -8,35 +8,26 @@ const KickIcon = ({ className }) => (
     role="img"
   >
     <title>Kick</title>
-    <defs>
-      <clipPath id="kick-logo-clip-path">
-        {/* 
-          This clip-path defines a single shape. It starts with the outer
-          rounded rectangle and then uses the K's path to "punch a hole" in it.
-          The 'evenodd' rule is what makes the punch-out effect work.
-        */}
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M4 2h16c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2zM8 4h2v7l6-7h2l-6.5 8L18 20h-2l-6-7v7H8V4z"
-        />
-      </clipPath>
-    </defs>
     
-    {/* The hard shadow layer: a solid color filling the entire viewbox, offset, and then clipped by our shape. */}
-    <rect 
-      x="1" y="1" 
-      width="24" height="24" 
-      fill="rgba(0,0,0,0.25)" 
-      clipPath="url(#kick-logo-clip-path)" 
+    {/* 
+      This is the most robust way to create the shape.
+      We define a single path with two parts: the outer rounded rectangle
+      and the inner "K". The 'evenodd' fill rule tells the SVG to treat
+      the inner shape as a "hole". This avoids issues with clip-paths or masks.
+    */}
+    
+    {/* The hard shadow layer, drawn first and offset by (1, 1) */}
+    <path
+      fillRule="evenodd"
+      d="M7 3h12c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2z M9 5h2v7l6-7h2l-6.5 8L19 21h-2l-6-7v7H9V5z"
+      fill="rgba(0,0,0,0.25)"
     />
     
-    {/* The main shape, also clipped by the same path. */}
-    <rect 
-      x="0" y="0" 
-      width="24" height="24" 
-      fill="currentColor" 
-      clipPath="url(#kick-logo-clip-path)" 
+    {/* The main shape, drawn on top */}
+    <path
+      fillRule="evenodd"
+      d="M6 2h12c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2z M8 4h2v7l6-7h2l-6.5 8L18 20h-2l-6-7v7H8V4z"
+      fill="currentColor"
     />
   </svg>
 );
