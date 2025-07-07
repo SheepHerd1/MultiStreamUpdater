@@ -3,7 +3,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #ffffff; /* Ensure the absolute root is white */
+  background-color: #e8f5e9; /* Your requested pastel green theme */
 }
 
 *,
@@ -21,7 +21,7 @@ body {
 
 .App {
   min-height: 100vh;
-  background-color: #ffffff; /* Ensure the React root div is also white */
+  /* The background is now inherited from the body, making this transparent */
   display: block; /* Ensure it behaves like a standard block container */
   width: 100%;
   text-align: left; /* Override any potential centering from other stylesheets */

@@ -9,7 +9,7 @@ const KickIcon = ({ className }) => (
     fill="currentColor"
   >
     <title>Kick</title>
-    <path d="M14.5 3L10 9L5.5 3H2L9 12L2 21H5.5L10 15L14.5 21H18L11 12L18 3H14.5Z" />
+    <path d="M2 3h3.5l4.5 6-4.5 6H2l7-9-7-9zm13 0h3.5l-7 9 7 9h-3.5l-4.5-6 4.5-6z" />
   </svg>
 );
 
