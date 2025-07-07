@@ -82,7 +82,14 @@ export default async function handler(req, res) {
         };
         if (window.opener) {
           // For security, post only to your frontend's origin.
-          const targetOrigin = '${process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://multi-stream-updater.vercel.app'}';
+          const frontendUrl = '${process.env.FRONTEND_URL || 'https://multi-stream-updater.vercel.app'}';
+          let targetOrigin;
+          try {
+            targetOrigin = new URL(frontendUrl).origin;
+          } catch (e) {
+            console.error("Invalid NEXT_PUBLIC_FRONTEND_URL, falling back to default.");
+            targetOrigin = 'https://multi-stream-updater.vercel.app';
+          }
           window.opener.postMessage(authData, targetOrigin);
         }
         window.close();

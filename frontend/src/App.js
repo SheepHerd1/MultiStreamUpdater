@@ -43,6 +43,12 @@ function App() {
     // This listener handles the successful authentication from the popup window
     const handleAuthMessage = (event) => {
       // It's good practice to check the origin in a production app
+      // Let's add some debugging to see what we receive.
+      console.log('Received message from popup:', {
+        origin: event.origin,
+        data: event.data,
+      });
+
       // if (event.origin !== 'YOUR_VERCEL_URL') return;
 
       const currentAuth = getInitialAuth();
