@@ -57,8 +57,8 @@ export default async function handler(req, res) {
     console.log('Received payload from Kick token endpoint:', response.data);
 
     // Immediately use the new access token to fetch the user's profile information
-    // Per Kick's API structure, the correct endpoint to get the authenticated user's data is /api/v1/user.
-    const userResponse = await axios.get('https://kick.com/api/v1/user', {
+    // The v1 endpoint returns an empty object. Let's try the v2 endpoint.
+    const userResponse = await axios.get('https://kick.com/api/v2/user', {
       headers: {
         'Authorization': `Bearer ${access_token}`,
         'Accept': 'application/json',
