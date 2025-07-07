@@ -52,6 +52,10 @@ export default async function handler(req, res) {
 
     const { access_token, refresh_token, scope } = response.data;
 
+    // --- VITAL DEBUGGING LOG ---
+    // This log will show us exactly what Kick's API is sending back.
+    console.log('Received payload from Kick token endpoint:', response.data);
+
     // Immediately use the new access token to fetch the user's profile information
     const userResponse = await axios.get('https://kick.com/api/v2/user', {
       headers: {
@@ -69,17 +73,24 @@ export default async function handler(req, res) {
       cookie.serialize('kick_code_verifier', '', { httpOnly: true, secure: process.env.NODE_ENV !== 'development', expires: new Date(0), path: '/' }),
     ]);
 
+    // Build the payload to send to the frontend
+    const authPayload = {
+      type: 'kick-auth-success',
+      accessToken: access_token,
+      userId: userId,
+      userName: userName,
+      scope: scope,
+    };
+
+    // IMPORTANT: Only include the refresh token in the payload if it's a valid, non-empty string.
+    if (refresh_token) {
+      authPayload.refreshToken = refresh_token;
+    }
+
     // This script sends the tokens back to the main window that opened the popup.
     const script = `
       <script>
-        const authData = {
-          type: 'kick-auth-success',
-          accessToken: '${access_token}',
-          refreshToken: '${refresh_token}',
-          userId: '${userId}',
-          userName: '${userName}',
-          scope: '${scope}',
-        };
+        const authData = ${JSON.stringify(authPayload)};
         if (window.opener) {
           // For security, post only to your frontend's origin.
           const frontendUrl = '${process.env.FRONTEND_URL || 'https://multi-stream-updater.vercel.app'}';
