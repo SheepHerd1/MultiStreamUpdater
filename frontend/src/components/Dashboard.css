@@ -76,7 +76,8 @@ main {
 }
 
 .welcome-message {
-  padding: 1rem 2rem 0 2rem; /* Further reduced top padding */
+  margin-top: 0; /* Override the default browser margin for the <p> tag */
+  padding: 1.5rem 2rem 0 2rem; /* Set a deliberate, predictable top padding */
   font-size: 1.2rem;
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
