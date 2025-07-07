@@ -3,7 +3,6 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: var(--background-primary);
 }
 
 *,
@@ -20,6 +19,7 @@ body {
 }
 
 .App {
+  background-color: var(--background-primary);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
