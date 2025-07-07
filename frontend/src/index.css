@@ -1,48 +1,7 @@
+/* We are moving all global styles to App.css for better control. */
+/* This file is now only for root-level browser settings. */
+
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #1a1a2e;
-  color: #e0e0e0;
-  display: flex;
-  justify-content: center;
-  padding-top: 40px;
-}
-
-.App {
-  position: relative; /* Needed for positioning the logout button */
-  width: 100%;
-  max-width: 600px;
-  padding: 20px;
-  background-color: #162447;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-}
-
-h1, h2 {
-  color: #fca311;
-  text-align: center;
-}
-
-button {
-  background-color: #fca311;
-  color: #162447;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-button:hover {
-  background-color: #e49b10;
-}
-
-button:disabled {
-  background-color: #555;
-  cursor: not-allowed;
 }
