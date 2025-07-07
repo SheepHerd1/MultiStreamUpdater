@@ -71,7 +71,9 @@ export default async function handler(req, res) {
           scope: '${scope}',
         };
         if (window.opener) {
-          window.opener.postMessage(authData, '*'); // Use your frontend URL in production
+          // For security, post only to your frontend's origin.
+          const targetOrigin = '${process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://multi-stream-updater.vercel.app'}';
+          window.opener.postMessage(authData, targetOrigin);
         }
         window.close();
       </script>
@@ -80,8 +82,28 @@ export default async function handler(req, res) {
     res.status(200).send(`<html><body><p>Authenticating...</p>${script}</body></html>`);
 
   } catch (err) {
-    console.error('Error exchanging Kick code for token:', err.response?.data || err.message);
-    const errorMessage = err.response?.data?.message || 'Could not get tokens or user info from Kick.';
-    res.status(500).send(`<html><body><h1>Authentication Failed</h1><p>${errorMessage}</p></body></html>`);
+    // Log the detailed error on the server for your own debugging
+    console.error('Kick callback error:', {
+      message: err.message,
+      isAxiosError: err.isAxiosError,
+      requestUrl: err.config?.url,
+      responseStatus: err.response?.status,
+      responseData: err.response?.data,
+    });
+
+    // Create a more informative error message for the user's popup
+    let userErrorMessage;
+    if (err.isAxiosError && err.response) {
+      // Error from Kick's API
+      const apiError = err.response.data;
+      userErrorMessage = `Kick API Error: ${apiError.message || JSON.stringify(apiError)} (Status: ${err.response.status} on ${err.config.url})`;
+    } else if (err.isAxiosError) {
+      // Network error or other issue with the request
+      userErrorMessage = `Network Error: Could not reach Kick's servers. Please check your connection.`;
+    } else {
+      // Likely a server-side code error (e.g., missing env var)
+      userErrorMessage = 'An internal server error occurred. Please check the Vercel function logs for details.';
+    }
+    res.status(500).send(`<html><body><h1>Authentication Failed</h1><p>${userErrorMessage}</p></body></html>`);
   }
 }
