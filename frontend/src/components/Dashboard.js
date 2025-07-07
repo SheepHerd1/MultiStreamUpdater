@@ -12,7 +12,7 @@ import KickIcon from './icons/KickIcon';
 import Spinner from './icons/Spinner';
 import UserMenu from './UserMenu';
 
-function Dashboard({ auth, onIndividualLogout, setAuth }) {
+function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
   // Shared state
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -182,7 +182,7 @@ function Dashboard({ auth, onIndividualLogout, setAuth }) {
     <div className="dashboard-layout">
       <header className="dashboard-header">
         <h2>Multi-Stream Updater</h2>
-        <UserMenu auth={auth} onIndividualLogout={onIndividualLogout} />
+        <UserMenu auth={auth} onLogout={onLogout} onIndividualLogout={onIndividualLogout} />
       </header>
 
       <main className="dashboard-content">

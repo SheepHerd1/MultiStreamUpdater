@@ -11,7 +11,7 @@ const platformIcons = {
   kick: KickIcon,
 };
 
-const UserMenu = ({ auth, onIndividualLogout }) => {
+const UserMenu = ({ auth, onLogout, onIndividualLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -76,6 +76,17 @@ const UserMenu = ({ auth, onIndividualLogout }) => {
               </button>
             </li>
           ))}
+          {connectedPlatforms.length > 1 && (
+            <li className="user-menu-separator"></li>
+          )}
+          <li className="user-menu-item">
+            <button
+              className="logout-all-btn"
+              onClick={onLogout}
+            >
+              Logout All Accounts
+            </button>
+          </li>
         </ul>
       </div>
     </div>

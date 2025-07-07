@@ -113,3 +113,28 @@
   background-color: #ffebee; /* Very light red background on hover */
   border-color: #ef9a9a;
 }
+
+.user-menu-separator {
+  height: 1px;
+  background-color: #f0f0f0;
+  margin: 8px 0;
+}
+
+.logout-all-btn {
+  width: 100%;
+  background-color: #fbe9e7; /* Very light red */
+  border: 1px solid #ffccbc; /* Light red border */
+  color: #d32f2f; /* Red text */
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.logout-all-btn:hover {
+  background-color: #ffccbc;
+  border-color: #ffab91;
+}
