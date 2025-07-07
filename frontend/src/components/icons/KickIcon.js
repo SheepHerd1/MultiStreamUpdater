@@ -9,20 +9,40 @@ const KickIcon = ({ className }) => (
   >
     <title>Kick</title>
     <defs>
-      <filter id="kick-logo-shadow" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="1" dy="1" stdDeviation="1" floodColor="#000000" floodOpacity="0.3" />
-      </filter>
+      <mask id="kick-negative-k">
+        {/* Start with a solid white area */}
+        <rect width="100%" height="100%" fill="white" />
+        {/* Use a black 'K' to create a transparent hole in the mask */}
+        <text
+          x="12"
+          y="12"
+          dy=".35em"
+          textAnchor="middle"
+          fontSize="16"
+          fontWeight="900"
+          fontFamily="system-ui, sans-serif"
+          fill="black"
+        >
+          K
+        </text>
+      </mask>
     </defs>
+    {/* The hard shadow layer: a solid, offset rectangle */}
+    <rect x="3" y="3" width="20" height="20" rx="4" fill="rgba(0,0,0,0.2)" mask="url(#kick-negative-k)" />
+    {/* The main shape, with the K cut out by the mask */}
+    <rect x="2" y="2" width="20" height="20" rx="4" fill="currentColor" mask="url(#kick-negative-k)" />
+    {/* The outline layer: Draw the K again, but as a stroke on top */}
     <text
-      x="50%"
-      y="50%"
-      dy=".3em" /* Vertical alignment adjustment */
+      x="12"
+      y="12"
+      dy=".35em"
       textAnchor="middle"
-      fontSize="20"
-      fontWeight="bold"
+      fontSize="16"
+      fontWeight="900"
       fontFamily="system-ui, sans-serif"
-      fill="currentColor"
-      filter="url(#kick-logo-shadow)"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
     >
       K
     </text>
