@@ -34,6 +34,12 @@
   background-color: #d32f2f;
 }
 
+.header-right-section {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
 .welcome-message {
   padding: 2rem 2rem 0 2rem; /* Re-apply padding here */
   font-size: 1.2rem;
@@ -42,14 +48,10 @@
 }
 
 .connected-platforms {
-  padding: 0 2rem; /* Re-apply padding here */
   display: flex;
   gap: 1.5rem;
   align-items: center;
-  margin-bottom: 2rem;
   flex-wrap: wrap;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #dcedc8; /* A light green separator */
 }
 
 .platform-status {
