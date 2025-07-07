@@ -3,7 +3,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #e8f5e9; /* Your requested pastel green theme */
+  background-color: var(--background-primary);
 }
 
 *,
@@ -16,7 +16,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
-  color: #37474f;
+  color: var(--text-primary);
 }
 
 .App {

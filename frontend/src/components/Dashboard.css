@@ -4,30 +4,42 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: var(--background-secondary);
+  box-shadow: 0 2px 4px var(--card-shadow);
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .dashboard-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: #333;
+  color: var(--text-primary);
+}
+
+/* --- Full Page Layout --- */
+/* This ensures the main content area expands to fill the screen,
+   pushing the sticky action bar to the bottom of the viewport. */
+.dashboard-layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+main {
+  flex-grow: 1;
 }
 
 .logout-btn {
-  background-color: #f44336; /* A clear "danger" color for logout */
-  color: white;
+  background-color: var(--error-background);
+  color: var(--error-text);
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .logout-btn:hover {
@@ -40,10 +52,32 @@
   gap: 2rem;
 }
 
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  color: var(--text-secondary);
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--background-hover);
+}
+
+.theme-toggle-icon {
+  width: 22px;
+  height: 22px;
+}
+
 .welcome-message {
   padding: 2rem 2rem 0 2rem; /* Re-apply padding here */
   font-size: 1.2rem;
-  color: #455a64;
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
 }
 
@@ -65,7 +99,7 @@
 .connected-platforms-mobile {
   padding: 0 2rem 1.5rem 2rem;
   margin-bottom: 2rem;
-  border-bottom: 1px solid #dcedc8;
+  border-bottom: 1px solid var(--card-border);
 }
 
 .platform-status {
@@ -73,7 +107,7 @@
   align-items: center;
   gap: 0.6rem;
   font-weight: 500;
-  color: #37474f;
+  color: var(--text-primary);
 }
 
 .platform-status:not(.connected) .platform-icon-status {
@@ -90,7 +124,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #4caf50; /* Green for connected */
+  background-color: var(--accent-primary);
 }
 
 .platform-status .connect-btn {
@@ -120,7 +154,7 @@
 
 .connect-btn.kick {
   background-color: #53fc18;
-  color: #111;
+  color: var(--text-on-kick);
 }
 .connect-btn.kick:hover {
   background-color: #49e015;
@@ -179,7 +213,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #37474f;
+  color: var(--text-primary);
   font-size: 0.9rem;
 }
 
@@ -189,10 +223,10 @@
 .form-group select {
   width: 100%;
   padding: 0.8rem;
-  background-color: #f8f9fa; /* Very light grey background */
-  border: 1px solid #ced4da; /* Standard light grey border */
+  background-color: var(--background-tertiary);
+  border: 1px solid var(--border-color-light);
   border-radius: 6px;
-  color: #495057; /* Dark text for readability */
+  color: var(--text-primary);
   font-size: 1rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -201,21 +235,21 @@
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #4caf50; /* Pastel green focus color */
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+  border-color: var(--border-color-focus);
+  box-shadow: 0 0 0 3px var(--focus-ring-color);
 }
 
 .form-group input:disabled,
 .form-group textarea:disabled,
 .form-group select:disabled {
-  background-color: #e9ecef;
+  background-color: var(--background-disabled);
   cursor: not-allowed;
 }
 
 .form-group small {
   display: block;
   margin-top: 0.5rem;
-  color: #78909c;
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
 
@@ -229,14 +263,14 @@
   top: 100%;
   left: 0;
   right: 0;
-  background: #ffffff;
-  border: 1px solid #ced4da;
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color-light);
   border-top: none;
   border-radius: 0 0 6px 6px;
   max-height: 200px;
   overflow-y: auto;
   z-index: 10;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px var(--card-shadow);
 }
 
 .category-result-item {
@@ -248,7 +282,7 @@
 }
 
 .category-result-item:hover {
-  background-color: #f1f8e9; /* Very light green hover */
+  background-color: var(--background-hover);
 }
 
 .category-result-item img {
@@ -264,16 +298,16 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.5rem;
-  background-color: #f8f9fa;
-  border: 1px solid #ced4da;
+  background-color: var(--background-tertiary);
+  border: 1px solid var(--border-color-light);
   border-radius: 6px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .tag-input-container:focus-within {
   outline: none;
-  border-color: #4caf50;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+  border-color: var(--border-color-focus);
+  box-shadow: 0 0 0 3px var(--focus-ring-color);
 }
 
 .tag-input-container input {
@@ -281,15 +315,15 @@
   border: none;
   background: transparent;
   padding: 0.25rem;
-  color: #495057;
+  color: var(--text-primary);
   outline: none;
   min-width: 120px;
   font-size: 1rem;
 }
 
 .tag-item {
-  background-color: #66bb6a; /* A slightly darker pastel green */
-  color: white;
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
   padding: 0.25rem 0.6rem;
   border-radius: 4px;
   display: flex;
@@ -301,7 +335,7 @@
 .tag-remove-btn {
   background: none;
   border: none;
-  color: white;
+  color: var(--text-on-accent);
   cursor: pointer;
   font-size: 1.1rem;
   line-height: 1;
@@ -319,13 +353,13 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent white */
+  background-color: var(--background-secondary);
   backdrop-filter: blur(8px); /* This creates the modern "frosted glass" effect */
   display: flex;
   gap: 1rem;
   padding: 1rem 2rem;
   justify-content: flex-end;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-color);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
@@ -340,29 +374,29 @@
 }
 
 .form-actions button[type="submit"] {
-  background-color: #4caf50; /* Main action color */
-  color: white;
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
 }
 
 .form-actions button[type="submit"]:hover:not(:disabled) {
-  background-color: #43a047;
+  background-color: var(--accent-primary-hover);
   box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
 
 .form-actions button:disabled {
-  background-color: #bdbdbd;
-  color: #757575;
+  background-color: var(--background-disabled);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
 .secondary-action {
   background-color: transparent;
-  color: #4caf50;
-  border: 1px solid #4caf50 !important;
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary) !important;
 }
 
 .secondary-action:hover:not(:disabled) {
-  background-color: #f1f8e9;
+  background-color: var(--background-hover);
 }
 
 /* Notifications */
@@ -381,11 +415,11 @@
 }
 
 .notification.success {
-  background-color: #2e7d32;
-  color: white;
+  background-color: var(--success-background);
+  color: var(--success-text);
 }
 
 .notification.error {
-  background-color: #c62828;
-  color: white;
+  background-color: var(--error-background);
+  color: var(--error-text);
 }

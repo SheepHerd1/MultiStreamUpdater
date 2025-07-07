@@ -10,6 +10,7 @@ import TwitchIcon from './icons/TwitchIcon';
 import YouTubeIcon from './icons/YouTubeIcon';
 import KickIcon from './icons/KickIcon';
 import Spinner from './icons/Spinner';
+import ThemeToggleButton from './ThemeToggleButton';
 import UserMenu from './UserMenu';
 
 function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
@@ -215,13 +216,14 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
   );
 
   return (
-    <>
+    <div className="dashboard-layout-container">
       <header className="dashboard-header">
         <h2>Multi-Stream Updater</h2>
         <div className="header-right-section">
           <div className="connected-platforms connected-platforms-desktop">
             {platformStatusBlock}
           </div>
+          <ThemeToggleButton />
           <UserMenu auth={auth} onLogout={onLogout} onIndividualLogout={onIndividualLogout} />
         </div>
       </header>
@@ -363,7 +365,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
       
       {notification && <div className="notification success">{notification}</div>}
       {errorMessages && <div className="notification error">{errorMessages}</div>}
-    </>
+    </div>
   );
 }
 

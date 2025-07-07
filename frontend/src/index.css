@@ -1,5 +1,6 @@
 /* We are moving all global styles to App.css for better control. */
 /* This file is now only for root-level browser settings. */
+@import './themes.css';
 
 body {
   -webkit-font-smoothing: antialiased;

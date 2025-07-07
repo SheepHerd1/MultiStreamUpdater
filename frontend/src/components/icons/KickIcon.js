@@ -8,20 +8,21 @@ const KickIcon = ({ className }) => (
     role="img"
   >
     <title>Kick</title>
-    
-    {/* The hard shadow layer, drawn first and offset by (1, 1) */}
-    <path
-      fillRule="evenodd"
-      d="M7 3h12c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2z M9 5h3v6.5l5-6.5h3L13.5 12l6.5 8h-3l-5-6.5V21H9V5z"
-      fill="rgba(0,0,0,0.25)"
-    />
-    
-    {/* The main shape, with a new, bolder K path */}
-    <path
-      fillRule="evenodd"
-      d="M6 2h12c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2z M8 4h3v6.5l5-6.5h3L12.5 12l6.5 8h-3l-5-6.5V20H8V4z"
-      fill="currentColor"
-    />
+    <g>
+      {/* The outline, drawn first as a fatter, black version of the K */}
+      <path
+        d="M7 4H10V10.5L17 4H20L12 12L20 20H17L10 13.5V20H7V4Z"
+        fill="#000"
+        stroke="#000"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+      {/* The main K shape, drawn on top with the current text color */}
+      <path
+        d="M7 4H10V10.5L17 4H20L12 12L20 20H17L10 13.5V20H7V4Z"
+        fill="currentColor"
+      />
+    </g>
   </svg>
 );
 
