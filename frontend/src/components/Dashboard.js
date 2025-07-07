@@ -179,13 +179,13 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
     .join('\n');
 
   return (
-    <div className="dashboard-layout">
+    <>
       <header className="dashboard-header">
         <h2>Multi-Stream Updater</h2>
         <UserMenu auth={auth} onLogout={onLogout} onIndividualLogout={onIndividualLogout} />
       </header>
 
-      <main className="dashboard-content">
+      <main>
         <p className="welcome-message">Welcome, {twitchAuth?.userName || youtubeAuth?.userName || kickAuth?.userName || 'Streamer'}!</p>
         
         <div className="connected-platforms">
@@ -322,7 +322,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
       
       {notification && <div className="notification success">{notification}</div>}
       {errorMessages && <div className="notification error">{errorMessages}</div>}
-    </div>
+    </>
   );
 }
 

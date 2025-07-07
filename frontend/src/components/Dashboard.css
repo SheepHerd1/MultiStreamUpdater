@@ -1,10 +1,3 @@
-/* Main container for the entire dashboard view */
-.dashboard-layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
 /* New full-width header */
 .dashboard-header {
   display: flex;
@@ -41,23 +34,15 @@
   background-color: #d32f2f;
 }
 
-/* Main content area */
-.dashboard-content {
-  padding: 2rem 0; /* Remove horizontal padding from the main container */
-  flex-grow: 1;
-  background-color: #ffffff; /* Give the content area a solid background */
-  width: 100%;
-}
-
 .welcome-message {
-  padding: 0 2rem; /* Add padding here instead */
+  padding: 2rem 2rem 0 2rem; /* Re-apply padding here */
   font-size: 1.2rem;
   color: #455a64;
   margin-bottom: 1.5rem;
 }
 
 .connected-platforms {
-  padding: 0 2rem; /* Add padding here instead */
+  padding: 0 2rem; /* Re-apply padding here */
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
@@ -131,7 +116,7 @@
 .stream-editor-layout {
   display: grid;
   grid-template-columns: 1fr;
-  padding: 0 2rem; /* Add padding here instead */
+  padding: 0 2rem; /* Re-apply padding here */
   gap: 1.5rem;
 }
 
@@ -303,7 +288,7 @@
   margin-top: 2rem;
   display: flex;
   gap: 1rem;
-  padding: 1.5rem 2rem; /* Add padding here instead */
+  padding: 1.5rem 2rem; /* Re-apply padding here */
   justify-content: flex-end;
   border-top: 1px solid #dcedc8;
 }
