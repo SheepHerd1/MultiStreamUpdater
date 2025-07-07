@@ -92,20 +92,10 @@ export default async function handler(req, res) {
       <script>
         const authData = ${JSON.stringify(authPayload)};
         if (window.opener) {
-          // For security, post only to your frontend's origin.
-          const frontendUrl = '${process.env.FRONTEND_URL}';
-          console.log('FRONTEND_URL from environment (injected):', frontendUrl);
-          let targetOrigin;
-          try {
-            // Fallback if the env var is not set
-            const urlToUse = frontendUrl || 'https://multi-stream-updater.vercel.app';
-            targetOrigin = new URL(urlToUse).origin;
-            // --- VITAL DEBUGGING LOG ---
-            console.log('Attempting postMessage to targetOrigin:', targetOrigin, 'derived from frontendUrl:', frontendUrl);
-          } catch (e) {
-            console.error("Invalid FRONTEND_URL, falling back to default. Error:", e.message);
-            targetOrigin = 'https://multi-stream-updater.vercel.app';
-          }
+          // Hardcoding the target origin for a definitive fix.
+          // This MUST match the origin of your frontend application.
+          const targetOrigin = 'https://sheepherd1.github.io';
+          console.log('Attempting postMessage to hardcoded targetOrigin:', targetOrigin);
           window.opener.postMessage(authData, targetOrigin);
         }
         window.close();
