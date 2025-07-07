@@ -29,7 +29,10 @@ async function handler(req, res) {
     params.append('client_secret', KICK_CLIENT_SECRET);
 
     const response = await axios.post(KICK_TOKEN_URL, params, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'MultiStreamUpdater/1.0 (https://multi-stream-updater.vercel.app)',
+      },
     });
 
     // Pass through the relevant data from Kick's response
