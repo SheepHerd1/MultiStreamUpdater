@@ -29,7 +29,7 @@ function handler(req, res) {
 
   // Scopes required for the application
   // Adding 'channel:read' to view channel info like category and description.
-  const scope = 'user:read channel:read channel:write offline_access';
+  const scope = 'user:read channel:read channel:write';
 
   const params = new URLSearchParams({
     client_id: KICK_CLIENT_ID,
