@@ -227,90 +227,96 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
               </div>
             </PlatformCard>
 
-            <PlatformCard title="Twitch Settings" className="twitch-card" isConnected={!!twitchAuth}>
-              <div className="form-group">
-                <label htmlFor="twitchCategory">Category</label>
-                <div className="category-search-container">
-                  <input
-                    id="twitchCategory"
-                    type="text"
-                    value={twitchCategoryQuery || twitchCategory}
-                    onChange={(e) => {
-                      setTwitchCategory('');
-                      setTwitchCategoryQuery(e.target.value);
-                    }}
-                    placeholder="Search for a category..."
-                    disabled={!twitchAuth}
-                  />
-                  {twitchCategoryResults.length > 0 && (
-                    <div className="category-results">
-                      {isTwitchCategoryLoading ? <div>Loading...</div> :
-                        twitchCategoryResults.map(cat => (
-                          <div key={cat.id} className="category-result-item" onClick={() => {
-                            setTwitchCategory(cat.name);
-                            setTwitchCategoryQuery('');
-                            setTwitchCategoryResults([]);
-                          }}>
-                            <img src={cat.box_art_url.replace('{width}', '30').replace('{height}', '40')} alt="" />
-                            <span>{cat.name}</span>
-                          </div>
-                        ))}
-                    </div>
-                  )}
+            {twitchAuth && (
+              <PlatformCard title="Twitch Settings" className="twitch-card">
+                <div className="form-group">
+                  <label htmlFor="twitchCategory">Category</label>
+                  <div className="category-search-container">
+                    <input
+                      id="twitchCategory"
+                      type="text"
+                      value={twitchCategoryQuery || twitchCategory}
+                      onChange={(e) => {
+                        setTwitchCategory('');
+                        setTwitchCategoryQuery(e.target.value);
+                      }}
+                      placeholder="Search for a category..."
+                      disabled={!twitchAuth}
+                    />
+                    {twitchCategoryResults.length > 0 && (
+                      <div className="category-results">
+                        {isTwitchCategoryLoading ? <div>Loading...</div> :
+                          twitchCategoryResults.map(cat => (
+                            <div key={cat.id} className="category-result-item" onClick={() => {
+                              setTwitchCategory(cat.name);
+                              setTwitchCategoryQuery('');
+                              setTwitchCategoryResults([]);
+                            }}>
+                              <img src={cat.box_art_url.replace('{width}', '30').replace('{height}', '40')} alt="" />
+                              <span>{cat.name}</span>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="form-group">
-                <label htmlFor="tags">Tags (up to 10)</label>
-                <div className="tag-input-container" tabIndex="0">
-                  {tags.map(tag => (
-                    <div key={tag} className="tag-item">
-                      {tag}
-                      <button type="button" className="tag-remove-btn" onClick={() => removeTag(tag)}>&times;</button>
-                    </div>
-                  ))}
-                  <input
-                    id="tags"
-                    type="text"
-                    value={tagInput}
-                    onChange={handleTagInputChange}
-                    onKeyDown={handleTagInputKeyDown}
-                    placeholder={tags.length < 10 ? "Add a tag..." : "Max 10 tags"}
-                    disabled={!twitchAuth || tags.length >= 10}
-                  />
+                <div className="form-group">
+                  <label htmlFor="tags">Tags (up to 10)</label>
+                  <div className="tag-input-container" tabIndex="0">
+                    {tags.map(tag => (
+                      <div key={tag} className="tag-item">
+                        {tag}
+                        <button type="button" className="tag-remove-btn" onClick={() => removeTag(tag)}>&times;</button>
+                      </div>
+                    ))}
+                    <input
+                      id="tags"
+                      type="text"
+                      value={tagInput}
+                      onChange={handleTagInputChange}
+                      onKeyDown={handleTagInputKeyDown}
+                      placeholder={tags.length < 10 ? "Add a tag..." : "Max 10 tags"}
+                      disabled={!twitchAuth || tags.length >= 10}
+                    />
+                  </div>
                 </div>
-              </div>
-            </PlatformCard>
+              </PlatformCard>
+            )}
 
-            <PlatformCard title="YouTube Settings" className="youtube-card" isConnected={!!youtubeAuth}>
-              <div className="form-group">
-                <label htmlFor="description">Description</label>
-                <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="YouTube video description..." rows="4" disabled={!youtubeAuth} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="youtubeCategory">Category</label>
-                <select id="youtubeCategory" value={youtubeCategoryId} onChange={(e) => setYoutubeCategoryId(e.target.value)} disabled={!youtubeAuth}>
-                  <option value="">-- Select a Category --</option>
-                  {youtubeCategories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.snippet.title}</option>
-                  ))}
-                </select>
-              </div>
-            </PlatformCard>
+            {youtubeAuth && (
+              <PlatformCard title="YouTube Settings" className="youtube-card">
+                <div className="form-group">
+                  <label htmlFor="description">Description</label>
+                  <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="YouTube video description..." rows="4" disabled={!youtubeAuth} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="youtubeCategory">Category</label>
+                  <select id="youtubeCategory" value={youtubeCategoryId} onChange={(e) => setYoutubeCategoryId(e.target.value)} disabled={!youtubeAuth}>
+                    <option value="">-- Select a Category --</option>
+                    {youtubeCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.snippet.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </PlatformCard>
+            )}
 
-            <PlatformCard title="Kick Settings" className="kick-card" isConnected={!!kickAuth}>
-              <div className="form-group">
-                <label htmlFor="kickCategory">Category</label>
-                <input
-                  id="kickCategory"
-                  type="text"
-                  value={kickCategory}
-                  onChange={(e) => setKickCategory(e.target.value)}
-                  placeholder="Enter a category..."
-                  disabled={!kickAuth}
-                />
-                <small>Note: Kick's API currently requires manual category entry.</small>
-              </div>
-            </PlatformCard>
+            {kickAuth && (
+              <PlatformCard title="Kick Settings" className="kick-card">
+                <div className="form-group">
+                  <label htmlFor="kickCategory">Category</label>
+                  <input
+                    id="kickCategory"
+                    type="text"
+                    value={kickCategory}
+                    onChange={(e) => setKickCategory(e.target.value)}
+                    placeholder="Enter a category..."
+                    disabled={!kickAuth}
+                  />
+                  <small>Note: Kick's API currently requires manual category entry.</small>
+                </div>
+              </PlatformCard>
+            )}
           </div>
 
           <div className="form-actions">
