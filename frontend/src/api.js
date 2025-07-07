@@ -51,19 +51,33 @@ api.interceptors.response.use(
         window.dispatchEvent(new CustomEvent('tokenRefreshStart', { detail: { platform } }));
 
         try {
-          const { data } = await axios.post(`${api.defaults.baseURL}/api/auth/${platform}/refresh`);
-          
-          const newAuth = { token: data.accessToken };
-
-          // Update auth data in localStorage so other tabs get it too
           const authData = JSON.parse(localStorage.getItem('auth')) || {};
-          authData[platform] = { ...authData[platform], ...newAuth };
-          localStorage.setItem('auth', JSON.stringify(authData));
+          const platformAuth = authData[platform];
+
+          if (!platformAuth?.refreshToken) {
+            throw new Error(`No refresh token for ${platform}`);
+          }
+
+          const { data } = await axios.post(
+            `${api.defaults.baseURL}/api/auth/${platform}/refresh`,
+            { refresh_token: platformAuth.refreshToken }
+          );
+
+          // Update the platform's auth details with the new tokens
+          const newPlatformAuth = {
+            ...platformAuth,
+            token: data.access_token,
+            refreshToken: data.refresh_token || platformAuth.refreshToken, // Use new refresh token if provided
+          };
+
+          const newAuthData = { ...authData, [platform]: newPlatformAuth };
+          localStorage.setItem('auth', JSON.stringify(newAuthData));
 
           // Dispatch a custom event to tell App.js to update its state
-          window.dispatchEvent(new CustomEvent('authUpdated', { detail: authData }));
+          window.dispatchEvent(new CustomEvent('authUpdated', { detail: newAuthData }));
 
-          resolve(newAuth);
+          // Resolve the promise with the new token for the original request to retry
+          resolve({ token: newPlatformAuth.token });
         } catch (refreshError) {
           console.error(`Token refresh failed for ${platform}:`, refreshError);
           // If refresh fails, we should probably log the user out.
@@ -76,7 +90,7 @@ api.interceptors.response.use(
 
       try {
         const newAuth = await refreshingPromises[platform];
-        originalRequest.headers['Authorization'] = `Bearer ${newAuth.token}`;
+        originalRequest.headers['Authorization'] = `Bearer ${newAuth.token}`; // newAuth is { token: '...' }
         return api(originalRequest);
       } catch (refreshError) {
         // The refresh promise was rejected, propagate the error
