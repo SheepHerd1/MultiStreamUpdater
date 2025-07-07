@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api';
+import { useDebounce } from './useDebounce';
 
 export const useTwitchStream = (twitchAuth, setTitle, setError) => {
   const [twitchCategory, setTwitchCategory] = useState('');
@@ -8,6 +9,8 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
   const [isTwitchCategoryLoading, setIsTwitchCategoryLoading] = useState(false);
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
+
+  const debouncedTwitchQuery = useDebounce(twitchCategoryQuery, 300);
 
   const fetchTwitchStreamInfo = useCallback(async () => {
     if (!twitchAuth) return;
@@ -26,26 +29,27 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     }
   }, [twitchAuth, setTitle, setError]);
 
-  const searchTwitchCategories = useCallback(async (query) => {
-    if (!query) {
+  useEffect(() => {
+    if (!debouncedTwitchQuery) {
       setTwitchCategoryResults([]);
       return;
     }
-    setIsTwitchCategoryLoading(true);
-    try {
-      const response = await api.get(`/api/twitch?action=categories&query=${query}`);
-      setTwitchCategoryResults(response.data);
-    } catch (error) {
-      console.error('Error searching categories:', error);
-    } finally {
-      setIsTwitchCategoryLoading(false);
-    }
-  }, []);
 
-  useEffect(() => {
-    const handler = setTimeout(() => searchTwitchCategories(twitchCategoryQuery), 300);
-    return () => clearTimeout(handler);
-  }, [twitchCategoryQuery, searchTwitchCategories]);
+    const search = async () => {
+      setIsTwitchCategoryLoading(true);
+      try {
+        const response = await api.get(`/api/twitch?action=categories&query=${debouncedTwitchQuery}`);
+        setTwitchCategoryResults(response.data);
+      } catch (error) {
+        console.error('Error searching categories:', error);
+        setTwitchCategoryResults([]);
+      } finally {
+        setIsTwitchCategoryLoading(false);
+      }
+    };
+
+    search();
+  }, [debouncedTwitchQuery]);
 
   const handleTagInputChange = (e) => setTagInput(e.target.value);
 
