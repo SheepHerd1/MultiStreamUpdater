@@ -79,15 +79,33 @@ function App() {
           console.error("Failed to process Twitch token from popup:", e);
         }
       } else if (event.data.type === 'youtube-auth-success' && event.data.accessToken) {
-        try {
-          newAuthData.youtube = {
-            token: event.data.accessToken,
-            refreshToken: event.data.refreshToken,
-          };
-          updateAuth(newAuthData);
-        } catch (e) {
-          console.error("Failed to process YouTube token from popup:", e);
-        }
+        // This logic was incorrect and was mixing up Kick and YouTube data.
+        // Let's correct it to only handle YouTube.
+        const processYouTubeAuth = async () => {
+          try {
+            // NEW: Fetch the user's channel name immediately after authentication
+            const channelInfoResponse = await api.get('/api/youtube?action=channel_info', {
+              headers: { 'Authorization': `Bearer ${event.data.accessToken}` }
+            });
+
+            const userName = channelInfoResponse.data?.snippet?.title;
+            const userId = channelInfoResponse.data?.id;
+
+            newAuthData.youtube = {
+              token: event.data.accessToken,
+              refreshToken: event.data.refreshToken,
+              userName: userName || 'YouTube User', // Fallback
+              userId: userId,
+            };
+            updateAuth(newAuthData);
+          } catch (e) {
+            console.error("Failed to process YouTube token or fetch user info:", e);
+            // Even if fetching user info fails, we can still save the tokens
+            newAuthData.youtube = { token: event.data.accessToken, refreshToken: event.data.refreshToken };
+            updateAuth(newAuthData);
+          }
+        };
+        processYouTubeAuth();
       } else if (event.data.type === 'kick-auth-success' && event.data.accessToken && event.data.userId) {
         try {
           // The callback now provides all necessary user info.

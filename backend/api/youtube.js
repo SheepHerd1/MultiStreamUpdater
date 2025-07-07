@@ -79,6 +79,23 @@ async function handleStreamUpdate(req, res) {
   }
 }
 
+async function handleChannelInfo(req, res) {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
+
+  try {
+    const youtube = google.youtube({ version: 'v3', auth: getOAuth2Client(token) });
+    // 'mine: true' fetches the channel for the authenticated user
+    const response = await youtube.channels.list({ part: 'id,snippet', mine: true });
+    // The API returns an array of items, we want the first one.
+    res.status(200).json(response.data.items?.[0] || {});
+  } catch (error) {
+    console.error('Error fetching YouTube channel info:', error.response?.data || error.message);
+    const errorMessage = error.response?.data?.error?.message || 'Failed to fetch YouTube channel info.';
+    res.status(error.response?.status || 500).json({ error: errorMessage });
+  }
+}
+
 async function handleCategories(req, res) {
   try {
     const youtube = google.youtube({ version: 'v3', auth: process.env.GOOGLE_API_KEY });
@@ -98,6 +115,8 @@ async function handler(req, res) {
     switch (action) {
       case 'stream_info':
         return handleStreamInfo(req, res);
+      case 'channel_info':
+        return handleChannelInfo(req, res);
       case 'categories':
         return handleCategories(req, res);
       default:
