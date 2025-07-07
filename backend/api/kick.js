@@ -1,148 +1,60 @@
 import axios from 'axios';
 import { withCors } from './_utils/cors.js';
 
-// The Kick API is hosted at kick.com/api, not a separate subdomain.
-// This is confirmed by server responses (404 on api.kick.com vs 401 on kick.com/api).
-const KICK_API_BASE_URL = 'https://kick.com/api/v2';
-
-// --- Reusable API Client & Error Handler ---
-
-/**
- * Creates a pre-configured Axios instance for making requests to the Kick API.
- * @param {string} token The user's OAuth Bearer token.
- * @returns A configured Axios instance.
- */
-const createKickApiClient = (token) => {
-  const client = axios.create({
-    baseURL: KICK_API_BASE_URL,
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Accept': 'application/json',
-      'User-Agent': 'MultiStreamUpdater/1.0.0',
-    },
-    // Prevent axios from following redirects, so we can catch auth failures that redirect to the homepage.
-    maxRedirects: 0,
-    // We must also validate the response, because Kick's API can return a 200 OK status
-    // with an HTML page on auth failure instead of a proper 401 error.
-    validateStatus: (status) => status >= 200 && status < 300,
-  });
-
-  // Use an interceptor to ensure the response is JSON. If not, reject the promise.
-  client.interceptors.response.use(
-    (response) => {
-      const contentType = response.headers['content-type'];
-      if (contentType && contentType.includes('application/json')) {
-        return response; // Response is valid JSON, continue.
-      }
-      // If the response is not JSON, it's an authentication failure.
-      // We create a custom error that mimics an Axios error for consistent handling.
-      const error = new Error('Authentication failed: Kick API returned a non-JSON response (likely HTML).');
-      error.response = {
-        // We'll treat this as a 401 Unauthorized error.
-        status: 401,
-        data: { message: error.message }
-      };
-      return Promise.reject(error);
-    },
-    (error) => {
-      // Pass through any other network or status code errors from Axios.
-      return Promise.reject(error);
-    }
-  );
-
-  return client;
-};
-
-/**
- * Centralized error handler for API requests.
- * @param {object} res The Express response object.
- * @param {Error} error The error caught from the API call.
- * @param {string} context A descriptive string for the action that failed.
- */
-const handleApiError = (res, error, context) => {
-  console.error(`Error ${context}:`, error.response?.data || error.message);
-  const status = error.response?.status || 500;
-  const message = error.response?.data?.message || error.message || `Failed to ${context}.`;
-  res.status(status).json({ error: message });
-};
-
-// --- Route Handlers ---
-
-async function handleUserInfo(req, res) {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
-
-  try {
-    const apiClient = createKickApiClient(token);
-    const response = await apiClient.get('/user');
-    res.status(200).json(response.data);
-  } catch (error) {
-    handleApiError(res, error, 'fetch user info from Kick');
-  }
-}
-
-async function handleStreamInfo(req, res) {
-  const { channel } = req.query;
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!channel) return res.status(400).json({ error: 'Channel parameter is required.' });
-  if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
-
-  try {
-    const apiClient = createKickApiClient(token);
-    const response = await apiClient.get(`/channels/${channel}`);
-    const livestreamData = response.data.livestream || {};
-    res.status(200).json(livestreamData);
-  } catch (error) {
-    handleApiError(res, error, 'fetch channel info from Kick');
-  }
-}
-
-async function handleStreamUpdate(req, res) {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
-  const { channel, title, category } = req.body;
-  if (!channel) return res.status(400).json({ error: 'Channel is required.' });
-  if (!title && !category) {
-    return res.status(400).json({ error: 'At least title or category must be provided for an update.' });
-  }
-
-  try {
-    const apiClient = createKickApiClient(token);
-    // Dynamically build the payload to only include fields that are being updated.
-    const payload = {};
-    if (title) payload.session_title = title;
-    if (category) payload.category_name = category;
-
-    await apiClient.patch(`/channels/${channel}`, payload);
-    res.status(200).json({ success: true, message: 'Kick stream updated successfully.' });
-  } catch (error) {
-    handleApiError(res, error, 'update Kick stream info');
-  }
-}
-
-// --- Main Handler ---
+// A simple proxy to the official Kick API.
+// This centralizes API calls and ensures the correct, documented endpoints are used.
 async function handler(req, res) {
   const { action } = req.query;
+  const accessToken = req.headers.authorization?.split(' ')[1];
 
-  if (req.method === 'GET') {
+  if (!accessToken) {
+    return res.status(401).json({ message: 'Unauthorized: Missing access token.' });
+  }
+
+  const kickApiBase = 'https://api.kick.com/public/v1';
+  const headers = {
+    'Authorization': `Bearer ${accessToken}`,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
+
+  try {
+    let response;
     switch (action) {
       case 'user_info':
-        return handleUserInfo(req, res);
-      case 'stream_info':
-        return handleStreamInfo(req, res);
+        // GET /users: If no user IDs are specified, returns the currently authorised user.
+        console.log(`[Kick Proxy] Forwarding to GET ${kickApiBase}/users`);
+        response = await axios.get(`${kickApiBase}/users`, { headers });
+        // The API returns an array, we want the first user object
+        res.status(200).json(response.data.data?.[0] || {});
+        break;
+
+      case 'channel_info':
+        // GET /channels: If no params, returns the currently authenticated user's channel.
+        console.log(`[Kick Proxy] Forwarding to GET ${kickApiBase}/channels`);
+        response = await axios.get(`${kickApiBase}/channels`, { headers });
+        // The API returns an array, we want the first channel object
+        res.status(200).json(response.data.data?.[0] || {});
+        break;
+      
+      case 'update_stream':
+        if (req.method !== 'PATCH') {
+            return res.status(405).json({ message: 'Method Not Allowed for this action.' });
+        }
+        console.log(`[Kick Proxy] Forwarding to PATCH ${kickApiBase}/channels with body:`, req.body);
+        response = await axios.patch(`${kickApiBase}/channels`, req.body, { headers });
+        res.status(response.status).send(); // Should be 204 No Content on success
+        break;
+
       default:
-        return res.status(400).json({ error: 'Invalid action for GET request' });
+        res.status(400).json({ message: 'Invalid action specified.' });
+        break;
     }
+  } catch (err) {
+    console.error(`[Kick Proxy] Error for action "${action}":`, { message: err.message, status: err.response?.status, data: err.response?.data });
+    res.status(err.response?.status || 500).json(err.response?.data || { message: 'An internal proxy error occurred.' });
   }
-
-  if (req.method === 'POST') {
-    if (action === 'stream_update') {
-      return handleStreamUpdate(req, res);
-    }
-    return res.status(400).json({ error: 'Invalid action for POST request' });
-  }
-
-  return res.status(405).json({ error: 'Method Not Allowed' });
 }
 
 export default withCors(handler);
+
