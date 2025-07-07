@@ -41,7 +41,17 @@ export default async function handler(req, res) {
       },
     });
 
-    const { access_token, refresh_token } = response.data;
+    const { access_token, refresh_token, scope } = response.data;
+
+    // Immediately use the new access token to fetch the user's profile information
+    const userResponse = await axios.get('https://kick.com/api/v2/user', {
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    const { id: userId, username: userName } = userResponse.data;
 
     // Clear the cookies after successful token exchange
     res.setHeader('Set-Cookie', [
@@ -56,6 +66,9 @@ export default async function handler(req, res) {
           type: 'kick-auth-success',
           accessToken: '${access_token}',
           refreshToken: '${refresh_token}',
+          userId: '${userId}',
+          userName: '${userName}',
+          scope: '${scope}',
         };
         if (window.opener) {
           window.opener.postMessage(authData, '*'); // Use your frontend URL in production
@@ -68,6 +81,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('Error exchanging Kick code for token:', err.response?.data || err.message);
-    res.status(500).send('<html><body><h1>Authentication Failed</h1><p>Could not get tokens from Kick.</p></body></html>');
+    const errorMessage = err.response?.data?.message || 'Could not get tokens or user info from Kick.';
+    res.status(500).send(`<html><body><h1>Authentication Failed</h1><p>${errorMessage}</p></body></html>`);
   }
 }

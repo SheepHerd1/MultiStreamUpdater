@@ -71,43 +71,17 @@ function App() {
         } catch (e) {
           console.error("Failed to process YouTube token from popup:", e);
         }
-      } else if (event.data.type === 'kick-auth-success' && event.data.accessToken) {
+      } else if (event.data.type === 'kick-auth-success' && event.data.accessToken && event.data.userId) {
         try {
-          // 1. Immediately store the tokens we have. This is crucial.
-          // It ensures the refresh token is available for the interceptor if the next API call fails.
-          const initialKickAuth = {
+          // The callback now provides all necessary user info.
+          // We can directly create the final auth object.
+          newAuthData.kick = {
             token: event.data.accessToken,
             refreshToken: event.data.refreshToken,
-            userId: null, // Will be filled in by the API call
-            userName: 'user', // Placeholder
+            userId: event.data.userId,
+            userName: event.data.userName,
           };
-          const tempAuthData = { ...newAuthData, kick: initialKickAuth };
-          updateAuth(tempAuthData);
-
-          // 2. Now, fetch the user info. If this fails with a 401, the interceptor
-          // can now find the refresh token we just saved.
-          api.get('/api/kick?action=user_info', {
-            headers: { 'Authorization': `Bearer ${event.data.accessToken}` }
-          })
-            .then(userInfoResponse => {
-              // 3. On success, update the auth state with the full user details.
-              const finalKickAuth = {
-                ...initialKickAuth, // carries over the tokens
-                userId: userInfoResponse.data.id,
-                userName: userInfoResponse.data.username,
-              };
-              const finalAuthData = { ...tempAuthData, kick: finalKickAuth };
-              updateAuth(finalAuthData);
-            })
-            .catch(err => {
-              // The interceptor will handle 401s by refreshing the token.
-              // We only want to log the user out if the error is something else,
-              // or if the token refresh itself fails (which the interceptor will re-throw).
-              if (err.response?.status !== 401) {
-                console.error("Failed to fetch Kick user info after auth:", err);
-                handleLogout(); // A general logout is cleaner here.
-              }
-            });
+          updateAuth(newAuthData);
         } catch (e) {
           console.error("Failed to process Kick token from popup:", e);
         }
