@@ -178,39 +178,46 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
     })
     .join('\n');
 
+  // To avoid duplicating code, we'll define the platform status block once.
+  const platformStatusBlock = (
+    <>
+      <div className={`platform-status ${twitchAuth ? 'connected' : ''}`}>
+        <TwitchIcon className="platform-icon-status" />
+        {twitchAuth ? (
+          <span>{twitchAuth.userName}</span>
+        ) : (
+          <button type="button" onClick={handleTwitchConnect} className="connect-btn twitch">Connect</button>
+        )}
+        {isRefreshing.twitch && <Spinner />}
+      </div>
+      <div className={`platform-status ${youtubeAuth ? 'connected' : ''}`}>
+        <YouTubeIcon className="platform-icon-status" />
+        {youtubeAuth ? (
+          <span>{youtubeAuth.userName || 'YouTube'}</span>
+        ) : (
+          <button type="button" onClick={handleYouTubeConnect} className="connect-btn youtube">Connect</button>
+        )}
+        {isRefreshing.youtube && <Spinner />}
+      </div>
+      <div className={`platform-status ${kickAuth ? 'connected' : ''}`}>
+        <KickIcon className="platform-icon-status" />
+        {kickAuth ? (
+          <span>{kickAuth.userName}</span>
+        ) : (
+          <button type="button" onClick={handleKickConnect} className="connect-btn kick">Connect</button>
+        )}
+        {isRefreshing.kick && <Spinner />}
+      </div>
+    </>
+  );
+
   return (
     <>
       <header className="dashboard-header">
         <h2>Multi-Stream Updater</h2>
         <div className="header-right-section">
-          <div className="connected-platforms">
-            <div className={`platform-status ${twitchAuth ? 'connected' : ''}`}>
-              <TwitchIcon className="platform-icon-status" />
-              {twitchAuth ? (
-                <span>{twitchAuth.userName}</span>
-              ) : (
-                <button type="button" onClick={handleTwitchConnect} className="connect-btn twitch">Connect</button>
-              )}
-              {isRefreshing.twitch && <Spinner />}
-            </div>
-            <div className={`platform-status ${youtubeAuth ? 'connected' : ''}`}>
-              <YouTubeIcon className="platform-icon-status" />
-              {youtubeAuth ? (
-                <span>{youtubeAuth.userName || 'YouTube'}</span>
-              ) : (
-                <button type="button" onClick={handleYouTubeConnect} className="connect-btn youtube">Connect</button>
-              )}
-              {isRefreshing.youtube && <Spinner />}
-            </div>
-            <div className={`platform-status ${kickAuth ? 'connected' : ''}`}>
-              <KickIcon className="platform-icon-status" />
-              {kickAuth ? (
-                <span>{kickAuth.userName}</span>
-              ) : (
-                <button type="button" onClick={handleKickConnect} className="connect-btn kick">Connect</button>
-              )}
-              {isRefreshing.kick && <Spinner />}
-            </div>
+          <div className="connected-platforms connected-platforms-desktop">
+            {platformStatusBlock}
           </div>
           <UserMenu auth={auth} onLogout={onLogout} onIndividualLogout={onIndividualLogout} />
         </div>
@@ -218,6 +225,10 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
 
       <main>
         <p className="welcome-message">Welcome, {twitchAuth?.userName || youtubeAuth?.userName || kickAuth?.userName || 'Streamer'}!</p>
+
+        <div className="connected-platforms connected-platforms-mobile">
+          {platformStatusBlock}
+        </div>
 
         <form id="stream-update-form" onSubmit={handleSubmit} className="dashboard-form">
           <div className="stream-editor-layout">

@@ -54,6 +54,20 @@
   flex-wrap: wrap;
 }
 
+/* --- Responsive Platform Statuses --- */
+
+/* Hide the desktop version by default (mobile-first) */
+.connected-platforms-desktop {
+  display: none;
+}
+
+/* Style the mobile version that appears in the main content area */
+.connected-platforms-mobile {
+  padding: 0 2rem 1.5rem 2rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #dcedc8;
+}
+
 .platform-status {
   display: flex;
   align-items: center;
@@ -123,6 +137,16 @@
 
 /* Responsive grid for larger screens - Restoring this as you liked the grid layout */
 @media (min-width: 1024px) {
+  /* Show the desktop statuses inside the header */
+  .connected-platforms-desktop {
+    display: flex;
+  }
+
+  /* Hide the mobile statuses */
+  .connected-platforms-mobile {
+    display: none;
+  }
+
   .stream-editor-layout {
     grid-template-columns: repeat(2, 1fr);
     grid-template-areas:
