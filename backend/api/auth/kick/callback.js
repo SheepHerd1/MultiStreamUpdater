@@ -93,7 +93,8 @@ export default async function handler(req, res) {
         const authData = ${JSON.stringify(authPayload)};
         if (window.opener) {
           // For security, post only to your frontend's origin.
-          const frontendUrl = '${process.env.FRONTEND_URL}';
+          const frontendUrl = process.env.FRONTEND_URL;
+          console.log('FRONTEND_URL from environment:', frontendUrl);
           let targetOrigin;
           try {
             // Fallback if the env var is not set
