@@ -22,12 +22,21 @@ export default async function handler(req, res) {
     return res.status(400).send('<html><body><h1>Error</h1><p>Invalid state. Please try again.</p></body></html>');
   }
 
+  // Explicitly check for the code_verifier cookie. This is critical for the PKCE flow.
+  if (!codeVerifier) {
+    console.error('Kick callback error: The "kick_code_verifier" cookie was missing or empty.');
+    return res.status(400).send('<html><body><h1>Authentication Error</h1><p>Your session may have expired or cookies are not being sent correctly. Please try logging in again.</p></body></html>');
+  }
+
   const { KICK_CLIENT_ID, KICK_CLIENT_SECRET, NEXT_PUBLIC_KICK_REDIRECT_URI } = process.env;
 
   try {
     // Correct token endpoint URL from Kick's documentation
     const tokenUrl = 'https://id.kick.com/oauth/token';
     
+    // Add server-side logging to confirm env vars are loaded. This will appear in your Vercel logs.
+    console.log('Attempting Kick token exchange. ENV check: Client ID loaded:', !!KICK_CLIENT_ID, 'Secret loaded:', !!KICK_CLIENT_SECRET);
+
     const response = await axios.post(tokenUrl, new URLSearchParams({
       grant_type: 'authorization_code',
       code: code,
@@ -48,6 +57,7 @@ export default async function handler(req, res) {
       headers: {
         'Authorization': `Bearer ${access_token}`,
         'Accept': 'application/json',
+        'User-Agent': 'MultiStreamUpdater/1.0 (https://multi-stream-updater.vercel.app)',
       },
     });
 
