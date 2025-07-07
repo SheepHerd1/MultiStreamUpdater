@@ -1,9 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import api from '../api';
+import { useDebounce } from './useDebounce';
 
 export const useKickStream = (kickAuth, setTitle, setError) => {
   const [kickCategory, setKickCategory] = useState('');
-  // Kick API might not have a separate category search, so we'll handle it differently for now.
+  const [kickCategoryQuery, setKickCategoryQuery] = useState('');
+  const [kickCategoryResults, setKickCategoryResults] = useState([]);
+  const [isKickCategoryLoading, setIsKickCategoryLoading] = useState(false);
+
+  const debouncedKickQuery = useDebounce(kickCategoryQuery, 500);
 
   const fetchKickStreamInfo = useCallback(async () => {
     // We only need the token to start. The username might not be available in the
@@ -44,9 +49,38 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
     }
   }, [kickAuth?.token, setTitle, setError]);
 
+  useEffect(() => {
+    if (debouncedKickQuery) {
+      const searchKickCategories = async () => {
+        if (!kickAuth?.token) return;
+        setIsKickCategoryLoading(true);
+        try {
+          // This proxies the request through our backend to the Kick API
+          const response = await api.get(`/api/kick?action=search_categories`, {
+            params: { q: debouncedKickQuery },
+            headers: { 'Authorization': `Bearer ${kickAuth.token}` },
+          });
+          // Based on Kick docs, results are in a 'data' array
+          setKickCategoryResults(response.data?.data || []);
+        } catch (err) {
+          console.error('Failed to search Kick categories:', err);
+          setKickCategoryResults([]); // Clear results on error
+        } finally {
+          setIsKickCategoryLoading(false);
+        }
+      };
+      searchKickCategories();
+    } else {
+      setKickCategoryResults([]); // Clear results if query is empty
+    }
+  }, [debouncedKickQuery, kickAuth?.token]);
+
   return {
     kickCategory,
     setKickCategory,
+    kickCategoryQuery, setKickCategoryQuery,
+    kickCategoryResults, setKickCategoryResults,
+    isKickCategoryLoading,
     fetchKickStreamInfo,
   };
 };

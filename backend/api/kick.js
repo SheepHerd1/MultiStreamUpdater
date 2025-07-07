@@ -76,6 +76,19 @@ async function handler(req, res) {
         res.status(response.status).send(); // Should be 204 No Content on success
         break;
 
+      case 'search_categories': {
+        const { q } = req.query;
+        if (!q) {
+          return res.status(400).json({ message: 'Search query "q" is required.' });
+        }
+        console.log(`[Kick Proxy] Searching categories with query: ${q}`);
+        const url = `${kickApiBase}/categories?q=${encodeURIComponent(q)}`;
+        const searchResponse = await axios.get(url, { headers });
+        // Forward the whole response object from Kick, which contains the 'data' array
+        res.status(200).json(searchResponse.data);
+        break;
+      }
+
       default:
         res.status(400).json({ message: 'Invalid action specified.' });
         break;

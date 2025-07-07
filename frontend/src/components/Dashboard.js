@@ -39,6 +39,9 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
   const {
     kickCategory,
     setKickCategory,
+    kickCategoryQuery, setKickCategoryQuery,
+    kickCategoryResults, setKickCategoryResults,
+    isKickCategoryLoading,
     fetchKickStreamInfo
   } = useKickStream(kickAuth, setTitle, setError);
 
@@ -317,15 +320,35 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
               <PlatformCard title="Kick Settings" className="kick-card">
                 <div className="form-group">
                   <label htmlFor="kickCategory">Category</label>
-                  <input
-                    id="kickCategory"
-                    type="text"
-                    value={kickCategory}
-                    onChange={(e) => setKickCategory(e.target.value)}
-                    placeholder="Enter a category..."
-                    disabled={!kickAuth}
-                  />
-                  <small>Note: Kick's API currently requires manual category entry.</small>
+                  <div className="category-search-container">
+                    <input
+                      id="kickCategory"
+                      type="text"
+                      value={kickCategoryQuery || kickCategory}
+                      onChange={(e) => {
+                        setKickCategory('');
+                        setKickCategoryQuery(e.target.value);
+                      }}
+                      placeholder="Search for a category..."
+                      disabled={!kickAuth}
+                      autoComplete="off"
+                    />
+                    {kickCategoryResults.length > 0 && (
+                      <div className="category-results">
+                        {isKickCategoryLoading ? <div>Loading...</div> :
+                          kickCategoryResults.map(cat => (
+                            <div key={cat.id} className="category-result-item" onClick={() => {
+                              setKickCategory(cat.name);
+                              setKickCategoryQuery('');
+                              setKickCategoryResults([]);
+                            }}>
+                              <img src={cat.thumbnail} alt={cat.name} />
+                              <span>{cat.name}</span>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </PlatformCard>
             )}
