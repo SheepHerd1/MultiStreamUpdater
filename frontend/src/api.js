@@ -80,7 +80,9 @@ api.interceptors.response.use(
           resolve({ token: newPlatformAuth.token });
         } catch (refreshError) {
           console.error(`Token refresh failed for ${platform}:`, refreshError);
-          // If refresh fails, we should probably log the user out.
+          // This is a critical failure. The refresh token is likely invalid.
+          // Dispatch a global event so the UI can handle the logout for this platform.
+          window.dispatchEvent(new CustomEvent('authError', { detail: { platform } }));
           reject(refreshError);
         } finally {
           window.dispatchEvent(new CustomEvent('tokenRefreshEnd', { detail: { platform } }));

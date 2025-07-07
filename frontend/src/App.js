@@ -128,16 +128,37 @@ function App() {
       }
     };
 
+    // This listener handles fatal auth errors from the interceptor
+    const handleAuthError = (event) => {
+      const { platform } = event.detail;
+      if (!platform) return;
+
+      console.warn(`Fatal auth error for ${platform}, clearing its session.`);
+      const currentAuth = getInitialAuth();
+      currentAuth[platform] = null;
+
+      // Check if any other platform is still authenticated
+      const anyAuthRemaining = Object.values(currentAuth).some(p => p !== null);
+
+      if (anyAuthRemaining) {
+        updateAuth(currentAuth);
+      } else {
+        handleLogout(); // Logout completely if no platforms are left
+      }
+    };
+
     window.addEventListener('message', handleAuthMessage);
     window.addEventListener('authUpdated', handleAuthUpdateFromInterceptor);
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('authError', handleAuthError);
 
     return () => {
       window.removeEventListener('message', handleAuthMessage);
       window.removeEventListener('authUpdated', handleAuthUpdateFromInterceptor);
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authError', handleAuthError);
     };
-  }, [updateAuth]);
+  }, [updateAuth, handleLogout]);
 
   if (isAuthLoading) {
     return <div>Loading...</div>;
