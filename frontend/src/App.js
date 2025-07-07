@@ -73,21 +73,38 @@ function App() {
         }
       } else if (event.data.type === 'kick-auth-success' && event.data.accessToken) {
         try {
-          // Immediately after getting the token, fetch user info from our backend
+          // 1. Immediately store the tokens we have. This is crucial.
+          // It ensures the refresh token is available for the interceptor if the next API call fails.
+          const initialKickAuth = {
+            token: event.data.accessToken,
+            refreshToken: event.data.refreshToken,
+            userId: null, // Will be filled in by the API call
+            userName: 'user', // Placeholder
+          };
+          const tempAuthData = { ...newAuthData, kick: initialKickAuth };
+          updateAuth(tempAuthData);
+
+          // 2. Now, fetch the user info. If this fails with a 401, the interceptor
+          // can now find the refresh token we just saved.
           api.get('/api/kick?action=user_info', {
             headers: { 'Authorization': `Bearer ${event.data.accessToken}` }
           })
             .then(userInfoResponse => {
-              newAuthData.kick = {
-                token: event.data.accessToken,
-                refreshToken: event.data.refreshToken,
+              // 3. On success, update the auth state with the full user details.
+              const finalKickAuth = {
+                ...initialKickAuth, // carries over the tokens
                 userId: userInfoResponse.data.id,
                 userName: userInfoResponse.data.username,
               };
-              updateAuth(newAuthData);
+              const finalAuthData = { ...tempAuthData, kick: finalKickAuth };
+              updateAuth(finalAuthData);
             })
             .catch(err => {
               console.error("Failed to fetch Kick user info after auth:", err);
+              // If this fails, remove the partial Kick auth to prevent a broken state.
+              const currentAuth = getInitialAuth();
+              delete currentAuth.kick;
+              updateAuth(currentAuth);
             });
         } catch (e) {
           console.error("Failed to process Kick token from popup:", e);
