@@ -16,7 +16,7 @@ async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { refresh_token } = req.body;
+  const { refresh_token, scope } = req.body;
   if (!refresh_token) {
     return res.status(400).json({ error: 'Refresh token not provided.' });
   }
@@ -27,6 +27,11 @@ async function handler(req, res) {
     params.append('refresh_token', refresh_token);
     params.append('client_id', KICK_CLIENT_ID);
     params.append('client_secret', KICK_CLIENT_SECRET);
+    // Some OAuth providers require the original scope to be passed on refresh.
+    // The Kick docs don't specify, but it's a common pattern and good practice to include it.
+    if (scope) {
+      params.append('scope', scope);
+    }
 
     const response = await axios.post(KICK_TOKEN_URL, params, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

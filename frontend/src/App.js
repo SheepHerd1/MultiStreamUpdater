@@ -86,6 +86,7 @@ function App() {
             refreshToken: event.data.refreshToken,
             userId: event.data.userId,
             userName: event.data.userName,
+            scope: event.data.scope, // Store the scope
           };
           updateAuth(newAuthData);
         } catch (e) {

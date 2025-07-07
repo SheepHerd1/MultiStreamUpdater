@@ -60,7 +60,10 @@ api.interceptors.response.use(
 
           const { data } = await axios.post(
             `${api.defaults.baseURL}/api/auth/${platform}/refresh`,
-            { refresh_token: platformAuth.refreshToken }
+            {
+              refresh_token: platformAuth.refreshToken,
+              scope: platformAuth.scope, // Pass the scope to the backend
+            }
           );
 
           // Update the platform's auth details with the new tokens
