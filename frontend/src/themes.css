@@ -4,6 +4,7 @@
   --background-primary: #f0f2f5;
   --background-secondary: #ffffff;
   --background-tertiary: #f8f9fa;
+  --background-secondary-translucent: rgba(255, 255, 255, 0.85);
   --background-hover: #f1f8e9;
   --background-disabled: #e9ecef;
 
@@ -29,12 +30,20 @@
   --error-text: #ffffff;
   --success-background: #2e7d32;
   --success-text: #ffffff;
+
+  --danger-text: #d32f2f;
+  --danger-background-light: #fbe9e7;
+  --danger-background-light-hover: #ffccbc;
+  --danger-border-light: #ffccbc;
+  --danger-border-light-hover: #ffab91;
+  --danger-individual-border: #ffcdd2;
 }
 
 [data-theme='dark'] {
   --background-primary: #121212;
   --background-secondary: #1e1e1e;
   --background-tertiary: #2a2a2a;
+  --background-secondary-translucent: rgba(30, 30, 30, 0.85);
   --background-hover: #2c3e50;
   --background-disabled: #3a3a3a;
 
@@ -52,4 +61,11 @@
   --accent-primary: #66bb6a;
   --accent-primary-hover: #81c784;
   --focus-ring-color: rgba(102, 187, 106, 0.2);
+
+  --danger-text: #f44336;
+  --danger-background-light: rgba(244, 67, 54, 0.1);
+  --danger-background-light-hover: rgba(244, 67, 54, 0.2);
+  --danger-border-light: rgba(244, 67, 54, 0.3);
+  --danger-border-light-hover: rgba(244, 67, 54, 0.4);
+  --danger-individual-border: rgba(244, 67, 54, 0.3);
 }

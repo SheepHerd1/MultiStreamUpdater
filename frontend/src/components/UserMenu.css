@@ -99,8 +99,8 @@
 
 .logout-individual-btn {
   background: none;
-  border: 1px solid #ffcdd2; /* Light red border */
-  color: #d32f2f; /* Red text */
+  border: 1px solid var(--danger-individual-border);
+  color: var(--danger-text);
   padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
@@ -110,8 +110,8 @@
 }
 
 .logout-individual-btn:hover {
-  background-color: #ffebee; /* Very light red background on hover */
-  border-color: #ef9a9a;
+  background-color: var(--danger-background-light-hover);
+  border-color: var(--danger-border-light-hover);
 }
 
 .user-menu-separator {
@@ -122,9 +122,9 @@
 
 .logout-all-btn {
   width: 100%;
-  background-color: #fbe9e7; /* Very light red */
-  border: 1px solid #ffccbc; /* Light red border */
-  color: #d32f2f; /* Red text */
+  background-color: var(--danger-background-light);
+  border: 1px solid var(--danger-border-light);
+  color: var(--danger-text);
   padding: 10px;
   border-radius: 6px;
   cursor: pointer;
@@ -135,6 +135,6 @@
 }
 
 .logout-all-btn:hover {
-  background-color: #ffccbc;
-  border-color: #ffab91;
+  background-color: var(--danger-background-light-hover);
+  border-color: var(--danger-border-light-hover);
 }
