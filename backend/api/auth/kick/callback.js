@@ -65,6 +65,9 @@ export default async function handler(req, res) {
       },
     });
 
+    // --- VITAL DEBUGGING LOG #2 ---
+    console.log('Received payload from Kick USER endpoint:', userResponse.data);
+
     const { id: userId, username: userName } = userResponse.data;
 
     // Clear the cookies after successful token exchange
