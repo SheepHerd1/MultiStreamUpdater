@@ -4,31 +4,21 @@ const KickIcon = ({
   size = 24,
   color = 'currentColor',
   className,
-  'aria-label': ariaLabel = 'Kick'
+  'aria-label': ariaLabel = 'Kick',
+  ...props
 }) => (
   <svg
-    role="img"
-    aria-label={ariaLabel}
-    viewBox="0 0 24 24"
+    viewBox="0 0 250 250"
     width={size}
     height={size}
     fill={color}
+    role="img"
+    aria-label={ariaLabel}
     xmlns="http://www.w3.org/2000/svg"
     className={className}
+    {...props}
   >
-    <title>Kick</title>
-    {/* Left vertical bar */}
-    <path
-      d="M2 3.857h6.143v16.293H2V3.857Z"
-      fillRule="evenodd"
-      clipRule="evenodd"
-    />
-    {/* K‑shaped arrow */}
-    <path
-      d="M22 3.857v16.293h-4.286v-5.714L12 20.15h-2.143l5.714-8.15-5.714-8.15H12l5.714 5.714V3.857H22Z"
-      fillRule="evenodd"
-      clipRule="evenodd"
-    />
+    <path d="M229.3 26.9L138 107.8v-57H113v135h25v-68l91.3 80.9h25v-96H250V0h-20.7z" />
   </svg>
 );
 
