@@ -61,7 +61,8 @@ export default async function handler(req, res) {
     // We will try the /api/v2/user endpoint again, but with a Referer header to better mimic a browser and satisfy security policies.
     let userId, userName;
     try {
-      const userResponse = await axios.get('https://kick.com/api/v2/user', {
+      // Let's try the v1 endpoint, which previously returned a 200 OK, but now with the full browser headers.
+      const userResponse = await axios.get('https://kick.com/api/v1/user', {
         headers: {
           'Authorization': `Bearer ${access_token}`,
           'Accept': 'application/json',
