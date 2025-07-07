@@ -45,6 +45,7 @@
 .dashboard-content {
   padding: 2rem;
   flex-grow: 1;
+  background-color: #ffffff; /* Give the content area a solid background */
   width: 100%;
 }
 
