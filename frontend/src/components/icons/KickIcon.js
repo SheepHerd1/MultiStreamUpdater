@@ -8,21 +8,14 @@ const KickIcon = ({ className }) => (
     role="img"
   >
     <title>Kick</title>
-    <g>
-      {/* The outline, drawn first as a fatter, black version of the K */}
-      <path
-        d="M7 4H10V10.5L17 4H20L12 12L20 20H17L10 13.5V20H7V4Z"
-        fill="#000"
-        stroke="#000"
-        strokeWidth="3"
-        strokeLinejoin="round"
-      />
-      {/* The main K shape, drawn on top with the current text color */}
-      <path
-        d="M7 4H10V10.5L17 4H20L12 12L20 20H17L10 13.5V20H7V4Z"
-        fill="currentColor"
-      />
-    </g>
+    {/* A single, bolder path that inherits its color for consistency */}
+    <path
+      d="M7 4H10V10.5L17 4H20L12 12L20 20H17L10 13.5V20H7V4Z"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 

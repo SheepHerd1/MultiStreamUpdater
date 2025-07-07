@@ -356,13 +356,13 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
             )}
           </div>
         </form>
-
-        <div className="form-actions">
-          <button type="submit" form="stream-update-form" disabled={isLoading || (!twitchAuth && !youtubeAuth && !kickAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
-          <button type="button" onClick={fetchAllStreamInfo} disabled={isLoading} className="secondary-action">Refresh All Info</button>
-        </div>
       </main>
       
+      <div className="form-actions">
+        <button type="submit" form="stream-update-form" disabled={isLoading || (!twitchAuth && !youtubeAuth && !kickAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
+        <button type="button" onClick={fetchAllStreamInfo} disabled={isLoading} className="secondary-action">Refresh All Info</button>
+      </div>
+
       {notification && <div className="notification success">{notification}</div>}
       {errorMessages && <div className="notification error">{errorMessages}</div>}
     </div>
