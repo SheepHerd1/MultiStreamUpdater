@@ -56,22 +56,24 @@ export default async function handler(req, res) {
     // This log will show us exactly what Kick's API is sending back.
     console.log('Received payload from Kick token endpoint:', response.data);
 
-    // Immediately use the new access token to fetch the user's profile information
-    // The v1 endpoint returns an empty object. Let's try the v2 endpoint.
-    const userResponse = await axios.get('https://kick.com/api/v2/user', {
-      headers: {
-        'Authorization': `Bearer ${access_token}`,
-        'Accept': 'application/json',
-        // Mimic a real browser to bypass WAF/security measures that block server-to-server requests.
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-    });
+    // --- FINAL STRATEGY: Decode the JWT access token to get user info ---
+    // This avoids a fragile, undocumented network call to a protected API endpoint.
+    let userId, userName;
+    try {
+      const tokenPayload = JSON.parse(Buffer.from(access_token.split('.')[1], 'base64').toString());
+      console.log('Decoded Kick JWT payload:', tokenPayload);
 
-    // --- VITAL DEBUGGING LOG #2 ---
-    console.log('Received payload from Kick USER endpoint:', userResponse.data);
+      // Standard JWT claim for subject (user ID) is 'sub'. The username is in 'kick_username'.
+      userId = tokenPayload.sub;
+      userName = tokenPayload.kick_username;
 
-    const { id: userId, username: userName } = userResponse.data;
+      if (!userId || !userName) {
+        throw new Error(`Required claims (sub, kick_username) not found in JWT payload. Found: ${Object.keys(tokenPayload).join(', ')}`);
+      }
+    } catch (jwtError) {
+      console.error('Failed to decode Kick JWT or find required claims:', jwtError);
+      return res.status(500).send(`<html><body><h1>Authentication Failed</h1><p>Could not extract user information from the authentication token. Please try again.</p></body></html>`);
+    }
 
     // Clear the cookies after successful token exchange
     res.setHeader('Set-Cookie', [
