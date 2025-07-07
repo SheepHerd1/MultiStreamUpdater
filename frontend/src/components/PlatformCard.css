@@ -1,20 +1,25 @@
 .platform-card {
-    background-color: #1e1e2e;
-    border: 1px solid #2a2a3a;
-    border-radius: 8px;
+    background-color: #ffffff;
+    border: 1px solid #dcedc8; /* Light pastel green border */
+    border-radius: 12px; /* Softer corners */
     padding: 20px;
     display: flex;
     flex-direction: column;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.platform-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .platform-card.disconnected {
-    opacity: 0.6;
-    background-color: #1a1a28; /* Slightly darker when disconnected */
+    opacity: 0.65;
+    background-color: #f5f5f5; /* Slightly greyed out when disconnected */
 }
 
 .platform-card-header {
-    border-bottom: 1px solid #3a3a4a;
+    border-bottom: 1px solid #e8f5e9; /* A very subtle separator */
     padding-bottom: 10px;
     margin-bottom: 15px;
 }
@@ -22,7 +27,7 @@
 .platform-card-header h3 {
     margin: 0;
     font-size: 1.2em;
-    color: #f0f0f0;
+    color: #37474f; /* Main text color */
 }
 
 .platform-card-content .form-group:last-child {

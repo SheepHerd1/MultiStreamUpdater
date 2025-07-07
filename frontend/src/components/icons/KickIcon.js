@@ -1,14 +1,15 @@
 import React from 'react';
 
-// A simple SVG component for the Kick icon
-const KickIcon = (props) => (
+const KickIcon = ({ className }) => (
   <svg
-    xmlns="http://www.w3.org/2000/svg"
+    role="img"
     viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
     fill="currentColor"
-    {...props}
   >
-    <path d="M19.53 3.47H4.47L3 5.33v13.34l1.47 1.86h4.41l2.21 2.53h3.8l5.64-5.64V3.47zm-6.36 11.3l-2.94 2.94h-2.94l-1.47-1.47V5.33h13.24v7.97l-2.9 2.47z" />
+    <title>Kick</title>
+    <path d="M14.5 3L10 9L5.5 3H2L9 12L2 21H5.5L10 15L14.5 21H18L11 12L18 3H14.5Z" />
   </svg>
 );
 

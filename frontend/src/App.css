@@ -1,0 +1,20 @@
+/* A simple reset for consistency */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  /* Your requested pastel green theme */
+  background-color: #e8f5e9; /* A nice, soft pastel green */
+  color: #37474f; /* A dark, muted color for text contrast */
+}
+
+.App {
+  min-height: 100vh;
+}

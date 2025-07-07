@@ -10,8 +10,9 @@ import TwitchIcon from './icons/TwitchIcon';
 import YouTubeIcon from './icons/YouTubeIcon';
 import KickIcon from './icons/KickIcon';
 import Spinner from './icons/Spinner';
+import UserMenu from './UserMenu';
 
-function Dashboard({ auth, onLogout, setAuth }) {
+function Dashboard({ auth, onIndividualLogout, setAuth }) {
   // Shared state
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -178,143 +179,146 @@ function Dashboard({ auth, onLogout, setAuth }) {
     .join('\n');
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
+    <div className="dashboard-layout">
+      <header className="dashboard-header">
         <h2>Multi-Stream Updater</h2>
-        <button onClick={onLogout} className="logout-btn">Logout</button>
-      </div>
-      <p>Welcome, {twitchAuth?.userName || youtubeAuth?.userName || kickAuth?.userName || 'Streamer'}!</p>
-      
-      <div className="connected-platforms">
-        <div className={`platform-status twitch ${twitchAuth ? 'connected' : ''}`}>
-          <TwitchIcon className="platform-icon-status" />
-          Twitch {twitchAuth ? 'Connected' : 'Not Connected'} {isRefreshing.twitch && <Spinner />}
-          {!twitchAuth && (
-            <button type="button" onClick={handleTwitchConnect} className="connect-btn twitch">
-              Connect
-            </button>
-          )}
-        </div>
-        <div className={`platform-status youtube ${youtubeAuth ? 'connected' : ''}`}>
-          <YouTubeIcon className="platform-icon-status" />
-          YouTube {youtubeAuth ? 'Connected' : 'Not Connected'} {isRefreshing.youtube && <Spinner />}
-          {!youtubeAuth && (
-            <button type="button" onClick={handleYouTubeConnect} className="connect-btn youtube">
-              Connect
-            </button>
-          )}
-        </div>
-        <div className={`platform-status kick ${kickAuth ? 'connected' : ''}`}>
-          <KickIcon className="platform-icon-status" />
-          Kick {kickAuth ? 'Connected' : 'Not Connected'} {isRefreshing.kick && <Spinner />}
-          {!kickAuth && (
-            <button type="button" onClick={handleKickConnect} className="connect-btn kick">
-              Connect
-            </button>
-          )}
-        </div>
-      </div>
+        <UserMenu auth={auth} onIndividualLogout={onIndividualLogout} />
+      </header>
 
-      <form onSubmit={handleSubmit}>
-        <div className="stream-editor-layout">
-          <PlatformCard title="Shared Information" className="shared-card">
-            <div className="form-group">
-              <label htmlFor="title">Stream Title</label>
-              <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Your stream title..." disabled={!twitchAuth && !youtubeAuth && !kickAuth} />
-            </div>
-          </PlatformCard>
+      <main className="dashboard-content">
+        <p className="welcome-message">Welcome, {twitchAuth?.userName || youtubeAuth?.userName || kickAuth?.userName || 'Streamer'}!</p>
+        
+        <div className="connected-platforms">
+          <div className={`platform-status twitch ${twitchAuth ? 'connected' : ''}`}>
+            <TwitchIcon className="platform-icon-status" />
+            Twitch {twitchAuth ? 'Connected' : 'Not Connected'} {isRefreshing.twitch && <Spinner />}
+            {!twitchAuth && (
+              <button type="button" onClick={handleTwitchConnect} className="connect-btn twitch">
+                Connect
+              </button>
+            )}
+          </div>
+          <div className={`platform-status youtube ${youtubeAuth ? 'connected' : ''}`}>
+            <YouTubeIcon className="platform-icon-status" />
+            YouTube {youtubeAuth ? 'Connected' : 'Not Connected'} {isRefreshing.youtube && <Spinner />}
+            {!youtubeAuth && (
+              <button type="button" onClick={handleYouTubeConnect} className="connect-btn youtube">
+                Connect
+              </button>
+            )}
+          </div>
+          <div className={`platform-status kick ${kickAuth ? 'connected' : ''}`}>
+            <KickIcon className="platform-icon-status" />
+            Kick {kickAuth ? 'Connected' : 'Not Connected'} {isRefreshing.kick && <Spinner />}
+            {!kickAuth && (
+              <button type="button" onClick={handleKickConnect} className="connect-btn kick">
+                Connect
+              </button>
+            )}
+          </div>
+        </div>
 
-          <PlatformCard title="Twitch Settings" className="twitch-card" isConnected={!!twitchAuth}>
-            <div className="form-group">
-              <label htmlFor="twitchCategory">Category</label>
-              <div className="category-search-container">
-                <input
-                  id="twitchCategory"
-                  type="text"
-                  value={twitchCategoryQuery || twitchCategory}
-                  onChange={(e) => {
-                    setTwitchCategory('');
-                    setTwitchCategoryQuery(e.target.value);
-                  }}
-                  placeholder="Search for a category..."
-                  disabled={!twitchAuth}
-                />
-                {twitchCategoryResults.length > 0 && (
-                  <div className="category-results">
-                    {isTwitchCategoryLoading ? <div>Loading...</div> :
-                      twitchCategoryResults.map(cat => (
-                        <div key={cat.id} className="category-result-item" onClick={() => {
-                          setTwitchCategory(cat.name);
-                          setTwitchCategoryQuery('');
-                          setTwitchCategoryResults([]);
-                        }}>
-                          <img src={cat.box_art_url.replace('{width}', '30').replace('{height}', '40')} alt="" />
-                          <span>{cat.name}</span>
-                        </div>
-                      ))}
-                  </div>
-                )}
+        <form onSubmit={handleSubmit}>
+          <div className="stream-editor-layout">
+            <PlatformCard title="Shared Information" className="shared-card">
+              <div className="form-group">
+                <label htmlFor="title">Stream Title</label>
+                <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Your stream title..." disabled={!twitchAuth && !youtubeAuth && !kickAuth} />
               </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="tags">Tags (up to 10)</label>
-              <div className="tag-input-container" tabIndex="0">
-                {tags.map(tag => (
-                  <div key={tag} className="tag-item">
-                    {tag}
-                    <button type="button" className="tag-remove-btn" onClick={() => removeTag(tag)}>&times;</button>
-                  </div>
-                ))}
-                <input
-                  id="tags"
-                  type="text"
-                  value={tagInput}
-                  onChange={handleTagInputChange}
-                  onKeyDown={handleTagInputKeyDown}
-                  placeholder={tags.length < 10 ? "Add a tag..." : "Max 10 tags"}
-                  disabled={!twitchAuth || tags.length >= 10}
-                />
+            </PlatformCard>
+
+            <PlatformCard title="Twitch Settings" className="twitch-card" isConnected={!!twitchAuth}>
+              <div className="form-group">
+                <label htmlFor="twitchCategory">Category</label>
+                <div className="category-search-container">
+                  <input
+                    id="twitchCategory"
+                    type="text"
+                    value={twitchCategoryQuery || twitchCategory}
+                    onChange={(e) => {
+                      setTwitchCategory('');
+                      setTwitchCategoryQuery(e.target.value);
+                    }}
+                    placeholder="Search for a category..."
+                    disabled={!twitchAuth}
+                  />
+                  {twitchCategoryResults.length > 0 && (
+                    <div className="category-results">
+                      {isTwitchCategoryLoading ? <div>Loading...</div> :
+                        twitchCategoryResults.map(cat => (
+                          <div key={cat.id} className="category-result-item" onClick={() => {
+                            setTwitchCategory(cat.name);
+                            setTwitchCategoryQuery('');
+                            setTwitchCategoryResults([]);
+                          }}>
+                            <img src={cat.box_art_url.replace('{width}', '30').replace('{height}', '40')} alt="" />
+                            <span>{cat.name}</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </PlatformCard>
+              <div className="form-group">
+                <label htmlFor="tags">Tags (up to 10)</label>
+                <div className="tag-input-container" tabIndex="0">
+                  {tags.map(tag => (
+                    <div key={tag} className="tag-item">
+                      {tag}
+                      <button type="button" className="tag-remove-btn" onClick={() => removeTag(tag)}>&times;</button>
+                    </div>
+                  ))}
+                  <input
+                    id="tags"
+                    type="text"
+                    value={tagInput}
+                    onChange={handleTagInputChange}
+                    onKeyDown={handleTagInputKeyDown}
+                    placeholder={tags.length < 10 ? "Add a tag..." : "Max 10 tags"}
+                    disabled={!twitchAuth || tags.length >= 10}
+                  />
+                </div>
+              </div>
+            </PlatformCard>
 
-          <PlatformCard title="YouTube Settings" className="youtube-card" isConnected={!!youtubeAuth}>
-            <div className="form-group">
-              <label htmlFor="description">Description</label>
-              <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="YouTube video description..." rows="4" disabled={!youtubeAuth} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="youtubeCategory">Category</label>
-              <select id="youtubeCategory" value={youtubeCategoryId} onChange={(e) => setYoutubeCategoryId(e.target.value)} disabled={!youtubeAuth}>
-                <option value="">-- Select a Category --</option>
-                {youtubeCategories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.snippet.title}</option>
-                ))}
-              </select>
-            </div>
-          </PlatformCard>
+            <PlatformCard title="YouTube Settings" className="youtube-card" isConnected={!!youtubeAuth}>
+              <div className="form-group">
+                <label htmlFor="description">Description</label>
+                <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="YouTube video description..." rows="4" disabled={!youtubeAuth} />
+              </div>
+              <div className="form-group">
+                <label htmlFor="youtubeCategory">Category</label>
+                <select id="youtubeCategory" value={youtubeCategoryId} onChange={(e) => setYoutubeCategoryId(e.target.value)} disabled={!youtubeAuth}>
+                  <option value="">-- Select a Category --</option>
+                  {youtubeCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.snippet.title}</option>
+                  ))}
+                </select>
+              </div>
+            </PlatformCard>
 
-          <PlatformCard title="Kick Settings" className="kick-card" isConnected={!!kickAuth}>
-            <div className="form-group">
-              <label htmlFor="kickCategory">Category</label>
-              <input
-                id="kickCategory"
-                type="text"
-                value={kickCategory}
-                onChange={(e) => setKickCategory(e.target.value)}
-                placeholder="Enter a category..."
-                disabled={!kickAuth}
-              />
-              <small>Note: Kick's API currently requires manual category entry.</small>
-            </div>
-          </PlatformCard>
-        </div>
+            <PlatformCard title="Kick Settings" className="kick-card" isConnected={!!kickAuth}>
+              <div className="form-group">
+                <label htmlFor="kickCategory">Category</label>
+                <input
+                  id="kickCategory"
+                  type="text"
+                  value={kickCategory}
+                  onChange={(e) => setKickCategory(e.target.value)}
+                  placeholder="Enter a category..."
+                  disabled={!kickAuth}
+                />
+                <small>Note: Kick's API currently requires manual category entry.</small>
+              </div>
+            </PlatformCard>
+          </div>
 
-        <div className="form-actions">
-          <button type="submit" disabled={isLoading || (!twitchAuth && !youtubeAuth && !kickAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
-          <button type="button" onClick={fetchAllStreamInfo} disabled={isLoading} className="secondary-action">Refresh All Info</button>
-        </div>
-      </form>
+          <div className="form-actions">
+            <button type="submit" disabled={isLoading || (!twitchAuth && !youtubeAuth && !kickAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
+            <button type="button" onClick={fetchAllStreamInfo} disabled={isLoading} className="secondary-action">Refresh All Info</button>
+          </div>
+        </form>
+      </main>
       
       {notification && <div className="notification success">{notification}</div>}
       {errorMessages && <div className="notification error">{errorMessages}</div>}

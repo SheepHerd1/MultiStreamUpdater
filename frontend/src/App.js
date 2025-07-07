@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import jwtDecode from 'jwt-decode';
 import api from './api';
+import './App.css';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 
@@ -31,6 +32,16 @@ function App() {
     setAuth({ twitch: null, youtube: null, kick: null });
     localStorage.removeItem('auth');
   }, []);
+
+  const handleIndividualLogout = useCallback((platform) => {
+    const currentAuth = getInitialAuth();
+    currentAuth[platform] = null;
+    updateAuth(currentAuth);
+    // If no platforms are left after this logout, perform a full logout
+    if (!Object.values(currentAuth).some(p => p !== null)) {
+      handleLogout();
+    }
+  }, [handleLogout, updateAuth]);
 
   // This function will be our single source for updating auth state and localStorage
   const updateAuth = useCallback((newAuthData) => {
@@ -147,7 +158,11 @@ function App() {
 
   return (
     <div className="App">
-      {auth.twitch || auth.youtube || auth.kick ? <Dashboard auth={auth} onLogout={handleLogout} setAuth={setAuth} /> : <Login />}
+      {auth.twitch || auth.youtube || auth.kick ? (
+        <Dashboard auth={auth} onLogout={handleLogout} onIndividualLogout={handleIndividualLogout} setAuth={setAuth} />
+      ) : (
+        <Login />
+      )}
     </div>
   );
 }
