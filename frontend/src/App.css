@@ -1,4 +1,11 @@
-/* A simple reset for consistency */
+/* A more robust reset to ensure a seamless, edge-to-edge layout */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #ffffff; /* Ensure the absolute root is white */
+}
+
 *,
 *::before,
 *::after {
@@ -6,15 +13,13 @@
 }
 
 body {
-  margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
-  /* Set the base background to white for a seamless, edge-to-edge feel */
-  background-color: #ffffff; 
-  color: #37474f; /* A dark, muted color for text contrast */
+  color: #37474f;
 }
 
 .App {
   min-height: 100vh;
+  background-color: #ffffff; /* Ensure the React root div is also white */
 }
