@@ -219,7 +219,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
       <main>
         <p className="welcome-message">Welcome, {twitchAuth?.userName || youtubeAuth?.userName || kickAuth?.userName || 'Streamer'}!</p>
 
-        <form onSubmit={handleSubmit} className="dashboard-form">
+        <form id="stream-update-form" onSubmit={handleSubmit} className="dashboard-form">
           <div className="stream-editor-layout">
             <PlatformCard title="Shared Information" className="shared-card">
               <div className="form-group">
@@ -319,12 +319,12 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
               </PlatformCard>
             )}
           </div>
-
-          <div className="form-actions">
-            <button type="submit" disabled={isLoading || (!twitchAuth && !youtubeAuth && !kickAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
-            <button type="button" onClick={fetchAllStreamInfo} disabled={isLoading} className="secondary-action">Refresh All Info</button>
-          </div>
         </form>
+
+        <div className="form-actions">
+          <button type="submit" form="stream-update-form" disabled={isLoading || (!twitchAuth && !youtubeAuth && !kickAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
+          <button type="button" onClick={fetchAllStreamInfo} disabled={isLoading} className="secondary-action">Refresh All Info</button>
+        </div>
       </main>
       
       {notification && <div className="notification success">{notification}</div>}
