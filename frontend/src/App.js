@@ -33,6 +33,12 @@ function App() {
     localStorage.removeItem('auth');
   }, []);
 
+  // This function will be our single source for updating auth state and localStorage
+  const updateAuth = useCallback((newAuthData) => {
+    setAuth(newAuthData);
+    localStorage.setItem('auth', JSON.stringify(newAuthData));
+  }, []);
+
   const handleIndividualLogout = useCallback((platform) => {
     const currentAuth = getInitialAuth();
     currentAuth[platform] = null;
@@ -42,12 +48,6 @@ function App() {
       handleLogout();
     }
   }, [handleLogout, updateAuth]);
-
-  // This function will be our single source for updating auth state and localStorage
-  const updateAuth = useCallback((newAuthData) => {
-    setAuth(newAuthData);
-    localStorage.setItem('auth', JSON.stringify(newAuthData));
-  }, []);
 
 
   useEffect(() => {
