@@ -22,18 +22,34 @@ async function handler(req, res) {
     let response;
     switch (action) {
       case 'user_info':
-        // GET /users: If no user IDs are specified, returns the currently authorised user.
-        console.log(`[Kick Proxy] Forwarding to GET ${kickApiBase}/users`);
-        response = await axios.get(`${kickApiBase}/users`, { headers });
-        // The API returns an array, we want the first user object
-        res.status(200).json(response.data.data?.[0] || {});
+        // To provide a complete object, we'll fetch from both /users and /channels and merge them.
+        console.log(`[Kick Proxy] Fetching from GET ${kickApiBase}/users`);
+        const userResponse = await axios.get(`${kickApiBase}/users`, { headers });
+        const userInfo = userResponse.data.data?.[0];
+
+        if (!userInfo) {
+          return res.status(404).json({ message: 'User not found via Kick API.' });
+        }
+
+        console.log(`[Kick Proxy] Fetching from GET ${kickApiBase}/channels`);
+        const channelResponse = await axios.get(`${kickApiBase}/channels`, { headers });
+        const channelInfo = channelResponse.data.data?.[0];
+
+        // Merge the two objects. The channel info is the primary source of stream data.
+        const combinedInfo = {
+          ...(userInfo || {}),
+          ...(channelInfo || {}),
+        };
+
+        console.log('[Kick Proxy] Returning combined user/channel info:', combinedInfo);
+        res.status(200).json(combinedInfo);
         break;
 
       case 'channel_info':
-        // GET /channels: If no params, returns the currently authenticated user's channel.
+        // This action is still useful for fetching only channel data, e.g., for live status updates.
         console.log(`[Kick Proxy] Forwarding to GET ${kickApiBase}/channels`);
         response = await axios.get(`${kickApiBase}/channels`, { headers });
-        // The API returns an array, we want the first channel object
+        // The API returns an array, we want the first channel object.
         res.status(200).json(response.data.data?.[0] || {});
         break;
       
@@ -57,4 +73,3 @@ async function handler(req, res) {
 }
 
 export default withCors(handler);
-
