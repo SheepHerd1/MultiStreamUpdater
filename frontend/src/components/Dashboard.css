@@ -76,7 +76,7 @@ main {
 }
 
 .welcome-message {
-  padding: 1.5rem 2rem 0 2rem; /* Reduced top padding to bring content closer to the header */
+  padding: 1rem 2rem 0 2rem; /* Further reduced top padding */
   font-size: 1.2rem;
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
