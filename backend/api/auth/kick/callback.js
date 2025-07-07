@@ -56,23 +56,30 @@ export default async function handler(req, res) {
     // This log will show us exactly what Kick's API is sending back.
     console.log('Received payload from Kick token endpoint:', response.data);
 
-    // --- FINAL STRATEGY: Decode the JWT access token to get user info ---
-    // This avoids a fragile, undocumented network call to a protected API endpoint.
+    // --- Get User Info via API Call ---
+    // The access_token is opaque, so we must make an API call to get user info.
+    // We will use the /api/v1/user endpoint with browser-like headers, as the v2 endpoint is explicitly forbidden by Kick's security policy.
     let userId, userName;
     try {
-      const tokenPayload = JSON.parse(Buffer.from(access_token.split('.')[1], 'base64').toString());
-      console.log('Decoded Kick JWT payload:', tokenPayload);
+      const userResponse = await axios.get('https://kick.com/api/v1/user', {
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+      });
+      console.log('Received payload from Kick USER endpoint:', userResponse.data);
 
-      // Standard JWT claim for subject (user ID) is 'sub'. The username is in 'kick_username'.
-      userId = tokenPayload.sub;
-      userName = tokenPayload.kick_username;
+      userId = userResponse.data.id;
+      userName = userResponse.data.username;
 
       if (!userId || !userName) {
-        throw new Error(`Required claims (sub, kick_username) not found in JWT payload. Found: ${Object.keys(tokenPayload).join(', ')}`);
+        throw new Error(`Kick user endpoint did not return "id" or "username". Response: ${JSON.stringify(userResponse.data)}`);
       }
-    } catch (jwtError) {
-      console.error('Failed to decode Kick JWT or find required claims:', jwtError);
-      return res.status(500).send(`<html><body><h1>Authentication Failed</h1><p>Could not extract user information from the authentication token. Please try again.</p></body></html>`);
+    } catch (apiError) {
+      console.error('Failed to fetch user info from Kick API:', apiError);
+      return res.status(500).send(`<html><body><h1>Authentication Failed</h1><p>Could not fetch your user profile from Kick after logging in. The API may be temporarily unavailable or your account may have restrictions.</p></body></html>`);
     }
 
     // Clear the cookies after successful token exchange
