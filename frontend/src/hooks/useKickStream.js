@@ -43,6 +43,15 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
     }
   }, [kickAuth, setTitle, setError]);
 
+  // This useEffect ensures that when the kickAuth object becomes available
+  // (e.g., after login), the stream info is fetched automatically. This makes it
+  // consistent with how the other platform hooks work.
+  useEffect(() => {
+    if (kickAuth) {
+      fetchKickStreamInfo();
+    }
+  }, [kickAuth, fetchKickStreamInfo]);
+
   useEffect(() => {
     if (debouncedKickQuery) {
       const searchKickCategories = async () => {
