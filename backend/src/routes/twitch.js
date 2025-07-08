@@ -10,6 +10,11 @@ const tokenCache = {
 };
 
 async function getAppAccessToken() {
+  // Add detailed logging to diagnose the issue on Vercel.
+  console.log('Attempting to get Twitch App Access Token...');
+  console.log(`TWITCH_CLIENT_ID available: ${!!process.env.TWITCH_CLIENT_ID}`);
+  console.log(`TWITCH_CLIENT_SECRET available: ${!!process.env.TWITCH_CLIENT_SECRET ? 'Yes (hidden for security)' : 'No'}`);
+
   if (!TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
     console.error('Twitch API Error: Missing TWITCH_CLIENT_ID or TWITCH_CLIENT_SECRET in environment.');
     throw new Error('Server is not configured for Twitch API calls.');
