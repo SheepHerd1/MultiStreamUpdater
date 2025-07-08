@@ -13,26 +13,14 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
 
   const fetchKickStreamInfo = useCallback(async () => {
     // We only need the token to start. The username might not be available in the
-    // auth object immediately after login, so we'll fetch it first.
-    if (!kickAuth?.token) return;
+    // auth object, so we check for both.
+    if (!kickAuth?.token || !kickAuth?.userName) return;
     setIsLoading(true);
     try {
-      // Step 1: Fetch user info to get the channel name (which is the 'slug').
-      const userInfoResponse = await api.get(`/api/kick?action=user_info`, {
-        headers: { 'Authorization': `Bearer ${kickAuth.token}` },
-      });
+      // We already have the channel name from the auth object, so we can use it directly.
+      const channelName = kickAuth.userName;
 
-      // The user object from Kick should contain a 'slug' which is the channel name.
-      // We'll also check for 'username' as a fallback and log the object for debugging.
-      const userData = userInfoResponse.data;
-
-      const channelName = userData?.slug || userData?.username;
-      if (!channelName) {
-        // Throw a more informative error if we can't find the channel name.
-        throw new Error('Could not determine Kick channel name from user info object. Check the console log above for details.');
-      }
-
-      // Step 2: Use the retrieved channel name to fetch the stream info.
+      // Use the channel name to fetch the stream info.
       const streamInfoResponse = await api.get(`/api/kick?action=stream_info`, {
         params: { channel: channelName },
         headers: { 'Authorization': `Bearer ${kickAuth.token}` },
@@ -49,7 +37,7 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
     } finally {
       setIsLoading(false);
     }
-  }, [kickAuth?.token, setTitle, setError]);
+  }, [kickAuth, setTitle, setError]);
 
   useEffect(() => {
     if (debouncedKickQuery) {

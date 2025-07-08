@@ -10,6 +10,11 @@ const tokenCache = {
 };
 
 async function getAppAccessToken() {
+  if (!TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
+    console.error('Twitch API Error: Missing TWITCH_CLIENT_ID or TWITCH_CLIENT_SECRET in environment.');
+    throw new Error('Server is not configured for Twitch API calls.');
+  }
+
   const now = Date.now();
   if (tokenCache.token && now < tokenCache.expiresAt - 60000) { // 60s buffer
     return tokenCache.token;
@@ -108,7 +113,7 @@ router.get('/', async (req, res) => {
     }
   } catch (error) {
     const status = error.response?.status || 500;
-    const message = error.response?.data?.error || `Failed to perform Twitch action: ${action}.`;
+    const message = error.message || error.response?.data?.error || `Failed to perform Twitch action: ${action}.`;
     console.error(`[Twitch GET Error] Action: ${action}, Status: ${status}`, error.message);
     return res.status(status).json({ error: message });
   }
