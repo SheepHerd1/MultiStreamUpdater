@@ -188,6 +188,12 @@ main {
   }
 }
 
+/* This is the key to fixing the dropdown overlap issue.
+   When any element inside a platform card receives focus, the card itself is lifted. */
+.stream-editor-layout .platform-card:focus-within {
+  z-index: 20;
+}
+
 
 /* General Form Styling */
 .form-group {

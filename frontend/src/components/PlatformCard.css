@@ -7,11 +7,6 @@
   flex-direction: column;
 }
 
-.platform-card.is-active {
-  /* This lifts the active card above its siblings, allowing dropdowns to appear on top. */
-  z-index: 20;
-}
-
 .platform-card-header {
   padding: 0.75rem 1.25rem;
   background-color: var(--background-tertiary);

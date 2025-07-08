@@ -20,7 +20,6 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
   const [title, setTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // For the main update button
   const [error, setError] = useState({}); // Use an object for platform-specific errors
-  const [activeInputGroup, setActiveInputGroup] = useState(null); // To manage dropdown z-index
   const [notification, setNotification] = useState('');
 
   // Get auth details from the prop
@@ -218,8 +217,8 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
             </PlatformCard>
 
             {twitchAuth && (
-              <PlatformCard title="Twitch Settings" className={`twitch-card ${activeInputGroup === 'twitch' ? 'is-active' : ''}`} error={error.twitch} isLoading={isTwitchLoading}>
-                <div onFocus={() => setActiveInputGroup('twitch')} onBlur={() => setActiveInputGroup(null)}>
+              <PlatformCard title="Twitch Settings" className="twitch-card" error={error.twitch} isLoading={isTwitchLoading}>
+                <div>
                   <div className="form-group">
                     <label htmlFor="twitchCategory">Category</label>
                     <CategorySearch
@@ -282,8 +281,8 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
             )}
 
             {kickAuth && (
-              <PlatformCard title="Kick Settings" className={`kick-card ${activeInputGroup === 'kick' ? 'is-active' : ''}`} error={error.kick} isLoading={isKickLoading}>
-                <div onFocus={() => setActiveInputGroup('kick')} onBlur={() => setActiveInputGroup(null)}>
+              <PlatformCard title="Kick Settings" className="kick-card" error={error.kick} isLoading={isKickLoading}>
+                <div>
                   <div className="form-group">
                     <label htmlFor="kickCategory">Category</label>
                     <CategorySearch
