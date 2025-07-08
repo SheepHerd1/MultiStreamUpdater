@@ -95,18 +95,13 @@ function App() {
     },
     'kick-auth-success': (data) => {
       if (!data.accessToken || !data.userId) throw new Error('Missing essential Kick auth data (token or userId).');
-      // The CSRF token is critical for updates. Warn the user if it's missing.
-      if (!data.csrfToken) {
-        console.warn('Kick CSRF Token not received from backend. Stream updates may fail.');
-      }
       return {
         kick: {
           token: data.accessToken,
           refreshToken: data.refreshToken,
           userId: data.userId,
           userName: data.userName,
-          scope: data.scope,
-          csrfToken: data.csrfToken, // Store the CSRF token
+          scope: data.scope
         },
       };
     },

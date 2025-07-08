@@ -111,11 +111,9 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
       {
         platform: 'kick',
         isReady: !!kickAuth,
-        getPayload: () => ({
-          channel: kickAuth.userName,
+        getPayload: () => ({ // The v1 API updates the authenticated user, no channel slug needed.
           title,
-          categoryId: kickCategory?.id,
-          csrfToken: kickAuth.csrfToken, // Pass the CSRF token to the backend
+          categoryId: kickCategory?.id
         }),
         getToken: () => kickAuth.token,
       },

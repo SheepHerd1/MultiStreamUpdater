@@ -60,33 +60,25 @@ router.route('/')
   })
   .patch(async (req, res) => {
     try {
-      // The frontend must now also send the csrfToken.
-      const { channel, title, categoryId, csrfToken } = req.body;
-      if (!channel) return res.status(400).json({ message: 'Channel slug is required.' });
-      if (!csrfToken) return res.status(400).json({ message: 'CSRF token is required for this operation.' });
-
+      // According to official docs, the PATCH endpoint updates the authenticated user's channel.
+      const { title, categoryId } = req.body;
+      
       const headers = {
         'Authorization': `Bearer ${req.kickAccessToken}`,
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        // Kick's v2 API requires the X-XSRF-TOKEN header for state-changing requests.
-        'X-XSRF-TOKEN': csrfToken,
       };
 
       // Construct the payload. The Kick API should only update the fields that are present.
       const updatePayload = {};
-      if (title !== undefined) updatePayload.session_title = title;
+      if (title !== undefined) updatePayload.stream_title = title;
       // A categoryId of null might be used to unset the category. We'll pass it along if it exists.
       if (categoryId !== undefined) updatePayload.category_id = categoryId;
 
-      // The v2 endpoint for updating a livestream expects a PATCH request for updates.
-      const updateUrl = `${KICK_API_V2_BASE}/channels/${encodeURIComponent(channel)}/livestream`;
-
-      // Log the request we are about to make to Kick for debugging.
-      console.log(`[Kick Update] Sending PATCH to ${updateUrl} with payload:`, JSON.stringify(updatePayload));
-
-      const response = await axios.patch(updateUrl, updatePayload, { headers });
-      return res.status(response.status).json({ success: true });
+      // The official documented endpoint for updating a livestream.
+      const updateUrl = `${KICK_API_V1_BASE}/channels`;
+      await axios.patch(updateUrl, updatePayload, { headers });
+      return res.status(204).send();
     } catch (err) {
       const status = err.response?.status || 500;
       const data = err.response?.data || { message: 'An internal proxy error occurred.' };

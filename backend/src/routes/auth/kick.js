@@ -63,29 +63,6 @@ router.get('/callback', async (req, res) => {
 
         const { access_token, refresh_token, scope } = tokenResponse.data;
 
-        // After getting the access token, we must make an authenticated request to a v2 API
-        // endpoint to receive the XSRF-TOKEN cookie, which is required for update operations.
-        let csrfToken = null;
-        try {
-            const v2UserResponse = await axios.get('https://kick.com/api/v2/user', {
-                headers: {
-                    'Authorization': `Bearer ${access_token}`,
-                    'Accept': 'application/json',
-                },
-            });
-
-            const cookiesFromKick = v2UserResponse.headers['set-cookie'];
-            if (cookiesFromKick) {
-                const parsedCookies = cookiesFromKick.map(c => cookie.parse(c));
-                const xsrfCookie = parsedCookies.find(c => c['XSRF-TOKEN']);
-                if (xsrfCookie) {
-                    csrfToken = decodeURIComponent(xsrfCookie['XSRF-TOKEN']);
-                }
-            }
-        } catch (csrfError) {
-            console.error('Kick CSRF token fetch error:', csrfError.response?.data || csrfError.message);
-        }
-
         const userResponse = await axios.get('https://api.kick.com/public/v1/users', {
             headers: { 'Authorization': `Bearer ${access_token}`, 'Accept': 'application/json' },
         });
@@ -106,8 +83,7 @@ router.get('/callback', async (req, res) => {
                     refreshToken: '${refresh_token}',
                     userId: '${userData.id}',
                     userName: '${channelName}',
-                    scope: '${scope}',
-                    csrfToken: '${csrfToken || ''}'
+                    scope: '${scope}'
                 }, '${FRONTEND_URL}');
                 window.close();
             </script>
@@ -137,31 +113,8 @@ router.post('/refresh', async (req, res) => {
 
         const { access_token, refresh_token } = response.data;
 
-        // Also fetch a new CSRF token, as the old one might be invalid with the new session.
-        let csrfToken = null;
-        try {
-            const v2UserResponse = await axios.get('https://kick.com/api/v2/user', {
-                headers: {
-                    'Authorization': `Bearer ${access_token}`,
-                    'Accept': 'application/json',
-                },
-            });
-
-            const cookiesFromKick = v2UserResponse.headers['set-cookie'];
-            if (cookiesFromKick) {
-                const parsedCookies = cookiesFromKick.map(c => cookie.parse(c));
-                const xsrfCookie = parsedCookies.find(c => c['XSRF-TOKEN']);
-                if (xsrfCookie) {
-                    csrfToken = decodeURIComponent(xsrfCookie['XSRF-TOKEN']);
-                }
-            }
-        } catch (csrfError) {
-            console.error('Kick CSRF token fetch error during refresh:', csrfError.response?.data || csrfError.message);
-            // Proceed without it; the next update operation will likely fail and prompt re-auth.
-        }
-
-        // The frontend interceptor expects 'access_token', 'refresh_token', and now 'csrfToken'.
-        res.status(200).json({ access_token, refresh_token, csrfToken });
+        // The frontend interceptor expects 'access_token' and 'refresh_token'.
+        res.status(200).json({ access_token, refresh_token });
     } catch (err) {
         console.error('Kick token refresh error:', err.response?.data || err.message);
         res.status(err.response?.status || 500).json({ message: 'Failed to refresh Kick token.', error: err.response?.data || 'Internal Server Error' });
