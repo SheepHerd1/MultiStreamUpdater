@@ -63,6 +63,29 @@ router.get('/callback', async (req, res) => {
 
         const { access_token, refresh_token, scope } = tokenResponse.data;
 
+        // After getting the access token, we must make an authenticated request to a v2 API
+        // endpoint to receive the XSRF-TOKEN cookie, which is required for update operations.
+        let csrfToken = null;
+        try {
+            const v2UserResponse = await axios.get('https://kick.com/api/v2/user', {
+                headers: {
+                    'Authorization': `Bearer ${access_token}`,
+                    'Accept': 'application/json',
+                },
+            });
+
+            const cookiesFromKick = v2UserResponse.headers['set-cookie'];
+            if (cookiesFromKick) {
+                const parsedCookies = cookiesFromKick.map(c => cookie.parse(c));
+                const xsrfCookie = parsedCookies.find(c => c['XSRF-TOKEN']);
+                if (xsrfCookie) {
+                    csrfToken = decodeURIComponent(xsrfCookie['XSRF-TOKEN']);
+                }
+            }
+        } catch (csrfError) {
+            console.error('Kick CSRF token fetch error:', csrfError.response?.data || csrfError.message);
+        }
+
         const userResponse = await axios.get('https://api.kick.com/public/v1/users', {
             headers: { 'Authorization': `Bearer ${access_token}`, 'Accept': 'application/json' },
         });
@@ -83,7 +106,8 @@ router.get('/callback', async (req, res) => {
                     refreshToken: '${refresh_token}',
                     userId: '${userData.id}',
                     userName: '${channelName}',
-                    scope: '${scope}'
+                    scope: '${scope}',
+                    csrfToken: '${csrfToken || ''}'
                 }, '${FRONTEND_URL}');
                 window.close();
             </script>

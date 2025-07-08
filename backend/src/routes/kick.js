@@ -59,16 +59,19 @@ router.route('/')
     }
   })
   .patch(async (req, res) => {
-    const headers = {
-      'Authorization': `Bearer ${req.kickAccessToken}`,
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
-  
     try {
-      // The frontend now sends the categoryId directly.
-      const { channel, title, categoryId } = req.body;
+      // The frontend must now also send the csrfToken.
+      const { channel, title, categoryId, csrfToken } = req.body;
       if (!channel) return res.status(400).json({ message: 'Channel slug is required.' });
+      if (!csrfToken) return res.status(400).json({ message: 'CSRF token is required for this operation.' });
+
+      const headers = {
+        'Authorization': `Bearer ${req.kickAccessToken}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        // Kick's v2 API requires the X-XSRF-TOKEN header for state-changing requests.
+        'X-XSRF-TOKEN': csrfToken,
+      };
 
       // Construct the payload. The Kick API should only update the fields that are present.
       const updatePayload = {};
