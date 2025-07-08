@@ -20,8 +20,15 @@ async function getAppAccessToken() {
     return tokenCache.token;
   }
   try {
-    const response = await axios.post(`https://id.twitch.tv/oauth2/token`, null, {
-      params: { client_id: TWITCH_CLIENT_ID, client_secret: TWITCH_CLIENT_SECRET, grant_type: 'client_credentials' },
+    // Twitch requires the credentials in the body with a specific content type.
+    // Using URLSearchParams ensures axios sends the data correctly formatted.
+    const params = new URLSearchParams();
+    params.append('client_id', TWITCH_CLIENT_ID);
+    params.append('client_secret', TWITCH_CLIENT_SECRET);
+    params.append('grant_type', 'client_credentials');
+
+    const response = await axios.post('https://id.twitch.tv/oauth2/token', params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     const { access_token, expires_in } = response.data;
     tokenCache.token = access_token;
