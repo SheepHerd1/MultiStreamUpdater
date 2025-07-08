@@ -57,31 +57,24 @@ router.route('/')
       return res.status(status).json(data);
     }
   })
-  .post(async (req, res) => {
-    const { action } = req.query;
+  .patch(async (req, res) => { // Changed from .post() to .patch()
     const headers = {
       'Authorization': `Bearer ${req.kickAccessToken}`,
       'Accept': 'application/json',
       'Content-Type': 'application/json',
     };
-
+  
     try {
-      switch (action) {
-        case 'stream_update': {
-          const { channel, title, category } = req.body;
-          if (!channel) return res.status(400).json({ message: 'Channel slug is required.' });
-
-          const url = `${KICK_API_BASE}/channels/${encodeURIComponent(channel)}`;
-          const response = await axios.patch(url, { session_title: title, category_name: category }, { headers });
-          return res.status(response.status).json({ success: true });
-        }
-        default:
-          return res.status(400).json({ message: `Invalid POST action specified: '${action}'` });
-      }
+      const { channel, title, category } = req.body;
+      if (!channel) return res.status(400).json({ message: 'Channel slug is required.' });
+  
+      const url = `${KICK_API_BASE}/channels/${encodeURIComponent(channel)}`;
+      const response = await axios.patch(url, { session_title: title, category_name: category }, { headers });
+      return res.status(response.status).json({ success: true });
     } catch (err) {
       const status = err.response?.status || 500;
       const data = err.response?.data || { message: 'An internal proxy error occurred.' };
-      console.error(`[Kick POST Error] Action: "${action}", Status: ${status}`, data);
+      console.error(`[Kick PATCH Error] Status: ${status}`, data);
       return res.status(status).json(data);
     }
   });

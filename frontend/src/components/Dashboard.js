@@ -118,11 +118,16 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
 
     platformUpdateConfig.forEach(p => {
       if (p.isReady) {
+        // Use PATCH for Kick and POST for others to match backend routes.
+        const isKick = p.platform === 'kick';
+        const url = isKick ? `/api/kick` : `/api/${p.platform}?action=stream_update`;
+        const method = isKick ? 'patch' : 'post';
+
         updateOperations.push({
           platform: p.platform,
-          promise: api.post(`/api/${p.platform}?action=stream_update`, p.getPayload(), {
+          promise: api[method](url, p.getPayload(), {
             headers: { 'Authorization': `Bearer ${p.getToken()}` }
-          })
+          }),
         });
       }
     });
