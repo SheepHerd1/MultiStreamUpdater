@@ -9,11 +9,11 @@ app.use(cors({
     // Restrict the origin to your frontend's URL for better security
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
-}));W
+}));
 app.use(express.json()); // Use the built-in JSON body parser for Express
 
 // --- Authentication Routes ---
-// These routes handle the OAuth flows Wfor each platform. We assume the other
+// These routes handle the OAuth flows for each platform. We assume the other
 // files (twitch.js, youtube.js, kick.js) exist in the 'auth' directory.
 const twitchAuthRoutes = require('../src/routes/auth/twitch');
 const youtubeAuthRoutes = require('../src/routes/auth/youtube');
