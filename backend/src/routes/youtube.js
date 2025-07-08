@@ -18,6 +18,11 @@ router.get('/', async (req, res) => {
   const { action } = req.query;
   const token = req.headers.authorization?.split(' ')[1];
 
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    console.error('[YouTube API] Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET.');
+    return res.status(500).json({ error: 'Server is not configured correctly for YouTube API calls.' });
+  }
+
   try {
     switch (action) {
       case 'stream_info': {
@@ -59,6 +64,10 @@ router.get('/', async (req, res) => {
       }
 
       case 'categories': {
+        if (!GOOGLE_API_KEY) {
+          console.error('[YouTube API] Missing GOOGLE_API_KEY for fetching categories.');
+          return res.status(500).json({ error: 'Server is not configured correctly for YouTube category search.' });
+        }
         const youtube = google.youtube({ version: 'v3', auth: GOOGLE_API_KEY });
         const response = await youtube.videoCategories.list({ part: 'snippet', regionCode: 'US' });
         return res.status(200).json(response.data.items);
@@ -78,6 +87,11 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { action } = req.query;
   const token = req.headers.authorization?.split(' ')[1];
+
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    console.error('[YouTube API] Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET.');
+    return res.status(500).json({ error: 'Server is not configured correctly for YouTube API calls.' });
+  }
 
   try {
     switch (action) {

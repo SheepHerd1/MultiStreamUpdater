@@ -28,6 +28,7 @@ router.get('/callback', async (req, res) => {
     if (!code) {
         return res.status(400).send('Authorization code is missing.');
     }
+
     try {
         const params = new URLSearchParams({
             client_id: TWITCH_CLIENT_ID,
