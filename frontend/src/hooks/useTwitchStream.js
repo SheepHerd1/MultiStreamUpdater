@@ -10,11 +10,8 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
   const [isTwitchCategoryLoading, setIsTwitchCategoryLoading] = useState(false);
   const [tags, setTags] = useState([]); // Will now hold an array of strings
   const [tagInput, setTagInput] = useState('');
-  const [tagSuggestions, setTagSuggestions] = useState([]);
-  const [isTagSearchLoading, setIsTagSearchLoading] = useState(false);
 
   const debouncedTwitchQuery = useDebounce(twitchCategoryQuery, 300);
-  const debouncedTagQuery = useDebounce(tagInput, 300);
 
   const fetchTwitchStreamInfo = useCallback(async () => {
     if (!twitchAuth) return;
@@ -49,32 +46,6 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     }
   }, [twitchAuth, fetchTwitchStreamInfo]);
 
-  // Effect for searching for tag suggestions
-  useEffect(() => {
-    if (!debouncedTagQuery) {
-      setTagSuggestions([]);
-      return;
-    }
-
-    const searchForTags = async () => {
-      setIsTagSearchLoading(true);
-      try {
-        const response = await api.get(`/api/twitch?action=search_tags&query=${debouncedTagQuery}`);
-        // The API returns tag objects, we just need their names (which are the tags themselves)
-        const suggestedTagNames = response.data.map(tag => tag.name);
-        // Filter out any tags that have already been added
-        const filteredSuggestions = suggestedTagNames.filter(name => !tags.includes(name));
-        setTagSuggestions(filteredSuggestions);
-      } catch (error) {
-        console.error('Error searching for tags:', error);
-        setTagSuggestions([]);
-      } finally {
-        setIsTagSearchLoading(false);
-      }
-    };
-    searchForTags();
-  }, [debouncedTagQuery, tags]);
-
   // Handle category search
   useEffect(() => {
     if (!debouncedTwitchQuery) {
@@ -107,7 +78,6 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     if (newTag && newTag.indexOf(' ') === -1 && tags.length < 10 && !tags.includes(newTag)) {
       setTags([...tags, newTag]);
       setTagInput('');
-      setTagSuggestions([]); // Clear suggestions after adding a tag
     }
   };
 
@@ -134,11 +104,8 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     isTwitchCategoryLoading,
     tags,
     tagInput,
-    tagSuggestions,
-    isTagSearchLoading,
     handleTagInputChange,
     handleTagInputKeyDown,
-    addTag,
     removeTag,
     fetchTwitchStreamInfo,
   };
