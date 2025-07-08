@@ -45,18 +45,18 @@ app.use(cors({
 app.use(express.json());
 
 // --- Authentication Routes ---
-app.use('/auth/twitch', twitchAuthRoutes);
-app.use('/auth/youtube', youtubeAuthRoutes);
-app.use('/auth/kick', kickAuthRoutes);
+app.use('/api/auth/twitch', twitchAuthRoutes);
+app.use('/api/auth/youtube', youtubeAuthRoutes);
+app.use('/api/auth/kick', kickAuthRoutes);
 // app.use('/auth/trovo', trovoAuthRoutes); // Temporarily disabled
 
 // --- API Proxy Routes ---
-app.use('/twitch', twitchApiRoutes);
-app.use('/youtube', youtubeApiRoutes);
-app.use('/kick', kickApiRoutes);
+app.use('/api/twitch', twitchApiRoutes);
+app.use('/api/youtube', youtubeApiRoutes);
+app.use('/api/kick', kickApiRoutes);
 
 // A simple root endpoint to confirm the server is running
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
     res.json({ message: 'Welcome to the Multi-Stream Updater API!' });
 });
 
