@@ -4,7 +4,8 @@ import { useDebounce } from './useDebounce';
 
 export const useKickStream = (kickAuth, setTitle, setError) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [kickCategory, setKickCategory] = useState('');
+  // Store the entire category object { id, name, ... } or null
+  const [kickCategory, setKickCategory] = useState(null);
   const [kickCategoryQuery, setKickCategoryQuery] = useState('');
   const [kickCategoryResults, setKickCategoryResults] = useState([]);
   const [isKickCategoryLoading, setIsKickCategoryLoading] = useState(false);
@@ -30,8 +31,8 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
         // The Kick API nests the live stream details inside a 'livestream' object.
         const livestream = streamInfoResponse.data.livestream;
         setTitle(currentTitle => currentTitle || livestream?.session_title || '');
-        // The category is the first item in the 'categories' array.
-        setKickCategory(livestream?.categories?.[0]?.name || '');
+        // Store the first category object, or null if it doesn't exist.
+        setKickCategory(livestream?.categories?.[0] || null);
       }
     } catch (err) {
       console.error('Could not fetch Kick info:', err);

@@ -66,34 +66,28 @@ router.route('/')
     };
   
     try {
-      const { channel, title, category } = req.body;
+      // The frontend now sends the categoryId directly.
+      const { channel, title, categoryId } = req.body;
       if (!channel) return res.status(400).json({ message: 'Channel slug is required.' });
 
-      let categoryId = null;
-      // If a category name is provided, we must find its ID to use with the update endpoint.
-      if (category) {
-        const searchUrl = `${KICK_API_V1_BASE}/categories?q=${encodeURIComponent(category)}`;
-        const searchResponse = await axios.get(searchUrl, { headers });
-        // Find an exact, case-insensitive match for the category name.
-        const foundCategory = searchResponse.data?.data?.find(c => c.name.toLowerCase() === category.toLowerCase());
-        
-        if (foundCategory) {
-          categoryId = foundCategory.id;
-        } else {
-          return res.status(400).json({ message: `Category '${category}' could not be found on Kick.` });
-        }
-      }
+      // Construct the payload. The Kick API should only update the fields that are present.
+      const updatePayload = {};
+      if (title !== undefined) updatePayload.session_title = title;
+      // A categoryId of null might be used to unset the category. We'll pass it along if it exists.
+      if (categoryId !== undefined) updatePayload.category_id = categoryId;
 
       // The v2 endpoint for updating a livestream expects a PATCH request for updates.
       const updateUrl = `${KICK_API_V2_BASE}/channels/${encodeURIComponent(channel)}/livestream`;
-      const updatePayload = { session_title: title, category_id: categoryId };
+
+      // Log the request we are about to make to Kick for debugging.
+      console.log(`[Kick Update] Sending PATCH to ${updateUrl} with payload:`, JSON.stringify(updatePayload));
 
       const response = await axios.patch(updateUrl, updatePayload, { headers });
       return res.status(response.status).json({ success: true });
     } catch (err) {
       const status = err.response?.status || 500;
       const data = err.response?.data || { message: 'An internal proxy error occurred.' };
-      console.error(`[Kick Update Error] Status: ${status}`, data);
+      console.error(`[Kick Update Error] Failed to update channel. Status: ${status}`, data);
       return res.status(status).json(data);
     }
   });

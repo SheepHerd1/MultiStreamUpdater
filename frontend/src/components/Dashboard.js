@@ -111,7 +111,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
       {
         platform: 'kick',
         isReady: !!kickAuth,
-        getPayload: () => ({ channel: kickAuth.userName, title, category: kickCategory }),
+        getPayload: () => ({ channel: kickAuth.userName, title, categoryId: kickCategory?.id }),
         getToken: () => kickAuth.token,
       },
     ];
@@ -288,16 +288,16 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
                   <div className="form-group">
                     <label htmlFor="kickCategory">Category</label>
                     <CategorySearch
-                      value={kickCategoryQuery || kickCategory}
+                      value={kickCategoryQuery || kickCategory?.name || ''}
                       onChange={(e) => {
-                        setKickCategory(''); // Clear selection when user types
+                        setKickCategory(null); // Clear selection when user types
                         setKickCategoryQuery(e.target.value);
                       }}
                       placeholder="Search for a category..."
                       disabled={!kickAuth}
                       results={kickCategoryResults}
                       onSelect={(cat) => {
-                        setKickCategory(cat.name);
+                        setKickCategory(cat); // Store the entire category object
                         setKickCategoryQuery('');
                         setKickCategoryResults([]);
                       }}
