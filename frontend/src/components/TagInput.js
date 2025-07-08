@@ -29,9 +29,9 @@ const TagInput = ({
   return (
     <div className="tag-input-container" ref={containerRef} onFocus={() => setIsFocused(true)}>
       <div className="tag-list">
-        {tags.map(tag => (
-          <div key={tag} className="tag-item">
-            {tag}
+        {tags.map(tag => ( // Now expects an array of objects
+          <div key={tag.tag_id} className="tag-item">
+            {tag.localization_names['en-us']}
             <button type="button" className="tag-remove-btn" onClick={() => onRemoveTag(tag)}>&times;</button>
           </div>
         ))}
@@ -47,9 +47,9 @@ const TagInput = ({
       </div>
       {showSuggestions && (
         <div className="tag-suggestions">
-          {suggestions.map(suggestion => (
-            <div key={suggestion.id} className="suggestion-item" onMouseDown={() => onAddTag(suggestion.name)}>
-              {suggestion.name}
+          {suggestions.map(suggestion => ( // Now expects an array of objects
+            <div key={suggestion.tag_id} className="suggestion-item" onMouseDown={() => onAddTag(suggestion)}>
+              {suggestion.localization_names['en-us']}
             </div>
           ))}
         </div>

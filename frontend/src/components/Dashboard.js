@@ -94,7 +94,12 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
       {
         platform: 'twitch',
         isReady: !!twitchAuth,
-        getPayload: () => ({ title, category: twitchCategory, tags, broadcasterId: twitchAuth.userId }),
+        getPayload: () => ({
+          title,
+          category: twitchCategory,
+          tag_ids: tags.map(tag => tag.tag_id), // Send an array of tag IDs
+          broadcasterId: twitchAuth.userId
+        }),
         getToken: () => twitchAuth.token,
       },
       {

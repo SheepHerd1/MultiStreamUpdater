@@ -1,7 +1,9 @@
 import axios from 'axios';
+import express from 'express';
 
 // We assume environment variables are validated at a higher level or are present.
 const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = process.env;
+const router = express.Router();
 
 // --- App Access Token Cache (for category search) ---
 const tokenCache = {
@@ -48,9 +50,44 @@ async function getAppAccessToken() {
   }
 }
 
+// --- All Tags Cache ---
+const allTagsCache = {
+  tags: [],
+  expiresAt: 0,
+};
+
+async function getAllTags(appAccessToken) {
+  const now = Date.now();
+  if (allTagsCache.tags.length > 0 && now < allTagsCache.expiresAt) {
+    return allTagsCache.tags;
+  }
+
+  let allTags = [];
+  let cursor = null;
+  const headers = { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appAccessToken}` };
+
+  try {
+    do {
+      // This is the correct, supported endpoint for all stream tags.
+      const url = `https://api.twitch.tv/helix/tags/streams?first=100${cursor ? `&after=${cursor}` : ''}`;
+      const response = await axios.get(url, { headers });
+      const { data, pagination } = response.data;
+      
+      if (data) allTags.push(...data);
+      cursor = pagination?.cursor;
+    } while (cursor);
+
+    allTagsCache.tags = allTags;
+    allTagsCache.expiresAt = now + (3600 * 1000); // Cache for 1 hour
+    console.log(`[Twitch API] Cached ${allTags.length} tags.`);
+    return allTags;
+  } catch (error) {
+    console.error('Error fetching all Twitch tags:', error.response?.data);
+    throw new Error('Could not fetch all Twitch tags from the new endpoint.');
+  }
+}
+
 // --- Route Handlers ---
-import express from 'express';
-const router = express.Router();
 
 const getHandlers = {
   'stream_info': async (req, res, token) => {
@@ -72,15 +109,11 @@ const getHandlers = {
     });
     return res.status(200).json(response.data.data);
   },
-  'search_tags': async (req, res) => {
-    const { query } = req.query;
-    if (!query) return res.status(400).json({ error: 'Query parameter is required for tag search.' });
-
+  'all_tags': async (req, res) => {
+    // This action now fetches all tags for the frontend to use for autocomplete.
     const appToken = await getAppAccessToken();
-    const response = await axios.get(`https://api.twitch.tv/helix/search/tags?query=${encodeURIComponent(query)}`, {
-      headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
-    });
-    return res.status(200).json(response.data.data);
+    const tags = await getAllTags(appToken);
+    return res.status(200).json(tags);
   }
 };
 
@@ -111,9 +144,10 @@ router.post('/', async (req, res) => {
   try {
     switch (action) {
       case 'stream_update': {
-        const { broadcasterId, title, category, tags } = req.body;
+        const { broadcasterId, title, category, tag_ids } = req.body; // Expecting tag_ids now
         if (!token || !broadcasterId) return res.status(401).json({ error: 'Missing token or broadcasterId' });
 
+        // Step 1: Update Title and Category
         const gameResponse = await axios.get(`https://api.twitch.tv/helix/games?name=${encodeURIComponent(category)}`, {
           headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}` },
         });
@@ -122,10 +156,17 @@ router.post('/', async (req, res) => {
         await axios.patch(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcasterId}`, {
           title,
           game_id: gameId,
-          tags,
         }, {
           headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         });
+
+        // Step 2: Update Tags using the correct endpoint
+        await axios.put(`https://api.twitch.tv/helix/streams/tags?broadcaster_id=${broadcasterId}`, {
+          tag_ids: tag_ids || [], // Send the array of tag IDs
+        }, {
+          headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        });
+
         return res.status(200).json({ success: true });
       }
 
