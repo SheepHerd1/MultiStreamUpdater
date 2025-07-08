@@ -63,15 +63,17 @@ router.get('/callback', async (req, res) => {
 
         const { access_token, refresh_token, scope } = tokenResponse.data;
 
-        const userResponse = await axios.get('https://api.kick.com/public/v1/users', {
+        // Per official docs, call /channels with no params to get the authenticated user's channel info.
+        const channelResponse = await axios.get('https://api.kick.com/public/v1/channels', {
             headers: { 'Authorization': `Bearer ${access_token}`, 'Accept': 'application/json' },
         });
-        const userData = userResponse.data.data?.[0];
+        const channelData = channelResponse.data.data?.[0];
 
-        // Per the documentation, the user object has a 'name' field. This is the channel slug.
-        const channelName = userData?.name;
-        if (!userData || !channelName) {
-            console.error('Kick callback error: Could not find user name in API response.', userData);
+        // The channel object has a 'slug' (the username) and 'broadcaster_user_id'.
+        const channelName = channelData?.slug;
+        const userId = channelData?.broadcaster_user_id;
+        if (!channelData || !channelName || !userId) {
+            console.error('Kick callback error: Could not find channel slug or ID in API response.', channelData);
             return res.status(500).send('Could not retrieve user channel from Kick.');
         }
 
@@ -81,7 +83,7 @@ router.get('/callback', async (req, res) => {
                     type: 'kick-auth-success',
                     accessToken: '${access_token}',
                     refreshToken: '${refresh_token}',
-                    userId: '${userData.id}',
+                    userId: '${userId}',
                     userName: '${channelName}',
                     scope: '${scope}'
                 }, '${FRONTEND_URL}');
