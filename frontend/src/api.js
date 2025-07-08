@@ -43,7 +43,14 @@ api.interceptors.response.use(
       if (refreshingPromises[platform]) {
         try {
           const newAuth = await refreshingPromises[platform];
-          originalRequest.headers['Authorization'] = `Bearer ${newAuth.token}`;
+          originalRequest.headers['Authorization'] = `Bearer ${newAuth.token}`; // newAuth is { token, csrfToken }
+
+          // For parallel Kick requests, update the CSRF token in the body as well.
+          if (platform === 'kick' && originalRequest.method.toLowerCase() === 'patch' && newAuth.csrfToken) {
+            const body = JSON.parse(originalRequest.data);
+            body.csrfToken = newAuth.csrfToken;
+            originalRequest.data = JSON.stringify(body);
+          }
           return api(originalRequest);
         } catch (refreshError) {
           return Promise.reject(refreshError);
@@ -84,8 +91,8 @@ api.interceptors.response.use(
           // Dispatch a custom event to tell App.js to update its state
           window.dispatchEvent(new CustomEvent('authUpdated', { detail: newAuthData }));
 
-          // Resolve the promise with the new token for the original request to retry
-          resolve({ token: newPlatformAuth.token });
+          // Resolve the promise with the new tokens for the original request to retry
+          resolve({ token: newPlatformAuth.token, csrfToken: newPlatformAuth.csrfToken });
         } catch (refreshError) {
           console.error(`Token refresh failed for ${platform}:`, refreshError);
           // This is a critical failure. The refresh token is likely invalid.
@@ -100,7 +107,14 @@ api.interceptors.response.use(
 
       try {
         const newAuth = await refreshingPromises[platform];
-        originalRequest.headers['Authorization'] = `Bearer ${newAuth.token}`; // newAuth is { token: '...' }
+        originalRequest.headers['Authorization'] = `Bearer ${newAuth.token}`; // newAuth is { token, csrfToken }
+
+        // If it's a Kick update, we also need to update the CSRF token in the request body.
+        if (platform === 'kick' && originalRequest.method.toLowerCase() === 'patch' && newAuth.csrfToken) {
+          const body = JSON.parse(originalRequest.data);
+          body.csrfToken = newAuth.csrfToken;
+          originalRequest.data = JSON.stringify(body);
+        }
         return api(originalRequest);
       } catch (refreshError) {
         // The refresh promise was rejected, propagate the error
