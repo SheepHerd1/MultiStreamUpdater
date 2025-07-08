@@ -84,11 +84,11 @@ router.route('/')
         }
       }
 
-      // The documented endpoint for updating a livestream is a POST to a v2 endpoint.
+      // The v2 endpoint for updating a livestream expects a PATCH request for updates.
       const updateUrl = `${KICK_API_V2_BASE}/channels/${encodeURIComponent(channel)}/livestream`;
       const updatePayload = { session_title: title, category_id: categoryId };
 
-      const response = await axios.post(updateUrl, updatePayload, { headers });
+      const response = await axios.patch(updateUrl, updatePayload, { headers });
       return res.status(response.status).json({ success: true });
     } catch (err) {
       const status = err.response?.status || 500;
