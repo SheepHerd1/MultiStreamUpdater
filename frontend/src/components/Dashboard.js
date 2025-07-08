@@ -28,7 +28,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
   // --- Custom Hooks for Platform Logic ---
   const {
     twitchCategory, setTwitchCategory, twitchCategoryQuery, setTwitchCategoryQuery, // Assuming the hook provides isLoading
-    twitchCategoryResults, setTwitchCategoryResults, isTwitchCategoryLoading,
+    twitchCategoryResults, setTwitchCategoryResults, isTwitchCategoryLoading, isTagSearchLoading,
     tags, tagInput, handleTagInputChange, handleTagInputKeyDown, removeTag, tagSuggestions, addTag, isLoading: isTwitchLoading,
     fetchTwitchStreamInfo
   } = useTwitchStream(twitchAuth, setTitle, setError);
@@ -97,7 +97,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
         getPayload: () => ({
           title,
           category: twitchCategory,
-          tag_ids: tags.map(tag => tag.tag_id), // Send an array of tag IDs
+          tags: tags, // Send an array of strings
           broadcasterId: twitchAuth.userId
         }),
         getToken: () => twitchAuth.token,
@@ -253,6 +253,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
                     onRemoveTag={removeTag}
                     suggestions={tagSuggestions}
                     onAddTag={addTag}
+                    isTagSearchLoading={isTagSearchLoading}
                     disabled={!twitchAuth}
                   />
                 </div>
