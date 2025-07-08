@@ -3,6 +3,7 @@ import api from '../api';
 import { useDebounce } from './useDebounce';
 
 export const useKickStream = (kickAuth, setTitle, setError) => {
+  const [isLoading, setIsLoading] = useState(false);
   const [kickCategory, setKickCategory] = useState('');
   const [kickCategoryQuery, setKickCategoryQuery] = useState('');
   const [kickCategoryResults, setKickCategoryResults] = useState([]);
@@ -14,7 +15,7 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
     // We only need the token to start. The username might not be available in the
     // auth object immediately after login, so we'll fetch it first.
     if (!kickAuth?.token) return;
-
+    setIsLoading(true);
     try {
       // Step 1: Fetch user info to get the channel name (which is the 'slug').
       const userInfoResponse = await api.get(`/api/kick?action=user_info`, {
@@ -24,7 +25,6 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
       // The user object from Kick should contain a 'slug' which is the channel name.
       // We'll also check for 'username' as a fallback and log the object for debugging.
       const userData = userInfoResponse.data;
-      console.log('Received Kick User Info for debugging:', userData);
 
       const channelName = userData?.slug || userData?.username;
       if (!channelName) {
@@ -46,6 +46,8 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
       console.error('Could not fetch Kick info:', err);
       const errorMessage = err.response?.data?.error || err.message || 'An unknown error occurred while fetching Kick info.';
       setError(prev => ({ ...prev, kick: errorMessage }));
+    } finally {
+      setIsLoading(false);
     }
   }, [kickAuth?.token, setTitle, setError]);
 
@@ -76,6 +78,7 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
   }, [debouncedKickQuery, kickAuth?.token]);
 
   return {
+    isLoading,
     kickCategory,
     setKickCategory,
     kickCategoryQuery, setKickCategoryQuery,

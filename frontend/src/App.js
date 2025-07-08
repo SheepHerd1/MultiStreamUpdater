@@ -12,7 +12,7 @@ const getInitialAuth = () => {
     if (storedAuth) {
       // Basic validation to ensure it's a plausible auth object
       const auth = JSON.parse(storedAuth);
-      if (auth && (auth.twitch || auth.youtube || auth.kick)) {
+      if (auth && (auth.twitch || auth.youtube || auth.kick || auth.trovo)) {
         return auth;
       }
     }
@@ -20,7 +20,7 @@ const getInitialAuth = () => {
     console.error("Failed to parse auth from localStorage", error);
     localStorage.removeItem('auth'); // Clear corrupted item
   }
-  return { twitch: null, youtube: null, kick: null };
+  return { twitch: null, youtube: null, kick: null, trovo: null };
 };
 
 
@@ -29,7 +29,7 @@ function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(false); // Can be false, initial check is synchronous
 
   const handleLogout = useCallback(() => {
-    setAuth({ twitch: null, youtube: null, kick: null });
+    setAuth({ twitch: null, youtube: null, kick: null, trovo: null });
     localStorage.removeItem('auth');
   }, []);
 
@@ -49,10 +49,69 @@ function App() {
     }
   }, [handleLogout, updateAuth]);
 
+  // --- Authentication Handlers ---
+  // This pattern replaces the long if/else if chain for better scalability.
+  const authSuccessHandlers = {
+    'twitch-auth-success': (data) => {
+      if (!data.token || !data.id_token) throw new Error('Missing Twitch tokens.');
+      const decoded = jwtDecode(data.id_token);
+      return {
+        twitch: {
+          token: data.token,
+          userId: decoded.sub,
+          userName: decoded.preferred_username || 'user',
+          refreshToken: data.refreshToken,
+        },
+      };
+    },
+    'youtube-auth-success': async (data) => {
+      if (!data.accessToken) throw new Error('Missing YouTube access token.');
+      try {
+        const channelInfoResponse = await api.get('/api/youtube?action=channel_info', {
+          headers: { 'Authorization': `Bearer ${data.accessToken}` }
+        });
+        const userName = channelInfoResponse.data?.snippet?.title;
+        const userId = channelInfoResponse.data?.id;
+        return {
+          youtube: {
+            token: data.accessToken,
+            refreshToken: data.refreshToken,
+            userName: userName || 'YouTube User',
+            userId: userId,
+          },
+        };
+      } catch (e) {
+        console.error("Failed to fetch YouTube user info, saving tokens only:", e);
+        // Fallback to saving just the tokens if user info fetch fails
+        return {
+          youtube: { token: data.accessToken, refreshToken: data.refreshToken },
+        };
+      }
+    },
+    'kick-auth-success': (data) => {
+      if (!data.accessToken || !data.userId) throw new Error('Missing Kick auth data.');
+      return {
+        kick: {
+          token: data.accessToken,
+          refreshToken: data.refreshToken,
+          userId: data.userId,
+          userName: data.userName,
+          scope: data.scope,
+        },
+      };
+    },
+    'trovo-auth-success': (data) => {
+      if (!data.accessToken || !data.userId) throw new Error('Missing Trovo auth data.');
+      return {
+        trovo: { ...data }, // Trovo data is already in the correct shape
+      };
+    },
+  };
+
 
   useEffect(() => {
     // This listener handles the successful authentication from the popup window
-    const handleAuthMessage = (event) => {
+    const handleAuthMessage = async (event) => {
       // It's good practice to check the origin in a production app
       // Let's add some debugging to see what we receive.
       console.log('Received message from popup:', {
@@ -62,64 +121,17 @@ function App() {
 
       // if (event.origin !== 'YOUR_VERCEL_URL') return;
 
-      const currentAuth = getInitialAuth();
-      let newAuthData = { ...currentAuth };
+      const { type, ...data } = event.data;
+      const handler = authSuccessHandlers[type];
 
-      if (event.data.type === 'twitch-auth-success' && event.data.token && event.data.id_token) {
+      if (handler) {
         try {
-          const decoded = jwtDecode(event.data.id_token);
-          newAuthData.twitch = {
-            token: event.data.token,
-            userId: decoded.sub,
-            userName: decoded.preferred_username || 'user',
-            refreshToken: event.data.refreshToken,
-          };
+          const currentAuth = getInitialAuth();
+          const platformUpdate = await handler(data);
+          const newAuthData = { ...currentAuth, ...platformUpdate };
           updateAuth(newAuthData);
         } catch (e) {
-          console.error("Failed to process Twitch token from popup:", e);
-        }
-      } else if (event.data.type === 'youtube-auth-success' && event.data.accessToken) {
-        // This logic was incorrect and was mixing up Kick and YouTube data.
-        // Let's correct it to only handle YouTube.
-        const processYouTubeAuth = async () => {
-          try {
-            // NEW: Fetch the user's channel name immediately after authentication
-            const channelInfoResponse = await api.get('/api/youtube?action=channel_info', {
-              headers: { 'Authorization': `Bearer ${event.data.accessToken}` }
-            });
-
-            const userName = channelInfoResponse.data?.snippet?.title;
-            const userId = channelInfoResponse.data?.id;
-
-            newAuthData.youtube = {
-              token: event.data.accessToken,
-              refreshToken: event.data.refreshToken,
-              userName: userName || 'YouTube User', // Fallback
-              userId: userId,
-            };
-            updateAuth(newAuthData);
-          } catch (e) {
-            console.error("Failed to process YouTube token or fetch user info:", e);
-            // Even if fetching user info fails, we can still save the tokens
-            newAuthData.youtube = { token: event.data.accessToken, refreshToken: event.data.refreshToken };
-            updateAuth(newAuthData);
-          }
-        };
-        processYouTubeAuth();
-      } else if (event.data.type === 'kick-auth-success' && event.data.accessToken && event.data.userId) {
-        try {
-          // The callback now provides all necessary user info.
-          // We can directly create the final auth object.
-          newAuthData.kick = {
-            token: event.data.accessToken,
-            refreshToken: event.data.refreshToken,
-            userId: event.data.userId,
-            userName: event.data.userName,
-            scope: event.data.scope, // Store the scope
-          };
-          updateAuth(newAuthData);
-        } catch (e) {
-          console.error("Failed to process Kick token from popup:", e);
+          console.error(`Failed to process auth for ${type}:`, e);
         }
       }
     };
@@ -176,7 +188,7 @@ function App() {
 
   return (
     <div className="App">
-      {auth.twitch || auth.youtube || auth.kick ? (
+      {auth.twitch || auth.youtube || auth.kick || auth.trovo ? (
         <Dashboard auth={auth} onLogout={handleLogout} onIndividualLogout={handleIndividualLogout} setAuth={setAuth} />
       ) : (
         <Login />

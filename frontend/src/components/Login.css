@@ -84,6 +84,15 @@
   background-color: #49e015; /* A slightly darker green */
 }
 
+.trovo-btn {
+  background-color: #19D2B3;
+  color: white;
+}
+
+.trovo-btn:hover:not(:disabled) {
+  background-color: #15b89c; /* A slightly darker teal */
+}
+
 .coming-soon {
   margin-top: 20px;
   color: var(--text-muted);

@@ -9,6 +9,7 @@ const refreshingPromises = {
   twitch: null,
   youtube: null,
   kick: null,
+  trovo: null,
 };
 
 // Utility to extract platform from URL, required for the interceptor
@@ -21,6 +22,9 @@ const getPlatformFromUrl = (url) => {
   }
   if (url.startsWith('/api/kick')) {
     return 'kick';
+  }
+  if (url.startsWith('/api/trovo')) {
+    return 'trovo';
   }
   return null;
 };

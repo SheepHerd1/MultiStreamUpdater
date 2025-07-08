@@ -6,6 +6,12 @@ import KickIcon from './icons/KickIcon';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://multi-stream-updater.vercel.app';
 
+const loginPlatforms = [
+    { key: 'twitch', name: 'Twitch', Icon: TwitchIcon },
+    { key: 'youtube', name: 'YouTube', Icon: YouTubeIcon },
+    { key: 'kick', name: 'Kick', Icon: KickIcon },
+];
+
 function Login() {
     const [authenticating, setAuthenticating] = useState(null); // Can be 'twitch', 'youtube', etc.
 
@@ -45,18 +51,12 @@ function Login() {
                 <h1>Multi-Stream Updater</h1>
                 <p>Connect your accounts to get started.</p>
                 <div className="platform-buttons">
-                    <button className="platform-btn twitch-btn" onClick={() => handleLogin('twitch')} disabled={!!authenticating}>
-                        <TwitchIcon className="platform-icon" />
-                        {authenticating === 'twitch' ? 'Authenticating...' : 'Connect with Twitch'}
-                    </button>
-                    <button className="platform-btn youtube-btn" onClick={() => handleLogin('youtube')} disabled={!!authenticating}>
-                        <YouTubeIcon className="platform-icon" />
-                        {authenticating === 'youtube' ? 'Authenticating...' : 'Connect with YouTube'}
-                    </button>
-                    <button className="platform-btn kick-btn" onClick={() => handleLogin('kick')} disabled={!!authenticating}>
-                        <KickIcon className="platform-icon" />
-                        {authenticating === 'kick' ? 'Authenticating...' : 'Connect with Kick'}
-                    </button>
+                    {loginPlatforms.map(({ key, name, Icon }) => (
+                        <button key={key} className={`platform-btn ${key}-btn`} onClick={() => handleLogin(key)} disabled={!!authenticating}>
+                            <Icon className="platform-icon" />
+                            {authenticating === key ? 'Authenticating...' : `Connect with ${name}`}
+                        </button>
+                    ))}
                     <div className="coming-soon">
                         <button className="platform-btn" disabled>Connect with Trovo (Coming Soon)</button>
                     </div>

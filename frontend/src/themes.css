@@ -26,8 +26,8 @@
   --accent-primary-hover: #43a047;
   --focus-ring-color: rgba(76, 175, 80, 0.2);
 
-  --error-background: #c62828;
-  --error-text: #ffffff;
+  --error-background: #ffebee; /* Lighter background for inline errors */
+  --error-text: #c62828; /* Darker text for contrast on light background */
   --success-background: #2e7d32;
   --success-text: #ffffff;
 
@@ -61,6 +61,9 @@
   --accent-primary: #66bb6a;
   --accent-primary-hover: #81c784;
   --focus-ring-color: rgba(102, 187, 106, 0.2);
+
+  --error-background: #4d1a1a; /* Dark red background for dark theme */
+  --error-text: #ffcdd2; /* Light red text for contrast */
 
   --danger-text: #f44336;
   --danger-background-light: rgba(244, 67, 54, 0.1);

@@ -3,6 +3,7 @@ import api from '../api';
 import { useDebounce } from './useDebounce';
 
 export const useTwitchStream = (twitchAuth, setTitle, setError) => {
+  const [isLoading, setIsLoading] = useState(false);
   const [twitchCategory, setTwitchCategory] = useState('');
   const [twitchCategoryQuery, setTwitchCategoryQuery] = useState('');
   const [twitchCategoryResults, setTwitchCategoryResults] = useState([]);
@@ -14,6 +15,7 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
 
   const fetchTwitchStreamInfo = useCallback(async () => {
     if (!twitchAuth) return;
+    setIsLoading(true);
     try {
       const response = await api.get(`/api/twitch?action=stream_info`, {
         params: { broadcaster_id: twitchAuth.userId },
@@ -26,6 +28,8 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
       console.error('Could not fetch Twitch info:', err);
       const errorMessage = err.response?.data?.error || 'Failed to fetch Twitch info.';
       setError(prev => ({ ...prev, twitch: errorMessage }));
+    } finally {
+      setIsLoading(false);
     }
   }, [twitchAuth, setTitle, setError]);
 
@@ -70,6 +74,7 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
   const removeTag = (tagToRemove) => setTags(tags.filter(tag => tag !== tagToRemove));
 
   return {
+    isLoading,
     twitchCategory,
     setTwitchCategory,
     twitchCategoryQuery,

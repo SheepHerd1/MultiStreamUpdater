@@ -11,12 +11,13 @@ import YouTubeIcon from './icons/YouTubeIcon';
 import KickIcon from './icons/KickIcon';
 import Spinner from './icons/Spinner';
 import ThemeToggleButton from './ThemeToggleButton';
+import CategorySearch from './CategorySearch';
 import UserMenu from './UserMenu';
 
 function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
   // Shared state
   const [title, setTitle] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // For the main update button
   const [error, setError] = useState({}); // Use an object for platform-specific errors
   const [notification, setNotification] = useState('');
 
@@ -25,15 +26,15 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
 
   // --- Custom Hooks for Platform Logic ---
   const {
-    twitchCategory, setTwitchCategory, twitchCategoryQuery, setTwitchCategoryQuery,
+    twitchCategory, setTwitchCategory, twitchCategoryQuery, setTwitchCategoryQuery, // Assuming the hook provides isLoading
     twitchCategoryResults, setTwitchCategoryResults, isTwitchCategoryLoading,
-    tags, tagInput, handleTagInputChange, handleTagInputKeyDown, removeTag,
+    tags, tagInput, handleTagInputChange, handleTagInputKeyDown, removeTag, isLoading: isTwitchLoading,
     fetchTwitchStreamInfo
   } = useTwitchStream(twitchAuth, setTitle, setError);
 
   const {
     description, setDescription, youtubeStreamId, youtubeUpdateType,
-    youtubeCategoryId, setYoutubeCategoryId, youtubeCategories,
+    youtubeCategoryId, setYoutubeCategoryId, youtubeCategories, isLoading: isYouTubeLoading,
     fetchYouTubeStreamInfo
   } = useYouTubeStream(youtubeAuth, setTitle, setError);
 
@@ -42,26 +43,22 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
     setKickCategory,
     kickCategoryQuery, setKickCategoryQuery,
     kickCategoryResults, setKickCategoryResults,
-    isKickCategoryLoading,
+    isKickCategoryLoading, isLoading: isKickLoading,
     fetchKickStreamInfo
   } = useKickStream(kickAuth, setTitle, setError);
 
   // Get token refreshing state from context
   const { isRefreshing } = useTokenRefresh();
 
+  // This function now just coordinates the fetches. The hooks manage their own loading state.
   const fetchAllStreamInfo = useCallback(async () => {
-    setIsLoading(true);
     setError({}); // Clear previous errors
-    try {
-      // The fetch functions are now dependencies of this callback
-      await Promise.allSettled([
-        fetchTwitchStreamInfo(),
-        fetchYouTubeStreamInfo(),
-        fetchKickStreamInfo()
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
+    // The fetch functions from the hooks should set their own loading states internally.
+    await Promise.allSettled([
+      fetchTwitchStreamInfo(),
+      fetchYouTubeStreamInfo(),
+      fetchKickStreamInfo()
+    ]);
   }, [fetchTwitchStreamInfo, fetchYouTubeStreamInfo, fetchKickStreamInfo]);
 
   useEffect(() => {
@@ -75,72 +72,58 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
     }
   }, [notification]);
 
-  const handleYouTubeConnect = () => {
-    const authUrl = `${api.defaults.baseURL}/api/auth/youtube/connect`;
+  const handleConnect = (platform) => {
+    const authUrl = `${api.defaults.baseURL}/api/auth/${platform}/connect`;
     const width = 500, height = 650;
     const left = (window.screen.width / 2) - (width / 2);
     const top = (window.screen.height / 2) - (height / 2);
     const windowFeatures = `width=${width},height=${height},top=${top},left=${left}`;
-    window.open(authUrl, 'youtubeAuth', windowFeatures);
+    window.open(authUrl, `${platform}Auth`, windowFeatures);
   };
 
-  const handleTwitchConnect = () => {
-    const authUrl = `${api.defaults.baseURL}/api/auth/twitch/connect`;
-    const width = 500, height = 650;
-    const left = (window.screen.width / 2) - (width / 2);
-    const top = (window.screen.height / 2) - (height / 2);
-    const windowFeatures = `width=${width},height=${height},top=${top},left=${left}`;
-    window.open(authUrl, 'twitchAuth', windowFeatures);
-  };
-
-  const handleKickConnect = () => {
-    const authUrl = `${api.defaults.baseURL}/api/auth/kick/connect`;
-    const width = 500, height = 650;
-    const left = (window.screen.width / 2) - (width / 2);
-    const top = (window.screen.height / 2) - (height / 2);
-    const windowFeatures = `width=${width},height=${height},top=${top},left=${left}`;
-    window.open(authUrl, 'kickAuth', windowFeatures);
-  };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
     setError({}); // Clear previous errors
     setNotification('');
 
     const updateOperations = [];
-
-    if (twitchAuth) {
-      updateOperations.push({
+    
+    const platformUpdateConfig = [
+      {
         platform: 'twitch',
-        promise: api.post(`/api/twitch?action=stream_update`, {
-          title, category: twitchCategory, tags, broadcasterId: twitchAuth.userId,
-        }, { headers: { 'Authorization': `Bearer ${twitchAuth.token}` } })
-      });
-    }
-
-    if (youtubeAuth && youtubeStreamId) {
-      updateOperations.push({
+        isReady: !!twitchAuth,
+        getPayload: () => ({ title, category: twitchCategory, tags, broadcasterId: twitchAuth.userId }),
+        getToken: () => twitchAuth.token,
+      },
+      {
         platform: 'youtube',
-        promise: api.post(`/api/youtube?action=stream_update`, {
-          title, description, streamId: youtubeStreamId, updateType: youtubeUpdateType, categoryId: youtubeCategoryId,
-        }, { headers: { 'Authorization': `Bearer ${youtubeAuth.token}` } })
-      });
-    }
-
-    if (kickAuth) {
-      updateOperations.push({
+        isReady: !!youtubeAuth && !!youtubeStreamId,
+        getPayload: () => ({ title, description, streamId: youtubeStreamId, updateType: youtubeUpdateType, categoryId: youtubeCategoryId }),
+        getToken: () => youtubeAuth.token,
+      },
+      {
         platform: 'kick',
-        promise: api.post(`/api/kick?action=stream_update`, {
-          channel: kickAuth.userName,
-          title,
-          category: kickCategory,
-        }, { headers: { 'Authorization': `Bearer ${kickAuth.token}` } })
-      });
-    }
+        isReady: !!kickAuth,
+        getPayload: () => ({ channel: kickAuth.userName, title, category: kickCategory }),
+        getToken: () => kickAuth.token,
+      },
+    ];
+
+    platformUpdateConfig.forEach(p => {
+      if (p.isReady) {
+        updateOperations.push({
+          platform: p.platform,
+          promise: api.post(`/api/${p.platform}?action=stream_update`, p.getPayload(), {
+            headers: { 'Authorization': `Bearer ${p.getToken()}` }
+          })
+        });
+      }
+    });
 
     if (updateOperations.length === 0) {
       setError({ general: "No platforms connected to update." });
-      setIsLoading(false);
+      setIsSubmitting(false);
       return;
     }
 
@@ -171,47 +154,30 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
       console.error('Error during the update submission process:', err);
       setError({ general: 'An unexpected error occurred. Please try again.' });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const errorMessages = Object.entries(error)
-    .map(([platform, message]) => {
-      if (platform === 'general') return message;
-      return `${platform.charAt(0).toUpperCase() + platform.slice(1)}: ${message}`;
-    })
-    .join('\n');
+  const platforms = [
+    { key: 'twitch', name: 'Twitch', auth: twitchAuth, Icon: TwitchIcon, isRefreshing: isRefreshing.twitch },
+    { key: 'youtube', name: 'YouTube', auth: youtubeAuth, Icon: YouTubeIcon, isRefreshing: isRefreshing.youtube },
+    { key: 'kick', name: 'Kick', auth: kickAuth, Icon: KickIcon, isRefreshing: isRefreshing.kick },
+  ];
 
   // To avoid duplicating code, we'll define the platform status block once.
   const platformStatusBlock = (
     <>
-      <div className={`platform-status ${twitchAuth ? 'connected' : ''}`}>
-        <TwitchIcon className="platform-icon-status" />
-        {twitchAuth ? (
-          <span>{twitchAuth.userName}</span>
-        ) : (
-          <button type="button" onClick={handleTwitchConnect} className="connect-btn twitch">Connect</button>
-        )}
-        {isRefreshing.twitch && <Spinner />}
-      </div>
-      <div className={`platform-status ${youtubeAuth ? 'connected' : ''}`}>
-        <YouTubeIcon className="platform-icon-status" />
-        {youtubeAuth ? (
-          <span>{youtubeAuth.userName || 'YouTube'}</span>
-        ) : (
-          <button type="button" onClick={handleYouTubeConnect} className="connect-btn youtube">Connect</button>
-        )}
-        {isRefreshing.youtube && <Spinner />}
-      </div>
-      <div className={`platform-status ${kickAuth ? 'connected' : ''}`}>
-        <KickIcon className="platform-icon-status" />
-        {kickAuth ? (
-          <span>{kickAuth.userName}</span>
-        ) : (
-          <button type="button" onClick={handleKickConnect} className="connect-btn kick">Connect</button>
-        )}
-        {isRefreshing.kick && <Spinner />}
-      </div>
+      {platforms.map(({ key, name, auth, Icon, isRefreshing }) => (
+        <div key={key} className={`platform-status ${auth ? 'connected' : ''}`}>
+          <Icon className="platform-icon-status" />
+          {auth ? (
+            <span>{auth.userName || name}</span>
+          ) : (
+            <button type="button" onClick={() => handleConnect(key)} className={`connect-btn ${key}`}>Connect</button>
+          )}
+          {isRefreshing && <Spinner />}
+        </div>
+      ))}
     </>
   );
 
@@ -245,37 +211,31 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
             </PlatformCard>
 
             {twitchAuth && (
-              <PlatformCard title="Twitch Settings" className="twitch-card">
+              <PlatformCard title="Twitch Settings" className="twitch-card" error={error.twitch} isLoading={isTwitchLoading}>
                 <div className="form-group">
                   <label htmlFor="twitchCategory">Category</label>
-                  <div className="category-search-container">
-                    <input
-                      id="twitchCategory"
-                      type="text"
-                      value={twitchCategoryQuery || twitchCategory}
-                      onChange={(e) => {
-                        setTwitchCategory('');
-                        setTwitchCategoryQuery(e.target.value);
-                      }}
-                      placeholder="Search for a category..."
-                      disabled={!twitchAuth}
-                    />
-                    {twitchCategoryResults.length > 0 && (
-                      <div className="category-results">
-                        {isTwitchCategoryLoading ? <div>Loading...</div> :
-                          twitchCategoryResults.map(cat => (
-                            <div key={cat.id} className="category-result-item" onClick={() => {
-                              setTwitchCategory(cat.name);
-                              setTwitchCategoryQuery('');
-                              setTwitchCategoryResults([]);
-                            }}>
-                              <img src={cat.box_art_url.replace('{width}', '30').replace('{height}', '40')} alt="" />
-                              <span>{cat.name}</span>
-                            </div>
-                          ))}
-                      </div>
+                  <CategorySearch
+                    value={twitchCategoryQuery || twitchCategory}
+                    onChange={(e) => {
+                      setTwitchCategory(''); // Clear selection when user types
+                      setTwitchCategoryQuery(e.target.value);
+                    }}
+                    placeholder="Search for a category..."
+                    disabled={!twitchAuth}
+                    results={twitchCategoryResults}
+                    onSelect={(cat) => {
+                      setTwitchCategory(cat.name);
+                      setTwitchCategoryQuery('');
+                      setTwitchCategoryResults([]);
+                    }}
+                    isLoading={isTwitchCategoryLoading}
+                    renderResultItem={(cat) => (
+                      <>
+                        <img src={cat.box_art_url.replace('{width}', '30').replace('{height}', '40')} alt="" />
+                        <span>{cat.name}</span>
+                      </>
                     )}
-                  </div>
+                  />
                 </div>
                 <div className="form-group">
                   <label htmlFor="tags">Tags (up to 10)</label>
@@ -301,7 +261,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
             )}
 
             {youtubeAuth && (
-              <PlatformCard title="YouTube Settings" className="youtube-card">
+              <PlatformCard title="YouTube Settings" className="youtube-card" error={error.youtube} isLoading={isYouTubeLoading}>
                 <div className="form-group">
                   <label htmlFor="description">Description</label>
                   <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="YouTube video description..." rows="4" disabled={!youtubeAuth} />
@@ -319,38 +279,31 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
             )}
 
             {kickAuth && (
-              <PlatformCard title="Kick Settings" className="kick-card">
+              <PlatformCard title="Kick Settings" className="kick-card" error={error.kick} isLoading={isKickLoading}>
                 <div className="form-group">
                   <label htmlFor="kickCategory">Category</label>
-                  <div className="category-search-container">
-                    <input
-                      id="kickCategory"
-                      type="text"
-                      value={kickCategoryQuery || kickCategory}
-                      onChange={(e) => {
-                        setKickCategory('');
-                        setKickCategoryQuery(e.target.value);
-                      }}
-                      placeholder="Search for a category..."
-                      disabled={!kickAuth}
-                      autoComplete="off"
-                    />
-                    {kickCategoryResults.length > 0 && (
-                      <div className="category-results">
-                        {isKickCategoryLoading ? <div>Loading...</div> :
-                          kickCategoryResults.map(cat => (
-                            <div key={cat.id} className="category-result-item" onClick={() => {
-                              setKickCategory(cat.name);
-                              setKickCategoryQuery('');
-                              setKickCategoryResults([]);
-                            }}>
-                              <img src={cat.thumbnail} alt={cat.name} />
-                              <span>{cat.name}</span>
-                            </div>
-                          ))}
-                      </div>
+                  <CategorySearch
+                    value={kickCategoryQuery || kickCategory}
+                    onChange={(e) => {
+                      setKickCategory(''); // Clear selection when user types
+                      setKickCategoryQuery(e.target.value);
+                    }}
+                    placeholder="Search for a category..."
+                    disabled={!kickAuth}
+                    results={kickCategoryResults}
+                    onSelect={(cat) => {
+                      setKickCategory(cat.name);
+                      setKickCategoryQuery('');
+                      setKickCategoryResults([]);
+                    }}
+                    isLoading={isKickCategoryLoading}
+                    renderResultItem={(cat) => (
+                      <>
+                        <img src={cat.thumbnail} alt={cat.name} />
+                        <span>{cat.name}</span>
+                      </>
                     )}
-                  </div>
+                  />
                 </div>
               </PlatformCard>
             )}
@@ -359,12 +312,14 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
       </main>
       
       <div className="form-actions">
-        <button type="submit" form="stream-update-form" disabled={isLoading || (!twitchAuth && !youtubeAuth && !kickAuth)}>{isLoading ? 'Updating...' : 'Update All Streams'}</button>
-        <button type="button" onClick={fetchAllStreamInfo} disabled={isLoading} className="secondary-action">Refresh All Info</button>
+        <button type="submit" form="stream-update-form" disabled={isSubmitting || (!twitchAuth && !youtubeAuth && !kickAuth)}>{isSubmitting ? 'Updating...' : 'Update All Streams'}</button>
+        <button type="button" onClick={fetchAllStreamInfo} disabled={isSubmitting || isTwitchLoading || isYouTubeLoading || isKickLoading} className="secondary-action">
+          {(isTwitchLoading || isYouTubeLoading || isKickLoading) ? 'Refreshing...' : 'Refresh All Info'}
+        </button>
       </div>
 
       {notification && <div className="notification success">{notification}</div>}
-      {errorMessages && <div className="notification error">{errorMessages}</div>}
+      {error.general && <div className="notification error">{error.general}</div>}
     </div>
   );
 }

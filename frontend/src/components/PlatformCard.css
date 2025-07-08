@@ -1,35 +1,49 @@
 .platform-card {
-    background-color: var(--card-background);
-    border: 1px solid var(--card-border);
-    border-radius: 12px; /* Softer corners */
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    transition: opacity 0.3s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 8px var(--card-shadow);
-}
-
-.platform-card:hover {
-    box-shadow: 0 4px 12px var(--card-shadow);
-}
-
-.platform-card.disconnected {
-    opacity: 0.65;
-    background-color: var(--background-tertiary);
+  background-color: var(--background-secondary);
+  position: relative; /* Required for the loader overlay */
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--card-shadow);
+  overflow: hidden; /* Ensures border-radius is respected by children */
+  display: flex;
+  flex-direction: column;
 }
 
 .platform-card-header {
-    border-bottom: 1px solid var(--card-border);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
+  padding: 0.75rem 1.25rem;
+  background-color: var(--background-tertiary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .platform-card-header h3 {
-    margin: 0;
-    font-size: 1.2em;
-    color: var(--text-primary);
+  margin: 0;
+  font-size: 1.1rem;
 }
 
-.platform-card-content .form-group:last-child {
-    margin-bottom: 0;
+.platform-card-content {
+  padding: 1.25rem;
+  flex-grow: 1;
+}
+
+.platform-card-error {
+  background-color: var(--error-background);
+  color: var(--error-text);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.platform-card-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--background-secondary-translucent);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 8px; /* Match parent */
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }

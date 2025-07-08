@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 
 export const useYouTubeStream = (youtubeAuth, setTitle, setError) => {
+  const [isLoading, setIsLoading] = useState(false);
   const [description, setDescription] = useState('');
   const [youtubeStreamId, setYoutubeStreamId] = useState(null);
   const [youtubeUpdateType, setYoutubeUpdateType] = useState(null);
@@ -10,6 +11,7 @@ export const useYouTubeStream = (youtubeAuth, setTitle, setError) => {
 
   const fetchYouTubeStreamInfo = useCallback(async () => {
     if (!youtubeAuth) return;
+    setIsLoading(true);
     try {
       const response = await api.get(`/api/youtube?action=stream_info`, {
         headers: { 'Authorization': `Bearer ${youtubeAuth.token}` },
@@ -27,6 +29,8 @@ export const useYouTubeStream = (youtubeAuth, setTitle, setError) => {
       console.error('Could not fetch YouTube info:', err);
       const errorMessage = err.response?.data?.error || 'Failed to fetch YouTube info.';
       setError(prev => ({ ...prev, youtube: errorMessage }));
+    } finally {
+      setIsLoading(false);
     }
   }, [youtubeAuth, setTitle, setError]);
 
@@ -45,6 +49,7 @@ export const useYouTubeStream = (youtubeAuth, setTitle, setError) => {
   }, [youtubeAuth]);
 
   return {
+    isLoading,
     description,
     setDescription,
     youtubeStreamId,
