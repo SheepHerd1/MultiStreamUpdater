@@ -15,43 +15,30 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
 
   const debouncedTwitchQuery = useDebounce(twitchCategoryQuery, 300);
 
-  // Fetch the master list of all Twitch tags once on component mount
-  useEffect(() => {
-    const fetchMasterTagList = async () => {
-      if (twitchAuth && allTwitchTags.length === 0) {
-        try {
-          const response = await api.get('/api/twitch?action=all_tags');
-          setAllTwitchTags(response.data || []);
-        } catch (error) {
-          console.error("Failed to fetch all Twitch tags:", error);
-          const errorMessage = error.response?.data?.error || 'Failed to fetch Twitch tags.';
-          setError(prev => ({ ...prev, twitch: errorMessage }));
-        }
-      }
-    };
-    fetchMasterTagList();
-  }, [twitchAuth, allTwitchTags.length, setError]);
-
-
+  // This is the function that will be called for initial load or manual refresh.
+  // It's now stable and doesn't depend on changing state within its own dependency array.
   const fetchTwitchStreamInfo = useCallback(async () => {
     if (!twitchAuth) return;
-    // Wait until the master tag list is fetched before getting stream info
-    if (allTwitchTags.length === 0) return; 
-
+    
     setIsLoading(true);
     try {
-      const response = await api.get(`/api/twitch?action=stream_info`, {
+      // It's okay to fetch the master list again here if needed, as it's cached on the backend.
+      const tagsResponse = await api.get('/api/twitch?action=all_tags');
+      const masterTags = tagsResponse.data || [];
+      setAllTwitchTags(masterTags);
+
+      const streamInfoResponse = await api.get(`/api/twitch?action=stream_info`, {
         params: { broadcaster_id: twitchAuth.userId },
         headers: { 'Authorization': `Bearer ${twitchAuth.token}` },
       });
-      setTitle(currentTitle => currentTitle || response.data.title || '');
-      setTwitchCategory(response.data.game_name || '');
 
-      // The API returns tag names (strings). We need to find their corresponding full objects.
-      const currentTagNames = response.data.tags || [];
+      setTitle(currentTitle => currentTitle || streamInfoResponse.data.title || '');
+      setTwitchCategory(streamInfoResponse.data.game_name || '');
+
+      const currentTagNames = streamInfoResponse.data.tags || [];
       const currentTagObjects = currentTagNames
-        .map(name => allTwitchTags.find(t => t.localization_names['en-us'] === name))
-        .filter(Boolean); // Filter out any tags not found in the master list
+        .map(name => masterTags.find(t => t.localization_names['en-us'] === name))
+        .filter(Boolean);
       setTags(currentTagObjects);
 
     } catch (err) {
@@ -61,14 +48,17 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     } finally {
       setIsLoading(false);
     }
-  }, [twitchAuth, setTitle, setError, allTwitchTags]);
+  }, [twitchAuth, setTitle, setError]); // This is now stable as long as auth/setters don't change.
 
-  // This useEffect depends on allTwitchTags being populated.
+  // This single useEffect handles the initial data load for Twitch.
+  // It runs only once when the twitchAuth object is first available.
   useEffect(() => {
-    if (allTwitchTags.length > 0) {
-        fetchTwitchStreamInfo();
+    if (twitchAuth) {
+      fetchTwitchStreamInfo();
     }
-  }, [allTwitchTags, fetchTwitchStreamInfo]);
+    // We only want this to run when twitchAuth is first populated.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [twitchAuth]);
 
 
   // Update tag suggestions when the user types

@@ -55,13 +55,13 @@ router.get('/callback', async (req, res) => {
 
 // Route: /api/auth/youtube/refresh
 router.post('/refresh', async (req, res) => {
-    const { refreshToken } = req.body;
-    if (!refreshToken) {
+    const { refresh_token } = req.body; // Correctly expect 'refresh_token' from the request body
+    if (!refresh_token) {
         return res.status(400).json({ error: 'Refresh token is required.' });
     }
     try {
         const oauth2Client = getOAuth2Client();
-        oauth2Client.setCredentials({ refresh_token: refreshToken });
+        oauth2Client.setCredentials({ refresh_token: refresh_token });
         const { token: newAccessToken } = await oauth2Client.getAccessToken();
         res.status(200).json({ access_token: newAccessToken });
     } catch (error) {
