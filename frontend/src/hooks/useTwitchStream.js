@@ -10,36 +10,34 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
   const [isTwitchCategoryLoading, setIsTwitchCategoryLoading] = useState(false);
   const [tags, setTags] = useState([]); // Will hold tag objects { tag_id, localization_names }
   const [tagInput, setTagInput] = useState('');
+  const [isTagSearchLoading, setIsTagSearchLoading] = useState(false);
   const [tagSuggestions, setTagSuggestions] = useState([]);
-  const [allTwitchTags, setAllTwitchTags] = useState([]); // Master list of all available tags
 
   const debouncedTwitchQuery = useDebounce(twitchCategoryQuery, 300);
+  const debouncedTagQuery = useDebounce(tagInput, 300);
 
-  // This is the function that will be called for initial load or manual refresh.
-  // It's now stable and doesn't depend on changing state within its own dependency array.
   const fetchTwitchStreamInfo = useCallback(async () => {
     if (!twitchAuth) return;
     
     setIsLoading(true);
     try {
-      // It's okay to fetch the master list again here if needed, as it's cached on the backend.
-      const tagsResponse = await api.get('/api/twitch?action=all_tags');
-      const masterTags = tagsResponse.data || [];
-      setAllTwitchTags(masterTags);
-
+      // Fetch stream info (title, category)
       const streamInfoResponse = await api.get(`/api/twitch?action=stream_info`, {
         params: { broadcaster_id: twitchAuth.userId },
         headers: { 'Authorization': `Bearer ${twitchAuth.token}` },
       });
+      // Defensively check if data exists before trying to access its properties
+      if (streamInfoResponse.data) {
+        setTitle(currentTitle => currentTitle || streamInfoResponse.data.title || '');
+        setTwitchCategory(streamInfoResponse.data.game_name || '');
+      }
 
-      setTitle(currentTitle => currentTitle || streamInfoResponse.data.title || '');
-      setTwitchCategory(streamInfoResponse.data.game_name || '');
-
-      const currentTagNames = streamInfoResponse.data.tags || [];
-      const currentTagObjects = currentTagNames
-        .map(name => masterTags.find(t => t.localization_names['en-us'] === name))
-        .filter(Boolean);
-      setTags(currentTagObjects);
+      // Fetch the stream's current tags using the new endpoint
+      const currentTagsResponse = await api.get('/api/twitch?action=stream_tags', {
+        params: { broadcaster_id: twitchAuth.userId },
+        headers: { 'Authorization': `Bearer ${twitchAuth.token}` },
+      });
+      setTags(currentTagsResponse.data || []);
 
     } catch (err) {
       console.error('Could not fetch Twitch info:', err);
@@ -48,10 +46,8 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     } finally {
       setIsLoading(false);
     }
-  }, [twitchAuth, setTitle, setError]); // This is now stable as long as auth/setters don't change.
+  }, [twitchAuth, setTitle, setError]);
 
-  // This single useEffect handles the initial data load for Twitch.
-  // It runs only once when the twitchAuth object is first available.
   useEffect(() => {
     if (twitchAuth) {
       fetchTwitchStreamInfo();
@@ -59,19 +55,29 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
   }, [twitchAuth, fetchTwitchStreamInfo]);
 
 
-  // Update tag suggestions when the user types
+  // Search for tag suggestions as the user types
   useEffect(() => {
-    if (tagInput) {
-      const existingTagIds = new Set(tags.map(t => t.tag_id));
-      const filtered = allTwitchTags
-        .filter(tag => tag.localization_names['en-us'].toLowerCase().includes(tagInput.toLowerCase()))
-        .filter(tag => !existingTagIds.has(tag.tag_id)) // Don't suggest already added tags
-        .slice(0, 7); // Show a limited number of suggestions
-      setTagSuggestions(filtered);
-    } else {
+    if (!debouncedTagQuery) {
       setTagSuggestions([]);
+      return;
     }
-  }, [tagInput, tags, allTwitchTags]);
+
+    const searchTags = async () => {
+      setIsTagSearchLoading(true);
+      try {
+        const response = await api.get(`/api/twitch?action=search_tags&query=${debouncedTagQuery}`);
+        const existingTagIds = new Set(tags.map(t => t.tag_id));
+        const filtered = response.data.filter(tag => !existingTagIds.has(tag.tag_id));
+        setTagSuggestions(filtered);
+      } catch (error) {
+        console.error('Error searching for tags:', error);
+        setTagSuggestions([]);
+      } finally {
+        setIsTagSearchLoading(false);
+      }
+    };
+    searchTags();
+  }, [debouncedTagQuery, tags]);
 
   // Handle category search
   useEffect(() => {
@@ -103,6 +109,7 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     if (tags.length < 10 && !tags.some(t => t.tag_id === tagObject.tag_id)) {
       setTags([...tags, tagObject]);
       setTagInput('');
+      setTagSuggestions([]); // Clear suggestions after adding one
     }
   };
 
@@ -130,6 +137,7 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     isTwitchCategoryLoading,
     tags,
     tagInput,
+    isTagSearchLoading,
     handleTagInputChange,
     handleTagInputKeyDown,
     tagSuggestions,

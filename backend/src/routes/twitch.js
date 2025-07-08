@@ -50,43 +50,6 @@ async function getAppAccessToken() {
   }
 }
 
-// --- All Tags Cache ---
-const allTagsCache = {
-  tags: [],
-  expiresAt: 0,
-};
-
-async function getAllTags(appAccessToken) {
-  const now = Date.now();
-  if (allTagsCache.tags.length > 0 && now < allTagsCache.expiresAt) {
-    return allTagsCache.tags;
-  }
-
-  let allTags = [];
-  let cursor = null;
-  const headers = { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appAccessToken}` };
-
-  try {
-    do {
-      // This is the correct, supported endpoint for all stream tags.
-      const url = `https://api.twitch.tv/helix/tags/streams?first=100${cursor ? `&after=${cursor}` : ''}`;
-      const response = await axios.get(url, { headers });
-      const { data, pagination } = response.data;
-      
-      if (data) allTags.push(...data);
-      cursor = pagination?.cursor;
-    } while (cursor);
-
-    allTagsCache.tags = allTags;
-    allTagsCache.expiresAt = now + (3600 * 1000); // Cache for 1 hour
-    console.log(`[Twitch API] Cached ${allTags.length} tags.`);
-    return allTags;
-  } catch (error) {
-    console.error('Error fetching all Twitch tags:', error.response?.data);
-    throw new Error('Could not fetch all Twitch tags from the new endpoint.');
-  }
-}
-
 // --- Route Handlers ---
 
 const getHandlers = {
@@ -109,10 +72,26 @@ const getHandlers = {
     });
     return res.status(200).json(response.data.data);
   },
-  'all_tags': async (req, res) => {
-    // This action now fetches all tags for the frontend to use for autocomplete.
+  'stream_tags': async (req, res, token) => {
+    const { broadcaster_id } = req.query;
+    if (!token || !broadcaster_id) return res.status(401).json({ error: 'Missing user token or broadcaster_id' });
+
+    // This endpoint correctly fetches the full tag objects for a stream.
+    const response = await axios.get(`https://api.twitch.tv/helix/streams/tags?broadcaster_id=${broadcaster_id}`, {
+      headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}` },
+    });
+    return res.status(200).json(response.data.data);
+  },
+  'search_tags': async (req, res) => {
+    const { query } = req.query;
+    if (!query) return res.status(400).json({ error: 'Query parameter is required.' });
+
     const appToken = await getAppAccessToken();
-    const tags = await getAllTags(appToken);
+    const response = await axios.get(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}&first=10`, {
+      headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
+    });
+    // Filter the results to only include items that are actual tags.
+    const tags = response.data.data.filter(item => item.is_tag);
     return res.status(200).json(tags);
   }
 };
