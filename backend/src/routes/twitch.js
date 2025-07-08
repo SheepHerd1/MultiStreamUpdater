@@ -31,7 +31,8 @@ async function getAppAccessToken() {
     console.error('Error getting Twitch App Access Token:', error.response?.data);
     tokenCache.token = null;
     tokenCache.expiresAt = 0;
-    throw new Error('Could not authenticate with Twitch for server-side actions.');
+    const twitchError = error.response?.data?.message || 'An unknown error occurred during app authentication.';
+    throw new Error(`Could not get app token: ${twitchError}`);
   }
 }
 

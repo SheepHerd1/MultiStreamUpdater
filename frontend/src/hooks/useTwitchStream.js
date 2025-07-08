@@ -49,10 +49,9 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
           setAllTwitchTags(tagData);
         } catch (error) {
           console.error("Failed to fetch all Twitch tags:", error);
-          // Make this error visible on the platform card for better debugging.
-          if (error.response?.data?.error) {
-            setError(prev => ({ ...prev, twitch: `Tag search failed: ${error.response.data.error}` }));
-          }
+          // This now correctly handles both network errors and errors thrown by the server.
+          const errorMessage = error.response?.data?.error || error.message || 'An unknown error occurred.';
+          setError(prev => ({ ...prev, twitch: `Tag search failed: ${errorMessage}` }));
         }
       }
     };
