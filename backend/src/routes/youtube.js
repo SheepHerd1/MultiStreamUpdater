@@ -28,8 +28,9 @@ router.get('/', async (req, res) => {
       case 'stream_info': {
         if (!token) return res.status(401).json({ error: 'Authorization token not provided.' });
         const youtube = google.youtube({ version: 'v3', auth: getOAuth2Client(token) });
-        const broadcastResponse = await youtube.liveBroadcasts.list({ part: 'id,snippet,contentDetails,status', broadcastStatus: 'active', broadcastType: 'all' });
 
+        // 1. Look for an active broadcast first.
+        let broadcastResponse = await youtube.liveBroadcasts.list({ part: 'id,snippet,contentDetails,status', broadcastStatus: 'active', broadcastType: 'all' });
         if (broadcastResponse.data.items.length > 0) {
           const broadcast = broadcastResponse.data.items[0];
           return res.status(200).json({
@@ -41,6 +42,21 @@ router.get('/', async (req, res) => {
           });
         }
 
+        // 2. If no active broadcast, look for the next upcoming one.
+        broadcastResponse = await youtube.liveBroadcasts.list({ part: 'id,snippet,contentDetails,status', broadcastStatus: 'upcoming', broadcastType: 'all', maxResults: 1 });
+        if (broadcastResponse.data.items.length > 0) {
+          const broadcast = broadcastResponse.data.items[0];
+          return res.status(200).json({
+            id: broadcast.id,
+            title: broadcast.snippet.title,
+            description: broadcast.snippet.description,
+            categoryId: broadcast.snippet.categoryId,
+            updateType: 'broadcast',
+            message: 'No active broadcast found. Showing next upcoming stream.',
+          });
+        }
+
+        // 3. As a fallback, get the persistent stream key settings.
         const streamResponse = await youtube.liveStreams.list({ part: 'id,snippet,cdn,status', mine: true });
         if (streamResponse.data.items.length > 0) {
           const stream = streamResponse.data.items[0];
@@ -49,11 +65,11 @@ router.get('/', async (req, res) => {
             title: stream.snippet.title,
             description: stream.snippet.description,
             updateType: 'stream',
-            message: 'No active broadcast found. Showing persistent stream info.',
+            message: 'No active or upcoming broadcast found. Showing persistent stream info.',
           });
         }
         
-        return res.status(200).json({ message: 'No active stream or broadcast found.' });
+        return res.status(200).json({ message: 'No active, upcoming, or persistent stream found.' });
       }
 
       case 'channel_info': {
