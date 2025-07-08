@@ -9,28 +9,28 @@ app.use(cors({
     // Restrict the origin to your frontend's URL for better security
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
-}));
+}));W
 app.use(express.json()); // Use the built-in JSON body parser for Express
 
 // --- Authentication Routes ---
-// These routes handle the OAuth flows for each platform. We assume the other
+// These routes handle the OAuth flows Wfor each platform. We assume the other
 // files (twitch.js, youtube.js, kick.js) exist in the 'auth' directory.
-const twitchAuthRoutes = require('./auth/twitch');
-const youtubeAuthRoutes = require('./auth/youtube');
-const kickAuthRoutes = require('./auth/kick');
-// const trovoAuthRoutes = require('./auth/trovo'); // Temporarily disabled
+const twitchAuthRoutes = require('../src/routes/auth/twitch');
+const youtubeAuthRoutes = require('../src/routes/auth/youtube');
+const kickAuthRoutes = require('../src/routes/auth/kick');
+const trovoAuthRoutes = require('../src/routes/auth/trovo');
 
 app.use('/api/auth/twitch', twitchAuthRoutes);
 app.use('/api/auth/youtube', youtubeAuthRoutes);
 app.use('/api/auth/kick', kickAuthRoutes);
-// app.use('/api/auth/trovo', trovoAuthRoutes); // Temporarily disabled
+app.use('/api/auth/trovo', trovoAuthRoutes);
 
 // --- API Proxy Routes ---
 // These routes forward requests from our frontend to the actual platform APIs,
 // injecting the required authentication tokens. This keeps secrets off the client.
-const twitchApiRoutes = require('./twitch');
-const youtubeApiRoutes = require('./youtube');
-const kickApiRoutes = require('./kick');
+const twitchApiRoutes = require('../src/routes/twitch');
+const youtubeApiRoutes = require('../src/routes/youtube');
+const kickApiRoutes = require('../src/routes/kick');
 // Note: A 'trovo.js' for API proxying will be needed for dashboard functionality.
 
 app.use('/api/twitch', twitchApiRoutes);
