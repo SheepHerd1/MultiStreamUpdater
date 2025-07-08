@@ -56,9 +56,7 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     if (twitchAuth) {
       fetchTwitchStreamInfo();
     }
-    // We only want this to run when twitchAuth is first populated.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [twitchAuth]);
+  }, [twitchAuth, fetchTwitchStreamInfo]);
 
 
   // Update tag suggestions when the user types
