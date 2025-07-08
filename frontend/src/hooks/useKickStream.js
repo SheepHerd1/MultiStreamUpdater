@@ -27,8 +27,11 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
       });
 
       if (streamInfoResponse.data) {
-        setTitle(currentTitle => currentTitle || streamInfoResponse.data.session_title || '');
-        setKickCategory(streamInfoResponse.data.category?.name || '');
+        // The Kick API nests the live stream details inside a 'livestream' object.
+        const livestream = streamInfoResponse.data.livestream;
+        setTitle(currentTitle => currentTitle || livestream?.session_title || '');
+        // The category is the first item in the 'categories' array.
+        setKickCategory(livestream?.categories?.[0]?.name || '');
       }
     } catch (err) {
       console.error('Could not fetch Kick info:', err);
