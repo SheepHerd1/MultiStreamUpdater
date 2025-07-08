@@ -6,6 +6,11 @@ const router = express.Router();
 
 // Route: /api/auth/twitch/connect
 router.get('/connect', (req, res) => {
+    if (!TWITCH_CLIENT_ID || !TWITCH_REDIRECT_URI) {
+        console.error('Function error in twitch/connect: Missing TWITCH_CLIENT_ID or TWITCH_REDIRECT_URI environment variables.');
+        return res.status(500).send('Server configuration error. Please contact the site administrator.');
+    }
+
     const TWITCH_SCOPES = 'channel:manage:broadcast openid user:read:broadcast';
     const params = new URLSearchParams({
         client_id: TWITCH_CLIENT_ID,

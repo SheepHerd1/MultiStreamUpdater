@@ -8,6 +8,11 @@ const router = express.Router();
 
 // Route: /api/auth/kick/connect
 router.get('/connect', (req, res) => {
+    if (!KICK_CLIENT_ID || !KICK_REDIRECT_URI) {
+        console.error('Function error in kick/connect: Missing KICK_CLIENT_ID or KICK_REDIRECT_URI environment variables.');
+        return res.status(500).send('Server configuration error. Please contact the site administrator.');
+    }
+
     const state = crypto.randomBytes(16).toString('hex');
     const codeVerifier = crypto.randomBytes(32).toString('hex');
     const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');

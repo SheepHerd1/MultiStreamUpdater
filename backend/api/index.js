@@ -6,7 +6,7 @@ import cors from 'cors';
 import twitchAuthRoutes from '../src/routes/auth/twitch.js';
 import youtubeAuthRoutes from '../src/routes/auth/youtube.js';
 import kickAuthRoutes from '../src/routes/auth/kick.js';
-import trovoAuthRoutes from '../src/routes/auth/trovo.js';
+// import trovoAuthRoutes from '../src/routes/auth/trovo.js'; // Temporarily disabled
 
 import twitchApiRoutes from '../src/routes/twitch.js';
 import youtubeApiRoutes from '../src/routes/youtube.js';
@@ -25,7 +25,7 @@ app.use(express.json());
 app.use('/api/auth/twitch', twitchAuthRoutes);
 app.use('/api/auth/youtube', youtubeAuthRoutes);
 app.use('/api/auth/kick', kickAuthRoutes);
-app.use('/api/auth/trovo', trovoAuthRoutes);
+// app.use('/api/auth/trovo', trovoAuthRoutes); // Temporarily disabled
 
 // --- API Proxy Routes ---
 app.use('/api/twitch', twitchApiRoutes);

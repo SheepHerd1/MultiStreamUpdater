@@ -10,6 +10,11 @@ function getOAuth2Client() {
 
 // Route: /api/auth/youtube/connect
 router.get('/connect', (req, res) => {
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !YOUTUBE_REDIRECT_URI) {
+        console.error("Missing Google OAuth environment variables.");
+        return res.status(500).send("Server configuration error. Unable to connect to YouTube.");
+    }
+
     const oauth2Client = getOAuth2Client();
     const scopes = [
         'https://www.googleapis.com/auth/youtube.readonly',
