@@ -69,13 +69,16 @@ router.get('/callback', async (req, res) => {
         });
         const channelData = channelResponse.data.data?.[0];
 
+        // Log the entire channel data object from Kick to help with debugging.
+        console.log('Received channelData from Kick:', JSON.stringify(channelData, null, 2));
+
         // The channel object has a 'slug' (lowercase username) and often a nested 'user' object
         // which contains the properly capitalized 'username' (the display name). We prefer the latter.
         const channelName = channelData?.user?.username || channelData?.slug;
         const userId = channelData?.broadcaster_user_id;
-        // Ensure we have the essential data before proceeding.
-        if (!channelData || !channelName) {
-            console.error('Kick callback error: Could not find channel slug or ID in API response.', channelData);
+        // Ensure we have the essential data before proceeding. A missing userId is a critical failure.
+        if (!channelData || !channelName || !userId) {
+            console.error('Kick callback error: Could not find channel slug or broadcaster_user_id in API response.', channelData);
             return res.status(500).send('Could not retrieve user channel from Kick.');
         }
 
