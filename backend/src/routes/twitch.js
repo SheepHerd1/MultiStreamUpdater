@@ -57,41 +57,35 @@ router.get('/', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   try {
-    switch (action) {
-      case 'stream_info': {
-        const { broadcaster_id } = req.query;
-        if (!token || !broadcaster_id) return res.status(401).json({ error: 'Missing token or broadcaster_id' });
-        
-        const response = await axios.get(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcaster_id}`, {
-          headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}` },
-        });
-        return res.status(200).json(response.data.data[0]);
-      }
+    if (action === 'stream_info') {
+      const { broadcaster_id } = req.query;
+      if (!token || !broadcaster_id) return res.status(401).json({ error: 'Missing token or broadcaster_id' });
+      
+      const response = await axios.get(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcaster_id}`, {
+        headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}` },
+      });
+      return res.status(200).json(response.data.data[0]);
+    } else if (action === 'categories') {
+      const { query } = req.query;
+      if (!query) return res.status(400).json({ error: 'Query parameter is required.' });
+      
+      const appToken = await getAppAccessToken();
+      const response = await axios.get(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}`, {
+        headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
+      });
+      return res.status(200).json(response.data.data);
+    } else if (action === 'search_tags') {
+      const { query } = req.query;
+      if (!query) return res.status(400).json({ error: 'Query parameter is required for tag search.' });
 
-      case 'categories': {
-        const { query } = req.query;
-        if (!query) return res.status(400).json({ error: 'Query parameter is required.' });
-        
-        const appToken = await getAppAccessToken();
-        const response = await axios.get(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}`, {
-          headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
-        });
-        return res.status(200).json(response.data.data);
-      }
-
-      case 'search_tags': {
-        const { query } = req.query;
-        if (!query) return res.status(400).json({ error: 'Query parameter is required for tag search.' });
-
-        const appToken = await getAppAccessToken();
-        const response = await axios.get(`https://api.twitch.tv/helix/search/tags?query=${encodeURIComponent(query)}`, {
-          headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
-        });
-        return res.status(200).json(response.data.data);
-      }
-
-      default:
-        return res.status(400).json({ error: 'Invalid GET action' });
+      const appToken = await getAppAccessToken();
+      const response = await axios.get(`https://api.twitch.tv/helix/search/tags?query=${encodeURIComponent(query)}`, {
+        headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
+      });
+      return res.status(200).json(response.data.data);
+    } else {
+      // This will now return a 404 with a specific message if no action matches.
+      return res.status(404).json({ error: `Invalid GET action specified: '${action}'` });
     }
   } catch (error) {
     const status = error.response?.status || 500;
