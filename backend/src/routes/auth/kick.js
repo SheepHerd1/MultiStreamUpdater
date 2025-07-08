@@ -68,17 +68,28 @@ router.get('/callback', async (req, res) => {
             headers: { 'Authorization': `Bearer ${access_token}`, 'Accept': 'application/json' },
         });
         const channelData = channelResponse.data.data?.[0];
-
-        // Log the entire channel data object from Kick to help with debugging.
-        console.log('Received channelData from Kick:', JSON.stringify(channelData, null, 2));
-
-        // The channel object has a 'slug' (lowercase username) and often a nested 'user' object
-        // which contains the properly capitalized 'username' (the display name). We prefer the latter.
-        const channelName = channelData?.user?.username || channelData?.slug;
         const userId = channelData?.broadcaster_user_id;
-        // Ensure we have the essential data before proceeding. A missing userId is a critical failure.
-        if (!channelData || !channelName || !userId) {
-            console.error('Kick callback error: Could not find channel slug or broadcaster_user_id in API response.', channelData);
+        const slug = channelData?.slug;
+
+        // The /channels endpoint only gives the lowercase slug. We must make a second call
+        // to /users to get the properly capitalized display name.
+        let displayName = slug; // Default to slug in case the next call fails.
+        try {
+            const userResponse = await axios.get('https://api.kick.com/public/v1/users', {
+                headers: { 'Authorization': `Bearer ${access_token}`, 'Accept': 'application/json' },
+            });
+            // This endpoint returns the user object directly.
+            const userData = userResponse.data;
+            console.log('Received userData from Kick /users endpoint:', JSON.stringify(userData, null, 2));
+            if (userData?.username) {
+                displayName = userData.username;
+            }
+        } catch (userError) {
+            console.warn('Could not fetch additional user data from /v1/users. Falling back to slug for username.', userError.message);
+        }
+
+        if (!userId || !displayName) {
+            console.error('Kick callback error: Could not find broadcaster_user_id or username in API responses.');
             return res.status(500).send('Could not retrieve user channel from Kick.');
         }
 
@@ -89,7 +100,7 @@ router.get('/callback', async (req, res) => {
                     accessToken: '${access_token}',
                     refreshToken: '${refresh_token}',
                     userId: '${userId}',
-                    userName: '${channelName}',
+                    userName: '${displayName}',
                     scope: '${scope}'
                 }, '${FRONTEND_URL}');
                 window.close();
