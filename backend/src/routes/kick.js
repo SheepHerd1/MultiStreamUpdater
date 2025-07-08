@@ -33,10 +33,9 @@ router.route('/')
           return res.status(200).json(userResponse.data.data?.[0] || {});
         }
         case 'stream_info': {
-          const { channel: channelSlug } = req.query;
-          if (!channelSlug) return res.status(400).json({ message: 'Channel slug is required.' });
-          
-          const url = `${KICK_API_V1_BASE}/channels?slug=${encodeURIComponent(channelSlug)}`;
+          // Per official docs, calling /channels with no params gets the authenticated user's channel.
+          // This is more robust than relying on a slug from the client.
+          const url = `${KICK_API_V1_BASE}/channels`;
           const response = await axios.get(url, { headers });
           return res.status(200).json(response.data.data?.[0] || {});
         }
