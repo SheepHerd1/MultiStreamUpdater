@@ -12,6 +12,7 @@ import KickIcon from './icons/KickIcon';
 import Spinner from './icons/Spinner';
 import ThemeToggleButton from './ThemeToggleButton';
 import CategorySearch from './CategorySearch';
+import TagInput from './TagInput';
 import UserMenu from './UserMenu';
 
 function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
@@ -28,7 +29,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
   const {
     twitchCategory, setTwitchCategory, twitchCategoryQuery, setTwitchCategoryQuery, // Assuming the hook provides isLoading
     twitchCategoryResults, setTwitchCategoryResults, isTwitchCategoryLoading,
-    tags, tagInput, handleTagInputChange, handleTagInputKeyDown, removeTag, isLoading: isTwitchLoading,
+    tags, tagInput, handleTagInputChange, handleTagInputKeyDown, removeTag, tagSuggestions, addTag, isLoading: isTwitchLoading,
     fetchTwitchStreamInfo
   } = useTwitchStream(twitchAuth, setTitle, setError);
 
@@ -239,23 +240,16 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
                 </div>
                 <div className="form-group">
                   <label htmlFor="tags">Tags (up to 10)</label>
-                  <div className="tag-input-container" tabIndex="0">
-                    {tags.map(tag => (
-                      <div key={tag} className="tag-item">
-                        {tag}
-                        <button type="button" className="tag-remove-btn" onClick={() => removeTag(tag)}>&times;</button>
-                      </div>
-                    ))}
-                    <input
-                      id="tags"
-                      type="text"
-                      value={tagInput}
-                      onChange={handleTagInputChange}
-                      onKeyDown={handleTagInputKeyDown}
-                      placeholder={tags.length < 10 ? "Add a tag..." : "Max 10 tags"}
-                      disabled={!twitchAuth || tags.length >= 10}
-                    />
-                  </div>
+                  <TagInput
+                    tags={tags}
+                    tagInput={tagInput}
+                    onTagInputChange={handleTagInputChange}
+                    onTagInputKeyDown={handleTagInputKeyDown}
+                    onRemoveTag={removeTag}
+                    suggestions={tagSuggestions}
+                    onAddTag={addTag}
+                    disabled={!twitchAuth}
+                  />
                 </div>
               </PlatformCard>
             )}

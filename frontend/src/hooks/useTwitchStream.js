@@ -10,6 +10,8 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
   const [isTwitchCategoryLoading, setIsTwitchCategoryLoading] = useState(false);
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
+  const [allTwitchTags, setAllTwitchTags] = useState([]);
+  const [tagSuggestions, setTagSuggestions] = useState([]);
 
   const debouncedTwitchQuery = useDebounce(twitchCategoryQuery, 300);
 
@@ -32,6 +34,40 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
       setIsLoading(false);
     }
   }, [twitchAuth, setTitle, setError]);
+
+  // Fetch all available Twitch tags once for searching
+  useEffect(() => {
+    const fetchAllTags = async () => {
+      if (twitchAuth && allTwitchTags.length === 0) {
+        try {
+          const response = await api.get('/api/twitch?action=all_tags');
+          // We only need the localized names for simplicity
+          const tagData = response.data.map(tag => ({
+            id: tag.tag_id,
+            name: tag.localization_names['en-us']
+          }));
+          setAllTwitchTags(tagData);
+        } catch (error) {
+          console.error("Failed to fetch all Twitch tags:", error);
+          // This is a non-critical error, so we don't set a visible error message.
+          // The tag input will just behave like a normal text field.
+        }
+      }
+    };
+    fetchAllTags();
+  }, [twitchAuth, allTwitchTags.length]);
+
+  // Update suggestions when user types in the tag input
+  useEffect(() => {
+    if (tagInput && allTwitchTags.length > 0) {
+      const filtered = allTwitchTags
+        .filter(tag => tag.name.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(tag.name))
+        .slice(0, 5); // Limit to 5 suggestions for performance and UI clarity
+      setTagSuggestions(filtered);
+    } else {
+      setTagSuggestions([]);
+    }
+  }, [tagInput, allTwitchTags, tags]);
 
   useEffect(() => {
     if (!debouncedTwitchQuery) {
@@ -57,14 +93,18 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
 
   const handleTagInputChange = (e) => setTagInput(e.target.value);
 
+  const addTag = (tagToAdd) => {
+    const newTag = tagToAdd.trim();
+    if (newTag && !tags.includes(newTag) && tags.length < 10) {
+      setTags([...tags, newTag]);
+      setTagInput('');
+    }
+  };
+
   const handleTagInputKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      const newTag = tagInput.trim();
-      if (newTag && !tags.includes(newTag) && tags.length < 10) {
-        setTags([...tags, newTag]);
-        setTagInput('');
-      }
+      addTag(tagInput);
     } else if (e.key === 'Backspace' && !tagInput) {
       e.preventDefault();
       setTags(tags.slice(0, -1));
@@ -86,6 +126,8 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     tagInput,
     handleTagInputChange,
     handleTagInputKeyDown,
+    tagSuggestions,
+    addTag,
     removeTag,
     fetchTwitchStreamInfo,
   };

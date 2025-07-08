@@ -32,6 +32,42 @@ async function getAppAccessToken() {
   }
 }
 
+// --- All Tags Cache ---
+const allTagsCache = {
+  tags: [],
+  expiresAt: 0,
+};
+
+async function getAllTags(appAccessToken) {
+  const now = Date.now();
+  if (allTagsCache.tags.length > 0 && now < allTagsCache.expiresAt) {
+    return allTagsCache.tags;
+  }
+
+  let allTags = [];
+  let cursor = null;
+  const headers = { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appAccessToken}` };
+
+  try {
+    do {
+      const url = `https://api.twitch.tv/helix/all-stream-tags?first=100${cursor ? `&after=${cursor}` : ''}`;
+      const response = await axios.get(url, { headers });
+      const { data, pagination } = response.data;
+      
+      if (data) allTags.push(...data);
+      cursor = pagination?.cursor;
+    } while (cursor);
+
+    allTagsCache.tags = allTags;
+    allTagsCache.expiresAt = now + (3600 * 1000); // Cache for 1 hour
+    console.log(`[Twitch API] Cached ${allTags.length} tags.`);
+    return allTags;
+  } catch (error) {
+    console.error('Error fetching all Twitch tags:', error.response?.data);
+    throw new Error('Could not fetch all Twitch tags.');
+  }
+}
+
 // --- Route Handlers ---
 async function handleStreamInfo(req, res) {
   const { broadcaster_id } = req.query;
@@ -90,6 +126,16 @@ async function handleCategories(req, res) {
   }
 }
 
+async function handleAllTags(req, res) {
+  try {
+    const appAccessToken = await getAppAccessToken();
+    const tags = await getAllTags(appAccessToken);
+    res.status(200).json(tags);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
 // --- Main Handler ---
 async function handler(req, res) {
   const { action } = req.query;
@@ -100,6 +146,8 @@ async function handler(req, res) {
         return handleStreamInfo(req, res);
       case 'categories':
         return handleCategories(req, res);
+      case 'all_tags':
+        return handleAllTags(req, res);
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
