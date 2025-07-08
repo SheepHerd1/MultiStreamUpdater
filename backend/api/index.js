@@ -14,9 +14,24 @@ import kickApiRoutes from '../src/routes/kick.js';
 
 const app = express();
 
+// --- CORS Configuration ---
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const allowedOrigins = [frontendUrl];
+
+// For GitHub Pages, the origin is the base domain (e.g., https://user.github.io),
+// but the full URL includes the repo path. We need to allow both.
+try {
+    const urlObject = new URL(frontendUrl);
+    if (urlObject.hostname.endsWith('github.io') && urlObject.origin !== frontendUrl) {
+        allowedOrigins.push(urlObject.origin);
+    }
+} catch (e) {
+    console.warn('Could not parse FRONTEND_URL for CORS origin calculation:', e.message);
+}
+
 // --- Middleware Setup ---
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
 }));
 app.use(express.json());

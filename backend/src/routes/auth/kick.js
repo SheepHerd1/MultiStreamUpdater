@@ -68,6 +68,11 @@ router.get('/callback', async (req, res) => {
         });
         const userData = userResponse.data.data?.[0];
 
+        if (!userData || !userData.username) {
+            console.error('Kick callback error: User data or username not found in API response.');
+            return res.status(500).send('Could not retrieve user profile from Kick.');
+        }
+
         res.send(`
             <script>
                 window.opener.postMessage({
