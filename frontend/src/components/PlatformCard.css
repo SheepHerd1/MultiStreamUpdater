@@ -5,13 +5,15 @@
   box-shadow: 0 2px 8px var(--card-shadow);
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* This is the key fix to ensure children respect the rounded corners */
 }
 
 .platform-card-header {
   padding: 0.75rem 1.25rem;
   background-color: var(--background-tertiary);
   border-bottom: 1px solid var(--border-color);
+  /* Inherit the parent's top rounded corners */
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
 }
 
 .platform-card-header h3 {
@@ -30,6 +32,9 @@
   padding: 0.75rem 1.25rem;
   font-size: 0.9rem;
   border-top: 1px solid var(--border-color);
+  /* Inherit the parent's bottom rounded corners */
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
 }
 
 .platform-card-loader {
