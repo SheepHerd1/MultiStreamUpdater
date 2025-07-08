@@ -238,20 +238,33 @@ main {
   width: 220px;
   background-color: var(--background-tertiary);
   color: var(--text-primary);
-  text-align: center;
+  text-align: left;
   border-radius: 6px;
   padding: 8px;
   position: absolute;
   z-index: 1;
-  bottom: 125%; /* Position above the icon */
-  left: 50%;
-  margin-left: -110px; /* Use half of the width to center the tooltip */
+  /* Position to the right of the icon */
+  top: 50%;
+  left: calc(100% + 12px); /* 100% of the icon width + 12px gap */
+  transform: translateY(-50%);
   opacity: 0;
   transition: opacity 0.3s;
   box-shadow: 0 2px 8px var(--card-shadow);
   border: 1px solid var(--border-color);
   font-size: 0.85rem;
   font-weight: 400;
+}
+
+.info-tooltip-text::after {
+  content: " ";
+  position: absolute;
+  top: 50%;
+  right: 100%; /* At the left edge of the tooltip */
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  /* This creates the little arrow pointing left */
+  border-color: transparent var(--background-tertiary) transparent transparent;
 }
 
 .info-tooltip-container:hover .info-tooltip-text {
