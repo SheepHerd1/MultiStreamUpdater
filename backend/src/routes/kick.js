@@ -33,9 +33,10 @@ router.route('/')
           return res.status(200).json(userResponse.data.data?.[0] || {});
         }
         case 'stream_info': {
-          // Per official docs, calling /channels with no params gets the authenticated user's channel.
-          // This is more robust than relying on a slug from the client.
-          const url = `${KICK_API_V1_BASE}/channels`;
+          const { broadcaster_user_id } = req.query;
+          if (!broadcaster_user_id) return res.status(400).json({ message: 'broadcaster_user_id is required.' });
+          // Making the lookup explicit by ID, similar to the working Twitch implementation.
+          const url = `${KICK_API_V1_BASE}/channels?broadcaster_user_id=${broadcaster_user_id}`;
           const response = await axios.get(url, { headers });
           return res.status(200).json(response.data.data?.[0] || {});
         }

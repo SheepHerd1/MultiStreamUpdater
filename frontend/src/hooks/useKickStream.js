@@ -13,12 +13,13 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
   const debouncedKickQuery = useDebounce(kickCategoryQuery, 500);
 
   const fetchKickStreamInfo = useCallback(async () => {
-    // We only need the token. The backend will identify the user from it.
-    if (!kickAuth?.token) return;
+    // We need the token for auth and the userId to identify the channel explicitly.
+    if (!kickAuth?.token || !kickAuth?.userId) return;
     setIsLoading(true);
     try {
-      // The backend no longer needs the channel slug; it uses the token to find the user.
+      // Pass the broadcaster_user_id to the backend for an explicit lookup, similar to Twitch.
       const streamInfoResponse = await api.get(`/api/kick?action=stream_info`, {
+        params: { broadcaster_user_id: kickAuth.userId },
         headers: { 'Authorization': `Bearer ${kickAuth.token}` },
       });
 
