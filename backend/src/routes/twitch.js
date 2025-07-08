@@ -71,7 +71,18 @@ const getHandlers = {
       headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
     });
     return res.status(200).json(response.data.data);
-  }
+  },
+  'search_tags': async (req, res) => {
+    const { query } = req.query;
+    if (!query) return res.status(400).json({ error: 'Query parameter is required.' });
+
+    const appToken = await getAppAccessToken();
+    const response = await axios.get(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}&first=7`, {
+      headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
+    });
+    const tags = response.data.data.filter(item => item.is_tag);
+    return res.status(200).json(tags);
+  },
 };
 
 router.get('/', async (req, res) => {

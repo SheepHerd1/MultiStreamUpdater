@@ -1,16 +1,40 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './TagInput.css';
+import Spinner from './icons/Spinner';
 
 const TagInput = ({
   tags,
   tagInput,
   onTagInputChange,
   onTagInputKeyDown,
+  onAddTag,
   onRemoveTag,
+  suggestions,
+  isTagSearchLoading,
   disabled,
 }) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const containerRef = useRef(null);
+
+  // Effect to handle clicks outside the component to close the dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const showSuggestions = isFocused && (suggestions.length > 0 || isTagSearchLoading);
+
   return (
-    <div className="tag-input-container">
+    <div
+      className="tag-input-container"
+      ref={containerRef}
+      onFocus={() => setIsFocused(true)}
+    >
       <div className="tag-list">
         {tags.map(tag => (
           <div key={tag} className="tag-item">
@@ -28,6 +52,18 @@ const TagInput = ({
           className="tag-input-field"
         />
       </div>
+      {showSuggestions && (
+        <div className="tag-suggestions">
+          {isTagSearchLoading ? (
+            <div className="suggestion-loading"><Spinner /></div>
+          ) : (
+            suggestions.map(suggestion => (
+              <div key={suggestion} className="suggestion-item" onMouseDown={() => onAddTag(suggestion)}>
+                {suggestion}
+              </div>
+            )))}
+        </div>
+      )}
     </div>
   );
 };
