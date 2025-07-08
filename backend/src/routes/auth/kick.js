@@ -71,21 +71,24 @@ router.get('/callback', async (req, res) => {
         const userId = channelData?.broadcaster_user_id;
         const slug = channelData?.slug;
 
-        // The /channels endpoint only gives the lowercase slug. We must make a second call
-        // to /users to get the properly capitalized display name.
-        let displayName = slug; // Default to slug in case the next call fails.
+        // The official v1 API only provides the lowercase slug. To get the capitalized
+        // display name, we will try the undocumented v2 endpoint, which is likely
+        // what was working for you before. This GET request does not require a CSRF token.
+        let displayName = slug; // Default to the lowercase slug
         try {
-            const userResponse = await axios.get('https://api.kick.com/public/v1/users', {
-                headers: { 'Authorization': `Bearer ${access_token}`, 'Accept': 'application/json' },
+            const v2UserResponse = await axios.get('https://kick.com/api/v2/user', {
+                headers: {
+                    'Authorization': `Bearer ${access_token}`,
+                    'Accept': 'application/json',
+                },
             });
-            // This endpoint returns the user object directly.
-            const userData = userResponse.data;
-            console.log('Received userData from Kick /users endpoint:', JSON.stringify(userData, null, 2));
-            if (userData?.username) {
-                displayName = userData.username;
+            const v2UserData = v2UserResponse.data;
+            console.log('Received userData from Kick v2 endpoint:', JSON.stringify(v2UserData, null, 2));
+            if (v2UserData?.username) {
+                displayName = v2UserData.username; // Use the capitalized name if found
             }
         } catch (userError) {
-            console.warn('Could not fetch additional user data from /v1/users. Falling back to slug for username.', userError.message);
+            console.warn('Could not fetch display name from v2 endpoint. Falling back to slug.', userError.message);
         }
 
         if (!userId || !displayName) {

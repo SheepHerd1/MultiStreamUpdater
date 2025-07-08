@@ -27,12 +27,27 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
         // The official Kick v1 API returns the stream title and category at the top level of the channel object.
         const channelData = streamInfoResponse.data;
         setTitle(currentTitle => currentTitle || channelData.stream_title || '');
-        // The category is a single object, not an array.
-        setKickCategory(channelData.category || null);
+
+        // Clear any previous Kick-specific error/info message before processing new data.
+        setError(prev => {
+            const { kick, ...rest } = prev;
+            return rest;
+        });
+
+        // Check if the category data is valid or just a placeholder for an offline stream.
+        if (channelData.category && channelData.category.id !== 0 && channelData.category.name) {
+          setKickCategory(channelData.category);
+        } else {
+          setKickCategory(null);
+          // If the stream is offline, provide a helpful message to the user.
+          if (channelData.stream && !channelData.stream.is_live) {
+            setError(prev => ({ ...prev, kick: 'Category info is only available when the stream is live.' }));
+          }
+        }
       }
     } catch (err) {
       console.error('Could not fetch Kick info:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'An unknown error occurred while fetching Kick info.';
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'An unknown error occurred while fetching Kick info.';
       setError(prev => ({ ...prev, kick: errorMessage }));
     } finally {
       setIsLoading(false);
