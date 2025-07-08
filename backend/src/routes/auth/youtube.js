@@ -1,8 +1,8 @@
-const express = require('express');
-const { google } = require('googleapis');
-const router = express.Router();
+import express from 'express';
+import { google } from 'googleapis';
 
 const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, YOUTUBE_REDIRECT_URI, FRONTEND_URL } = process.env;
+const router = express.Router();
 
 function getOAuth2Client() {
     return new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, YOUTUBE_REDIRECT_URI);
@@ -65,4 +65,4 @@ router.post('/refresh', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

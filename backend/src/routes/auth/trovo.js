@@ -1,6 +1,5 @@
-const express = require('express');
-const axios = require('axios');
-const router = express.Router();
+import express from 'express';
+import axios from 'axios';
 
 const {
     TROVO_CLIENT_ID,
@@ -8,6 +7,7 @@ const {
     TROVO_REDIRECT_URI,
     FRONTEND_URL
 } = process.env;
+const router = express.Router();
 
 // Trovo API endpoints
 const TROVO_AUTH_URL = 'https://open.trovo.live/page/login.html';
@@ -107,4 +107,4 @@ router.post('/refresh', async (req, res) => {
     res.status(501).json({ message: 'Trovo token refresh is not yet supported by their API.' });
 });
 
-module.exports = router;
+export default router;

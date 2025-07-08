@@ -1,7 +1,7 @@
-const express = require('express');
-const axios = require('axios');
-const router = express.Router();
+import express from 'express';
+import axios from 'axios';
 
+const router = express.Router();
 const KICK_API_BASE = 'https://api.kick.com/public/v1';
 
 // This middleware will handle all requests to /api/kick
@@ -67,4 +67,4 @@ router.all('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

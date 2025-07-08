@@ -1,8 +1,8 @@
-const express = require('express');
-const axios = require('axios');
-const router = express.Router();
+import express from 'express';
+import axios from 'axios';
 
 const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_REDIRECT_URI, FRONTEND_URL } = process.env;
+const router = express.Router();
 
 // Route: /api/auth/twitch/connect
 router.get('/connect', (req, res) => {
@@ -74,4 +74,4 @@ router.post('/refresh', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

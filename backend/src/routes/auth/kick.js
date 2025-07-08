@@ -1,10 +1,10 @@
-const express = require('express');
-const axios = require('axios');
-const crypto = require('crypto');
-const cookie = require('cookie');
-const router = express.Router();
+import express from 'express';
+import axios from 'axios';
+import crypto from 'crypto';
+import cookie from 'cookie';
 
 const { KICK_CLIENT_ID, KICK_CLIENT_SECRET, KICK_REDIRECT_URI, FRONTEND_URL } = process.env;
+const router = express.Router();
 
 // Route: /api/auth/kick/connect
 router.get('/connect', (req, res) => {
@@ -107,4 +107,4 @@ router.post('/refresh', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

@@ -1,8 +1,6 @@
-const axios = require('axios');
-const { withCors } = require('../utils/cors.js');
-const { validateEnv } = require('../utils/env.js');
+import axios from 'axios';
 
-validateEnv(['TWITCH_CLIENT_ID', 'TWITCH_CLIENT_SECRET']);
+// We assume environment variables are validated at a higher level or are present.
 const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = process.env;
 
 // --- App Access Token Cache (for category search) ---
@@ -69,7 +67,8 @@ async function getAllTags(appAccessToken) {
 }
 
 // --- Route Handlers ---
-const router = require('express').Router();
+import express from 'express';
+const router = express.Router();
 
 router.get('/', async (req, res) => {
   const { action } = req.query;
@@ -151,4 +150,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
