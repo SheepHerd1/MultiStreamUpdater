@@ -81,11 +81,22 @@ router.get('/callback', async (req, res) => {
                 'Authorization': `Bearer ${access_token}`,
                 'Accept': 'application/json',
             };
-            // Forwarding the cookies from the token exchange is crucial for private APIs.
-            // This is the missing piece that caused the 403 Forbidden error.
+
             if (cookiesFromTokenResponse) {
+                // 1. Forward all cookies in the 'Cookie' header for session management.
                 v2Headers['Cookie'] = cookiesFromTokenResponse.join('; ');
+
+                // 2. Specifically find the XSRF-TOKEN and add it as a separate header.
+                // This is the crucial step for CSRF protection and the likely cause of the 403 error.
+                const parsedCookies = cookiesFromTokenResponse.map(c => cookie.parse(c));
+                const xsrfCookie = parsedCookies.find(c => c['XSRF-TOKEN']);
+                if (xsrfCookie) {
+                    const csrfToken = decodeURIComponent(xsrfCookie['XSRF-TOKEN']);
+                    v2Headers['X-XSRF-TOKEN'] = csrfToken;
+                    console.log('Found and added X-XSRF-TOKEN header to v2 request.');
+                }
             }
+
             const v2UserResponse = await axios.get('https://kick.com/api/v2/user', { headers: v2Headers });
             const v2UserData = v2UserResponse.data;
             console.log('Received userData from Kick v2 endpoint:', JSON.stringify(v2UserData, null, 2));
