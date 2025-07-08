@@ -62,21 +62,31 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
       return;
     }
 
+    const controller = new AbortController();
+
     const searchTags = async () => {
       setIsTagSearchLoading(true);
       try {
-        const response = await api.get(`/api/twitch?action=search_tags&query=${debouncedTagQuery}`);
+        const response = await api.get(`/api/twitch?action=search_tags&query=${debouncedTagQuery}`, {
+          signal: controller.signal,
+        });
         const existingTagIds = new Set(tags.map(t => t.tag_id));
         const filtered = response.data.filter(tag => !existingTagIds.has(tag.tag_id));
         setTagSuggestions(filtered);
       } catch (error) {
-        console.error('Error searching for tags:', error);
-        setTagSuggestions([]);
+        if (error.name !== 'CanceledError') {
+          console.error('Error searching for tags:', error);
+          setTagSuggestions([]);
+        }
       } finally {
-        setIsTagSearchLoading(false);
+        if (!controller.signal.aborted) {
+          setIsTagSearchLoading(false);
+        }
       }
     };
     searchTags();
+
+    return () => controller.abort();
   }, [debouncedTagQuery, tags]);
 
   // Handle category search
