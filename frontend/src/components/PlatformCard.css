@@ -3,7 +3,6 @@
   position: relative; /* Required for the loader overlay */
   border-radius: 8px;
   box-shadow: 0 2px 8px var(--card-shadow);
-  overflow: hidden; /* Ensures border-radius is respected by children */
   display: flex;
   flex-direction: column;
 }
