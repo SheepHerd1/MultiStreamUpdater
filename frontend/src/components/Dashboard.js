@@ -20,6 +20,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
   const [title, setTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // For the main update button
   const [error, setError] = useState({}); // Use an object for platform-specific errors
+  const [activeInputGroup, setActiveInputGroup] = useState(null); // To manage dropdown z-index
   const [notification, setNotification] = useState('');
 
   // Get auth details from the prop
@@ -217,45 +218,47 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
             </PlatformCard>
 
             {twitchAuth && (
-              <PlatformCard title="Twitch Settings" className="twitch-card" error={error.twitch} isLoading={isTwitchLoading}>
-                <div className="form-group">
-                  <label htmlFor="twitchCategory">Category</label>
-                  <CategorySearch
-                    value={twitchCategoryQuery || twitchCategory}
-                    onChange={(e) => {
-                      setTwitchCategory(''); // Clear selection when user types
-                      setTwitchCategoryQuery(e.target.value);
-                    }}
-                    placeholder="Search for a category..."
-                    disabled={!twitchAuth}
-                    results={twitchCategoryResults}
-                    onSelect={(cat) => {
-                      setTwitchCategory(cat.name);
-                      setTwitchCategoryQuery('');
-                      setTwitchCategoryResults([]);
-                    }}
-                    isLoading={isTwitchCategoryLoading}
-                    renderResultItem={(cat) => (
-                      <>
-                        <img src={cat.box_art_url.replace('{width}', '30').replace('{height}', '40')} alt="" />
-                        <span>{cat.name}</span>
-                      </>
-                    )}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="tags">Tags (up to 10)</label>
-                  <TagInput
-                    tags={tags}
-                    tagInput={tagInput}
-                    onTagInputChange={handleTagInputChange}
-                    onTagInputKeyDown={handleTagInputKeyDown}
-                    onRemoveTag={removeTag}
-                    suggestions={tagSuggestions}
-                    onAddTag={addTag}
-                    isTagSearchLoading={isTagSearchLoading}
-                    disabled={!twitchAuth}
-                  />
+              <PlatformCard title="Twitch Settings" className={`twitch-card ${activeInputGroup === 'twitch' ? 'is-active' : ''}`} error={error.twitch} isLoading={isTwitchLoading}>
+                <div onFocus={() => setActiveInputGroup('twitch')} onBlur={() => setActiveInputGroup(null)}>
+                  <div className="form-group">
+                    <label htmlFor="twitchCategory">Category</label>
+                    <CategorySearch
+                      value={twitchCategoryQuery || twitchCategory}
+                      onChange={(e) => {
+                        setTwitchCategory(''); // Clear selection when user types
+                        setTwitchCategoryQuery(e.target.value);
+                      }}
+                      placeholder="Search for a category..."
+                      disabled={!twitchAuth}
+                      results={twitchCategoryResults}
+                      onSelect={(cat) => {
+                        setTwitchCategory(cat.name);
+                        setTwitchCategoryQuery('');
+                        setTwitchCategoryResults([]);
+                      }}
+                      isLoading={isTwitchCategoryLoading}
+                      renderResultItem={(cat) => (
+                        <>
+                          <img src={cat.box_art_url.replace('{width}', '30').replace('{height}', '40')} alt="" />
+                          <span>{cat.name}</span>
+                        </>
+                      )}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="tags">Tags (up to 10)</label>
+                    <TagInput
+                      tags={tags}
+                      tagInput={tagInput}
+                      onTagInputChange={handleTagInputChange}
+                      onTagInputKeyDown={handleTagInputKeyDown}
+                      onRemoveTag={removeTag}
+                      suggestions={tagSuggestions}
+                      onAddTag={addTag}
+                      isTagSearchLoading={isTagSearchLoading}
+                      disabled={!twitchAuth}
+                    />
+                  </div>
                 </div>
               </PlatformCard>
             )}
@@ -279,31 +282,33 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
             )}
 
             {kickAuth && (
-              <PlatformCard title="Kick Settings" className="kick-card" error={error.kick} isLoading={isKickLoading}>
-                <div className="form-group">
-                  <label htmlFor="kickCategory">Category</label>
-                  <CategorySearch
-                    value={kickCategoryQuery || kickCategory}
-                    onChange={(e) => {
-                      setKickCategory(''); // Clear selection when user types
-                      setKickCategoryQuery(e.target.value);
-                    }}
-                    placeholder="Search for a category..."
-                    disabled={!kickAuth}
-                    results={kickCategoryResults}
-                    onSelect={(cat) => {
-                      setKickCategory(cat.name);
-                      setKickCategoryQuery('');
-                      setKickCategoryResults([]);
-                    }}
-                    isLoading={isKickCategoryLoading}
-                    renderResultItem={(cat) => (
-                      <>
-                        <img src={cat.thumbnail} alt={cat.name} />
-                        <span>{cat.name}</span>
-                      </>
-                    )}
-                  />
+              <PlatformCard title="Kick Settings" className={`kick-card ${activeInputGroup === 'kick' ? 'is-active' : ''}`} error={error.kick} isLoading={isKickLoading}>
+                <div onFocus={() => setActiveInputGroup('kick')} onBlur={() => setActiveInputGroup(null)}>
+                  <div className="form-group">
+                    <label htmlFor="kickCategory">Category</label>
+                    <CategorySearch
+                      value={kickCategoryQuery || kickCategory}
+                      onChange={(e) => {
+                        setKickCategory(''); // Clear selection when user types
+                        setKickCategoryQuery(e.target.value);
+                      }}
+                      placeholder="Search for a category..."
+                      disabled={!kickAuth}
+                      results={kickCategoryResults}
+                      onSelect={(cat) => {
+                        setKickCategory(cat.name);
+                        setKickCategoryQuery('');
+                        setKickCategoryResults([]);
+                      }}
+                      isLoading={isKickCategoryLoading}
+                      renderResultItem={(cat) => (
+                        <>
+                          <img src={cat.thumbnail} alt={cat.name} />
+                          <span>{cat.name}</span>
+                        </>
+                      )}
+                    />
+                  </div>
                 </div>
               </PlatformCard>
             )}
