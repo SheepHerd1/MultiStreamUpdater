@@ -68,8 +68,8 @@ router.get('/callback', async (req, res) => {
         });
         const userData = userResponse.data.data?.[0];
 
-        if (!userData || !userData.username) {
-            console.error('Kick callback error: User data or username not found in API response.');
+        if (!userData || !userData.slug) {
+            console.error('Kick callback error: User data or slug not found in API response.', userData);
             return res.status(500).send('Could not retrieve user profile from Kick.');
         }
 
@@ -79,8 +79,8 @@ router.get('/callback', async (req, res) => {
                     type: 'kick-auth-success',
                     accessToken: '${access_token}',
                     refreshToken: '${refresh_token}',
-                    userId: '${userData?.id}',
-                    userName: '${userData?.username}',
+                    userId: '${userData.id}',
+                    userName: '${userData.slug}',
                     scope: '${scope}'
                 }, '${FRONTEND_URL}');
                 window.close();

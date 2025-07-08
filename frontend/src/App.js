@@ -84,7 +84,11 @@ function App() {
         console.error("Failed to fetch YouTube user info, saving tokens only:", e);
         // Fallback to saving just the tokens if user info fetch fails
         return {
-          youtube: { token: data.accessToken, refreshToken: data.refreshToken },
+          youtube: {
+            token: data.accessToken,
+            refreshToken: data.refreshToken,
+            userName: 'YouTube (Error)', // Provide a fallback name
+          },
         };
       }
     },

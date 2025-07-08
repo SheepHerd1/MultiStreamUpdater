@@ -49,8 +49,10 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
           setAllTwitchTags(tagData);
         } catch (error) {
           console.error("Failed to fetch all Twitch tags:", error);
-          // This is a non-critical error, so we don't set a visible error message.
-          // The tag input will just behave like a normal text field.
+          // Make this error visible on the platform card for better debugging.
+          if (error.response?.data?.error) {
+            setError(prev => ({ ...prev, twitch: `Tag search failed: ${error.response.data.error}` }));
+          }
         }
       }
     };
