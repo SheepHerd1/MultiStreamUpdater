@@ -10,10 +10,10 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
   const [isTwitchCategoryLoading, setIsTwitchCategoryLoading] = useState(false);
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
-  const [allTwitchTags, setAllTwitchTags] = useState([]);
   const [tagSuggestions, setTagSuggestions] = useState([]);
 
   const debouncedTwitchQuery = useDebounce(twitchCategoryQuery, 300);
+  const debouncedTagQuery = useDebounce(tagInput, 300);
 
   const fetchTwitchStreamInfo = useCallback(async () => {
     if (!twitchAuth) return;
@@ -35,40 +35,26 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     }
   }, [twitchAuth, setTitle, setError]);
 
-  // Fetch all available Twitch tags once for searching
+  // Search for tags when the user types in the tag input
   useEffect(() => {
-    const fetchAllTags = async () => {
-      if (twitchAuth && allTwitchTags.length === 0) {
+    if (debouncedTagQuery) {
+      const searchTags = async () => {
         try {
-          const response = await api.get('/api/twitch?action=all_tags');
-          // We only need the localized names for simplicity
-          const tagData = response.data.map(tag => ({
-            id: tag.tag_id,
-            name: tag.localization_names['en-us']
-          }));
-          setAllTwitchTags(tagData);
+          const response = await api.get(`/api/twitch?action=search_tags&query=${debouncedTagQuery}`);
+          const suggestions = response.data
+            .map(tag => ({ id: tag.id, name: tag.localization_names['en-us'] }))
+            .filter(tag => !tags.includes(tag.name)); // Don't suggest tags that are already added
+          setTagSuggestions(suggestions);
         } catch (error) {
-          console.error("Failed to fetch all Twitch tags:", error);
-          // This now correctly handles both network errors and errors thrown by the server.
-          const errorMessage = error.response?.data?.error || error.message || 'An unknown error occurred.';
-          setError(prev => ({ ...prev, twitch: `Tag search failed: ${errorMessage}` }));
+          console.error("Failed to search for Twitch tags:", error);
+          setTagSuggestions([]);
         }
-      }
-    };
-    fetchAllTags();
-  }, [twitchAuth, allTwitchTags.length]);
-
-  // Update suggestions when user types in the tag input
-  useEffect(() => {
-    if (tagInput && allTwitchTags.length > 0) {
-      const filtered = allTwitchTags
-        .filter(tag => tag.name.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(tag.name))
-        .slice(0, 5); // Limit to 5 suggestions for performance and UI clarity
-      setTagSuggestions(filtered);
+      };
+      searchTags();
     } else {
       setTagSuggestions([]);
     }
-  }, [tagInput, allTwitchTags, tags]);
+  }, [debouncedTagQuery, tags]);
 
   useEffect(() => {
     if (!debouncedTwitchQuery) {

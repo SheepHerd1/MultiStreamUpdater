@@ -48,42 +48,6 @@ async function getAppAccessToken() {
   }
 }
 
-// --- All Tags Cache ---
-const allTagsCache = {
-  tags: [],
-  expiresAt: 0,
-};
-
-async function getAllTags(appAccessToken) {
-  const now = Date.now();
-  if (allTagsCache.tags.length > 0 && now < allTagsCache.expiresAt) {
-    return allTagsCache.tags;
-  }
-
-  let allTags = [];
-  let cursor = null;
-  const headers = { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appAccessToken}` };
-
-  try {
-    do {
-      const url = `https://api.twitch.tv/helix/all-stream-tags?first=100${cursor ? `&after=${cursor}` : ''}`;
-      const response = await axios.get(url, { headers });
-      const { data, pagination } = response.data;
-      
-      if (data) allTags.push(...data);
-      cursor = pagination?.cursor;
-    } while (cursor);
-
-    allTagsCache.tags = allTags;
-    allTagsCache.expiresAt = now + (3600 * 1000); // Cache for 1 hour
-    console.log(`[Twitch API] Cached ${allTags.length} tags.`);
-    return allTags;
-  } catch (error) {
-    console.error('Error fetching all Twitch tags:', error.response?.data);
-    throw new Error('Could not fetch all Twitch tags.');
-  }
-}
-
 // --- Route Handlers ---
 import express from 'express';
 const router = express.Router();
@@ -115,10 +79,15 @@ router.get('/', async (req, res) => {
         return res.status(200).json(response.data.data);
       }
 
-      case 'all_tags': {
+      case 'search_tags': {
+        const { query } = req.query;
+        if (!query) return res.status(400).json({ error: 'Query parameter is required for tag search.' });
+
         const appToken = await getAppAccessToken();
-        const tags = await getAllTags(appToken);
-        return res.status(200).json(tags);
+        const response = await axios.get(`https://api.twitch.tv/helix/search/tags?query=${encodeURIComponent(query)}`, {
+          headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
+        });
+        return res.status(200).json(response.data.data);
       }
 
       default:
