@@ -42,7 +42,7 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
           setKickCategory(null);
           // If the stream is offline, provide a helpful message to the user.
           if (channelData.stream && !channelData.stream.is_live) {
-            setKickInfoMessage('The category currently selected is only available when the stream is live.');
+            setKickInfoMessage('The category currently selected on your channel is only available when the stream is live.');
           }
         }
       }
