@@ -52,46 +52,55 @@ async function getAppAccessToken() {
 import express from 'express';
 const router = express.Router();
 
+const getHandlers = {
+  'stream_info': async (req, res, token) => {
+    const { broadcaster_id } = req.query;
+    if (!token || !broadcaster_id) return res.status(401).json({ error: 'Missing token or broadcaster_id' });
+    
+    const response = await axios.get(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcaster_id}`, {
+      headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}` },
+    });
+    return res.status(200).json(response.data.data[0]);
+  },
+  'categories': async (req, res) => {
+    const { query } = req.query;
+    if (!query) return res.status(400).json({ error: 'Query parameter is required.' });
+    
+    const appToken = await getAppAccessToken();
+    const response = await axios.get(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}`, {
+      headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
+    });
+    return res.status(200).json(response.data.data);
+  },
+  'search_tags': async (req, res) => {
+    const { query } = req.query;
+    if (!query) return res.status(400).json({ error: 'Query parameter is required for tag search.' });
+
+    const appToken = await getAppAccessToken();
+    const response = await axios.get(`https://api.twitch.tv/helix/search/tags?query=${encodeURIComponent(query)}`, {
+      headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
+    });
+    return res.status(200).json(response.data.data);
+  }
+};
+
 router.get('/', async (req, res) => {
   const { action } = req.query;
   const token = req.headers.authorization?.split(' ')[1];
 
-  try {
-    if (action === 'stream_info') {
-      const { broadcaster_id } = req.query;
-      if (!token || !broadcaster_id) return res.status(401).json({ error: 'Missing token or broadcaster_id' });
-      
-      const response = await axios.get(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcaster_id}`, {
-        headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}` },
-      });
-      return res.status(200).json(response.data.data[0]);
-    } else if (action === 'categories') {
-      const { query } = req.query;
-      if (!query) return res.status(400).json({ error: 'Query parameter is required.' });
-      
-      const appToken = await getAppAccessToken();
-      const response = await axios.get(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}`, {
-        headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
-      });
-      return res.status(200).json(response.data.data);
-    } else if (action === 'search_tags') {
-      const { query } = req.query;
-      if (!query) return res.status(400).json({ error: 'Query parameter is required for tag search.' });
+  const handler = getHandlers[action];
 
-      const appToken = await getAppAccessToken();
-      const response = await axios.get(`https://api.twitch.tv/helix/search/tags?query=${encodeURIComponent(query)}`, {
-        headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
-      });
-      return res.status(200).json(response.data.data);
-    } else {
-      // This will now return a 404 with a specific message if no action matches.
-      return res.status(404).json({ error: `Invalid GET action specified: '${action}'` });
+  if (handler) {
+    try {
+      await handler(req, res, token);
+    } catch (error) {
+      const status = error.response?.status || 500;
+      const message = error.message || error.response?.data?.error || `Failed to perform Twitch action: ${action}.`;
+      console.error(`[Twitch GET Error] Action: ${action}, Status: ${status}`, error.message);
+      return res.status(status).json({ error: message });
     }
-  } catch (error) {
-    const status = error.response?.status || 500;
-    const message = error.message || error.response?.data?.error || `Failed to perform Twitch action: ${action}.`;
-    console.error(`[Twitch GET Error] Action: ${action}, Status: ${status}`, error.message);
-    return res.status(status).json({ error: message });
+  } else {
+    return res.status(404).json({ error: `Invalid GET action specified: '${action}'` });
   }
 });
 
