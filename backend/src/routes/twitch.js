@@ -77,11 +77,14 @@ const getHandlers = {
     if (!query) return res.status(400).json({ error: 'Query parameter is required.' });
 
     const appToken = await getAppAccessToken();
-    const response = await axios.get(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}&first=7`, {
+    // The search/categories endpoint prioritizes games. We fetch a larger number of results
+    // to increase the chance of finding items that are tags.
+    const response = await axios.get(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}&first=30`, {
       headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
     });
     const tags = response.data.data.filter(item => item.is_tag);
-    return res.status(200).json(tags);
+    // Return a reasonable number of suggestions to the client.
+    return res.status(200).json(tags.slice(0, 7));
   },
 };
 
