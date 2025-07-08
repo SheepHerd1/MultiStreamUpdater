@@ -13,20 +13,19 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
   const debouncedKickQuery = useDebounce(kickCategoryQuery, 500);
 
   const fetchKickStreamInfo = useCallback(async () => {
-    // We need the token for auth and the userName to derive the slug for the v2 endpoint.
-    if (!kickAuth?.token || !kickAuth?.userName) return;
+    // Reverting to use broadcaster_user_id for a more stable v1 API call.
+    if (!kickAuth?.token || !kickAuth?.userId) return;
     setIsLoading(true);
     try {
-      // Pass the channel slug to the backend to query the v2 endpoint.
       const streamInfoResponse = await api.get(`/api/kick?action=stream_info`, {
-        params: { channel_slug: kickAuth.userName.toLowerCase() },
+        params: { broadcaster_user_id: kickAuth.userId },
         headers: { 'Authorization': `Bearer ${kickAuth.token}` },
       });
 
       if (streamInfoResponse.data) {
-        // This is a robust parser that can handle both v1 and v2 API responses.
-        const { title, category, isLive } = parseKickApiResponse(streamInfoResponse.data);
-        setTitle(currentTitle => currentTitle || title || '');
+        // The official Kick v1 API returns the stream title and category at the top level of the channel object.
+        const channelData = streamInfoResponse.data;
+        setTitle(currentTitle => currentTitle || channelData.stream_title || '');
 
         // Clear any previous Kick-specific error/info message before processing new data.
         setError(prev => {
@@ -35,12 +34,12 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
         });
 
         // Check if the category data is valid or just a placeholder for an offline stream.
-        if (category && category.id !== 0 && category.name) {
-          setKickCategory(category);
+        if (channelData.category && channelData.category.id !== 0 && channelData.category.name) {
+          setKickCategory(channelData.category);
         } else {
           setKickCategory(null);
           // If the stream is offline, provide a helpful message to the user.
-          if (!isLive) {
+          if (channelData.stream && !channelData.stream.is_live) {
             setError(prev => ({ ...prev, kick: 'Category info is only available when the stream is live.' }));
           }
         }
@@ -53,28 +52,6 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
       setIsLoading(false);
     }
   }, [kickAuth, setTitle, setError]);
-
-  // This helper function can parse data from either the v1 or v2 Kick API endpoints,
-  // making the frontend resilient to backend changes.
-  const parseKickApiResponse = (data) => {
-    // Check for v2 structure (undocumented)
-    if (data && data.livestream) {
-      return {
-        title: data.livestream.session_title,
-        category: data.livestream.categories?.[0], // v2 has an array of categories
-        isLive: data.livestream.is_live,
-      };
-    }
-    // Fallback to v1 structure (official)
-    if (data) {
-      return {
-        title: data.stream_title,
-        category: data.category,
-        isLive: data.stream?.is_live,
-      };
-    }
-    return {}; // Return empty object if data is invalid
-  };
 
   // This useEffect ensures that when the kickAuth object becomes available
   // (e.g., after login), the stream info is fetched automatically. This makes it
