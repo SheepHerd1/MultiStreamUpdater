@@ -81,7 +81,8 @@ function App() {
           },
         };
       } catch (e) {
-        console.error("Failed to fetch YouTube user info, saving tokens only:", e);
+        console.error("Failed to fetch YouTube user info, saving tokens only.", e);
+
         // Fallback to saving just the tokens if user info fetch fails
         return {
           youtube: {

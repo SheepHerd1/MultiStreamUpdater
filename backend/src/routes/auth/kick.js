@@ -68,9 +68,11 @@ router.get('/callback', async (req, res) => {
         });
         const userData = userResponse.data.data?.[0];
 
-        if (!userData || !userData.slug) {
-            console.error('Kick callback error: User data or slug not found in API response.', userData);
-            return res.status(500).send('Could not retrieve user profile from Kick.');
+        // Per the documentation, the user object has a 'name' field. This is the channel slug.
+        const channelName = userData?.name;
+        if (!userData || !channelName) {
+            console.error('Kick callback error: Could not find user name in API response.', userData);
+            return res.status(500).send('Could not retrieve user channel from Kick.');
         }
 
         res.send(`
@@ -80,7 +82,7 @@ router.get('/callback', async (req, res) => {
                     accessToken: '${access_token}',
                     refreshToken: '${refresh_token}',
                     userId: '${userData.id}',
-                    userName: '${userData.slug}',
+                    userName: '${channelName}',
                     scope: '${scope}'
                 }, '${FRONTEND_URL}');
                 window.close();
