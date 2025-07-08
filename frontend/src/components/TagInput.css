@@ -82,3 +82,11 @@
 .suggestion-item:hover {
   background-color: var(--background-hover);
 }
+
+.suggestion-item-none {
+  padding: 8px 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  cursor: default;
+}

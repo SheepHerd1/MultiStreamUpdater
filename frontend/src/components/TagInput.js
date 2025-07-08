@@ -27,7 +27,9 @@ const TagInput = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const showSuggestions = isFocused && (suggestions.length > 0 || isTagSearchLoading);
+  // The dropdown should show if the input is focused and the user has started typing.
+  // This prevents it from hiding immediately if no results are found.
+  const showSuggestions = isFocused && tagInput.length > 0;
 
   return (
     <div
@@ -56,12 +58,15 @@ const TagInput = ({
         <div className="tag-suggestions">
           {isTagSearchLoading ? (
             <div className="suggestion-loading"><Spinner /></div>
-          ) : (
+          ) : suggestions.length > 0 ? (
             suggestions.map(suggestion => (
               <div key={suggestion} className="suggestion-item" onMouseDown={() => onAddTag(suggestion)}>
                 {suggestion}
               </div>
-            )))}
+            ))
+          ) : (
+            <div className="suggestion-item-none">No matching tags found. Press Enter to add.</div>
+          )}
         </div>
       )}
     </div>
