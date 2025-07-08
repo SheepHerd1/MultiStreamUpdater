@@ -28,11 +28,11 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
       });
 
       if (streamInfoResponse.data) {
-        // The Kick API nests the live stream details inside a 'livestream' object.
-        const livestream = streamInfoResponse.data.livestream;
-        setTitle(currentTitle => currentTitle || livestream?.session_title || '');
-        // Store the first category object, or null if it doesn't exist.
-        setKickCategory(livestream?.categories?.[0] || null);
+        // The official Kick v1 API returns the stream title and category at the top level of the channel object.
+        const channelData = streamInfoResponse.data;
+        setTitle(currentTitle => currentTitle || channelData.stream_title || '');
+        // The category is a single object, not an array.
+        setKickCategory(channelData.category || null);
       }
     } catch (err) {
       console.error('Could not fetch Kick info:', err);
