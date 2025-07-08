@@ -206,10 +206,57 @@ main {
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
   font-weight: 600;
   color: var(--text-primary);
   font-size: 0.9rem;
+}
+
+.label-with-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.label-with-info label {
+  margin-bottom: 0; /* The parent container now handles the margin */
+}
+
+.info-tooltip-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.info-icon {
+  color: var(--text-muted);
+  cursor: help;
+}
+
+.info-tooltip-text {
+  visibility: hidden;
+  width: 220px;
+  background-color: var(--background-tertiary);
+  color: var(--text-primary);
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%; /* Position above the icon */
+  left: 50%;
+  margin-left: -110px; /* Use half of the width to center the tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+  box-shadow: 0 2px 8px var(--card-shadow);
+  border: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.info-tooltip-container:hover .info-tooltip-text {
+  visibility: visible;
+  opacity: 1;
 }
 
 /* This is the key part for the "ugly text boxes" */

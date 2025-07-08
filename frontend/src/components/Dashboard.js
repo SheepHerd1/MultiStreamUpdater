@@ -10,6 +10,7 @@ import TwitchIcon from './icons/TwitchIcon';
 import YouTubeIcon from './icons/YouTubeIcon';
 import KickIcon from './icons/KickIcon';
 import Spinner from './icons/Spinner';
+import InfoIcon from './icons/InfoIcon';
 import ThemeToggleButton from './ThemeToggleButton';
 import CategorySearch from './CategorySearch';
 import TagInput from './TagInput';
@@ -45,7 +46,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
     kickCategoryQuery, setKickCategoryQuery,
     kickCategoryResults, setKickCategoryResults,
     isKickCategoryLoading, isLoading: isKickLoading,
-    fetchKickStreamInfo
+    fetchKickStreamInfo, kickInfoMessage
   } = useKickStream(kickAuth, setTitle, setError);
 
   // Get token refreshing state from context
@@ -289,7 +290,15 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
               <PlatformCard title="Kick Settings" className="kick-card" error={error.kick} isLoading={isKickLoading}>
                 <div>
                   <div className="form-group">
-                    <label htmlFor="kickCategory">Category</label>
+                    <div className="label-with-info">
+                      <label htmlFor="kickCategory">Category</label>
+                      {kickInfoMessage && (
+                        <div className="info-tooltip-container">
+                          <InfoIcon className="info-icon" />
+                          <span className="info-tooltip-text">{kickInfoMessage}</span>
+                        </div>
+                      )}
+                    </div>
                     <CategorySearch
                       value={kickCategoryQuery || kickCategory?.name || ''}
                       onChange={(e) => {

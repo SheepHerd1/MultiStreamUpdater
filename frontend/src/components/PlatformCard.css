@@ -5,6 +5,7 @@
   box-shadow: 0 2px 8px var(--card-shadow);
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* This is the key fix to ensure children respect the rounded corners */
 }
 
 .platform-card-header {

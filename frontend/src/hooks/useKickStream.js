@@ -9,6 +9,7 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
   const [kickCategoryQuery, setKickCategoryQuery] = useState('');
   const [kickCategoryResults, setKickCategoryResults] = useState([]);
   const [isKickCategoryLoading, setIsKickCategoryLoading] = useState(false);
+  const [kickInfoMessage, setKickInfoMessage] = useState('');
 
   const debouncedKickQuery = useDebounce(kickCategoryQuery, 500);
 
@@ -16,6 +17,7 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
     // Reverting to use broadcaster_user_id for a more stable v1 API call.
     if (!kickAuth?.token || !kickAuth?.userId) return;
     setIsLoading(true);
+    setKickInfoMessage(''); // Reset on every fetch
     try {
       const streamInfoResponse = await api.get(`/api/kick?action=stream_info`, {
         params: { broadcaster_user_id: kickAuth.userId },
@@ -40,7 +42,7 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
           setKickCategory(null);
           // If the stream is offline, provide a helpful message to the user.
           if (channelData.stream && !channelData.stream.is_live) {
-            setError(prev => ({ ...prev, kick: 'Category info is only available when the stream is live.' }));
+            setKickInfoMessage('The category currently selected is only available when the stream is live.');
           }
         }
       }
@@ -95,6 +97,7 @@ export const useKickStream = (kickAuth, setTitle, setError) => {
     kickCategoryQuery, setKickCategoryQuery,
     kickCategoryResults, setKickCategoryResults,
     isKickCategoryLoading,
+    kickInfoMessage,
     fetchKickStreamInfo,
   };
 };
