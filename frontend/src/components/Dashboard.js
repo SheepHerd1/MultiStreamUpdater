@@ -154,7 +154,7 @@ function Dashboard({ auth, onLogout, onIndividualLogout, setAuth }) {
         if (result.status === 'rejected') {
           hasFailures = true;
           const reason = result.reason;
-          const errorMessage = reason.response?.data?.error || `An unknown error occurred on ${platform}.`;
+          const errorMessage = reason.response?.data?.message || reason.response?.data?.error || `An unknown error occurred on ${platform}.`;
           console.error(`Update failed for ${platform}:`, reason);
           newErrors[platform] = errorMessage;
         }

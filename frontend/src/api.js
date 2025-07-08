@@ -75,6 +75,7 @@ api.interceptors.response.use(
             ...platformAuth,
             token: data.access_token,
             refreshToken: data.refresh_token || platformAuth.refreshToken, // Use new refresh token if provided
+            csrfToken: data.csrfToken || platformAuth.csrfToken, // Use new CSRF token if provided
           };
 
           const newAuthData = { ...authData, [platform]: newPlatformAuth };

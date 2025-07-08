@@ -134,9 +134,34 @@ router.post('/refresh', async (req, res) => {
         }), {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         });
-        // The frontend interceptor expects 'access_token' and 'refresh_token'
+
         const { access_token, refresh_token } = response.data;
-        res.status(200).json({ access_token, refresh_token });
+
+        // Also fetch a new CSRF token, as the old one might be invalid with the new session.
+        let csrfToken = null;
+        try {
+            const v2UserResponse = await axios.get('https://kick.com/api/v2/user', {
+                headers: {
+                    'Authorization': `Bearer ${access_token}`,
+                    'Accept': 'application/json',
+                },
+            });
+
+            const cookiesFromKick = v2UserResponse.headers['set-cookie'];
+            if (cookiesFromKick) {
+                const parsedCookies = cookiesFromKick.map(c => cookie.parse(c));
+                const xsrfCookie = parsedCookies.find(c => c['XSRF-TOKEN']);
+                if (xsrfCookie) {
+                    csrfToken = decodeURIComponent(xsrfCookie['XSRF-TOKEN']);
+                }
+            }
+        } catch (csrfError) {
+            console.error('Kick CSRF token fetch error during refresh:', csrfError.response?.data || csrfError.message);
+            // Proceed without it; the next update operation will likely fail and prompt re-auth.
+        }
+
+        // The frontend interceptor expects 'access_token', 'refresh_token', and now 'csrfToken'.
+        res.status(200).json({ access_token, refresh_token, csrfToken });
     } catch (err) {
         console.error('Kick token refresh error:', err.response?.data || err.message);
         res.status(err.response?.status || 500).json({ message: 'Failed to refresh Kick token.', error: err.response?.data || 'Internal Server Error' });
