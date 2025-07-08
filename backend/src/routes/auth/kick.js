@@ -62,6 +62,7 @@ router.get('/callback', async (req, res) => {
         });
 
         const { access_token, refresh_token, scope } = tokenResponse.data;
+        const cookiesFromTokenResponse = tokenResponse.headers['set-cookie'];
 
         // Per official docs, call /channels with no params to get the authenticated user's channel info.
         const channelResponse = await axios.get('https://api.kick.com/public/v1/channels', {
@@ -76,12 +77,16 @@ router.get('/callback', async (req, res) => {
         // what was working for you before. This GET request does not require a CSRF token.
         let displayName = slug; // Default to the lowercase slug
         try {
-            const v2UserResponse = await axios.get('https://kick.com/api/v2/user', {
-                headers: {
-                    'Authorization': `Bearer ${access_token}`,
-                    'Accept': 'application/json',
-                },
-            });
+            const v2Headers = {
+                'Authorization': `Bearer ${access_token}`,
+                'Accept': 'application/json',
+            };
+            // Forwarding the cookies from the token exchange is crucial for private APIs.
+            // This is the missing piece that caused the 403 Forbidden error.
+            if (cookiesFromTokenResponse) {
+                v2Headers['Cookie'] = cookiesFromTokenResponse.join('; ');
+            }
+            const v2UserResponse = await axios.get('https://kick.com/api/v2/user', { headers: v2Headers });
             const v2UserData = v2UserResponse.data;
             console.log('Received userData from Kick v2 endpoint:', JSON.stringify(v2UserData, null, 2));
             if (v2UserData?.username) {
