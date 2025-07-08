@@ -71,28 +71,6 @@ const getHandlers = {
       headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
     });
     return res.status(200).json(response.data.data);
-  },
-  'stream_tags': async (req, res, token) => {
-    const { broadcaster_id } = req.query;
-    if (!token || !broadcaster_id) return res.status(401).json({ error: 'Missing user token or broadcaster_id' });
-
-    // This endpoint correctly fetches the full tag objects for a stream.
-    const response = await axios.get(`https://api.twitch.tv/helix/streams/tags?broadcaster_id=${broadcaster_id}`, {
-      headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}` },
-    });
-    return res.status(200).json(response.data.data);
-  },
-  'search_tags': async (req, res) => {
-    const { query } = req.query;
-    if (!query) return res.status(400).json({ error: 'Query parameter is required.' });
-
-    const appToken = await getAppAccessToken();
-    const response = await axios.get(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}&first=10`, {
-      headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${appToken}` },
-    });
-    // Filter the results to only include items that are actual tags.
-    const tags = response.data.data.filter(item => item.is_tag);
-    return res.status(200).json(tags);
   }
 };
 
@@ -123,25 +101,21 @@ router.post('/', async (req, res) => {
   try {
     switch (action) {
       case 'stream_update': {
-        const { broadcasterId, title, category, tag_ids } = req.body; // Expecting tag_ids now
+        // The frontend will now send an array of tag strings.
+        const { broadcasterId, title, category, tags } = req.body;
         if (!token || !broadcasterId) return res.status(401).json({ error: 'Missing token or broadcasterId' });
 
-        // Step 1: Update Title and Category
+        // We can update title, category, and tags in a single API call.
         const gameResponse = await axios.get(`https://api.twitch.tv/helix/games?name=${encodeURIComponent(category)}`, {
           headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}` },
         });
         const gameId = gameResponse.data.data[0]?.id || '';
 
+        // PATCH to /helix/channels updates all properties at once.
         await axios.patch(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcasterId}`, {
           title,
           game_id: gameId,
-        }, {
-          headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        });
-
-        // Step 2: Update Tags using the correct endpoint
-        await axios.put(`https://api.twitch.tv/helix/streams/tags?broadcaster_id=${broadcasterId}`, {
-          tag_ids: tag_ids || [], // Send the array of tag IDs
+          tags: tags || [], // Pass the array of tag strings.
         }, {
           headers: { 'Client-ID': TWITCH_CLIENT_ID, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         });

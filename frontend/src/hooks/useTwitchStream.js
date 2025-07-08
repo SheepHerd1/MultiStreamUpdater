@@ -8,13 +8,10 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
   const [twitchCategoryQuery, setTwitchCategoryQuery] = useState('');
   const [twitchCategoryResults, setTwitchCategoryResults] = useState([]);
   const [isTwitchCategoryLoading, setIsTwitchCategoryLoading] = useState(false);
-  const [tags, setTags] = useState([]); // Will hold tag objects { tag_id, localization_names }
+  const [tags, setTags] = useState([]); // Will now hold an array of strings
   const [tagInput, setTagInput] = useState('');
-  const [isTagSearchLoading, setIsTagSearchLoading] = useState(false);
-  const [tagSuggestions, setTagSuggestions] = useState([]);
 
   const debouncedTwitchQuery = useDebounce(twitchCategoryQuery, 300);
-  const debouncedTagQuery = useDebounce(tagInput, 300);
 
   const fetchTwitchStreamInfo = useCallback(async () => {
     if (!twitchAuth) return;
@@ -30,14 +27,9 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
       if (streamInfoResponse.data) {
         setTitle(currentTitle => currentTitle || streamInfoResponse.data.title || '');
         setTwitchCategory(streamInfoResponse.data.game_name || '');
+        // The /channels endpoint returns tags as an array of strings
+        setTags(streamInfoResponse.data.tags || []);
       }
-
-      // Fetch the stream's current tags using the new endpoint
-      const currentTagsResponse = await api.get('/api/twitch?action=stream_tags', {
-        params: { broadcaster_id: twitchAuth.userId },
-        headers: { 'Authorization': `Bearer ${twitchAuth.token}` },
-      });
-      setTags(currentTagsResponse.data || []);
 
     } catch (err) {
       console.error('Could not fetch Twitch info:', err);
@@ -54,40 +46,6 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     }
   }, [twitchAuth, fetchTwitchStreamInfo]);
 
-
-  // Search for tag suggestions as the user types
-  useEffect(() => {
-    if (!debouncedTagQuery) {
-      setTagSuggestions([]);
-      return;
-    }
-
-    const controller = new AbortController();
-
-    const searchTags = async () => {
-      setIsTagSearchLoading(true);
-      try {
-        const response = await api.get(`/api/twitch?action=search_tags&query=${debouncedTagQuery}`, {
-          signal: controller.signal,
-        });
-        const existingTagIds = new Set(tags.map(t => t.tag_id));
-        const filtered = response.data.filter(tag => !existingTagIds.has(tag.tag_id));
-        setTagSuggestions(filtered);
-      } catch (error) {
-        if (error.name !== 'CanceledError') {
-          console.error('Error searching for tags:', error);
-          setTagSuggestions([]);
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsTagSearchLoading(false);
-        }
-      }
-    };
-    searchTags();
-
-    return () => controller.abort();
-  }, [debouncedTagQuery, tags]);
 
   // Handle category search
   useEffect(() => {
@@ -114,27 +72,27 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
 
   const handleTagInputChange = (e) => setTagInput(e.target.value);
 
-  // This function now adds a tag *object* from the suggestions
-  const addTag = (tagObject) => {
-    if (tags.length < 10 && !tags.some(t => t.tag_id === tagObject.tag_id)) {
-      setTags([...tags, tagObject]);
+  // This function now adds a tag string from the input
+  const addTag = (tagString) => {
+    const newTag = tagString.trim();
+    // Twitch tags cannot contain spaces. Let's enforce that.
+    if (newTag && newTag.indexOf(' ') === -1 && tags.length < 10 && !tags.includes(newTag)) {
+      setTags([...tags, newTag]);
       setTagInput('');
-      setTagSuggestions([]); // Clear suggestions after adding one
     }
   };
 
   const handleTagInputKeyDown = (e) => {
-    // We only add tags from suggestions, so Enter key might be used for that later.
-    // For now, we just handle backspace to remove the last tag.
-    if (e.key === 'Enter' || e.key === ',') {
+    if ((e.key === 'Enter' || e.key === ',') && tagInput) {
       e.preventDefault();
+      addTag(tagInput);
     } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
       e.preventDefault();
       setTags(tags.slice(0, -1));
     }
   };
 
-  const removeTag = (tagToRemove) => setTags(tags.filter(tag => tag.tag_id !== tagToRemove.tag_id));
+  const removeTag = (tagToRemove) => setTags(tags.filter(tag => tag !== tagToRemove));
 
   return {
     isLoading,
@@ -147,10 +105,8 @@ export const useTwitchStream = (twitchAuth, setTitle, setError) => {
     isTwitchCategoryLoading,
     tags,
     tagInput,
-    isTagSearchLoading,
     handleTagInputChange,
     handleTagInputKeyDown,
-    tagSuggestions,
     addTag,
     removeTag,
     fetchTwitchStreamInfo,
